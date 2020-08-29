@@ -1,0 +1,27 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[pipenv]
+allow_prereleases = true
+
+[scripts]
+install-ci-deps = "pipenv install --dev --skip-lock black pydocstyle flake8 pylint mypy pytest"
+
+[dev-packages]
+jupyterlab = "*"
+black = "*"
+pytest = "*"
+pylint = "*"
+pytest-tornasync = "*"
+mypy = "*"
+pydocstyle = "*"
+flake8 = "*"
+isort = "*"
+
+[packages]
+solana = "*"
+
+[requires]
+python_version = "3.7"

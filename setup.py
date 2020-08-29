@@ -1,0 +1,1 @@
+"""setuptools module for PySerum."""
