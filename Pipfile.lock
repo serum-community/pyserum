@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7398fdfe2db7f9fccedfb9fabfac7dd29e291a4df279d648323551745d93d71f"
+            "sha256": "6ea79692740d8f9ad6f765ba95c1a93c84319755ea33ca7cb94cee3d1dd5e60c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -157,14 +157,6 @@
                 "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"
             ],
             "version": "==1.4.4"
-        },
-        "appnope": {
-            "hashes": [
-                "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0",
-                "sha256:8b995ffe925347a2138d7ac0fe77155e4311a0ea6d6da4f5128fe4b3cbe5ed71"
-            ],
-            "markers": "sys_platform == 'darwin' and platform_system == 'Darwin'",
-            "version": "==0.1.0"
         },
         "argon2-cffi": {
             "hashes": [
