@@ -2,11 +2,12 @@
 import base64
 from struct import Struct
 from typing import Any, NamedTuple
-from construct import Struct as cStruct
-from construct import Int32ul, Padding, Int8ul, Int64ul, Int128ul
+from construct import Struct as cStruct  # type: ignore
+from construct import Padding  # type: ignore
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from .slab import SLAB_LAYOUT
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
     "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
@@ -41,43 +42,14 @@ _MINT_LAYOUT += "36s"
 _MINT_LAYOUT += "b"
 _MINT_LAYOUT += "3s"
 
-SLAB_HEADER_LAYOUT = cStruct(
-    "bump_index" / Int32ul,
-    "padding1" / Padding(4),
-    "free_list_length" / Int32ul,
-    "padding2" / Padding(4),
-    "free_list_head" / Int32ul,
-    "root" / Int32ul,
-    "leaf_count" / Int32ul,
-    "padding3" / Padding(4)
-)
 
-UNINTIALIZED = cStruct()
-
-LEAF_NODE = cStruct(
-    "owner_slot" / Int8ul,
-    "fee_tier" / Int8ul,
-    Padding(2),
-    "key" / Int128ul,
-    Padding(32),
-    "quantity" / Int64ul,
-)
-
-SLAB_LAYOUT = cStruct(
-    SLAB_HEADER_LAYOUT
-)
-
-ORDER_BOOK_LAYOUT = cStruct(
-    Padding(5),
-    "account_flag" / Padding(4),
-    "slab_layout" / SLAB_LAYOUT,
-    Padding(7)
-)
+ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flag" / Padding(4), "slab_layout" / SLAB_LAYOUT)
 
 
 # Represents the decoded market state
 class MarketState(NamedTuple):
     """Market State to stored the parsed market data."""
+
     name: str
     account_flags: int
     ownAddress: str
@@ -106,6 +78,7 @@ class MarketState(NamedTuple):
     padding: str
 
     def get_initialized_flag(self):
+        """Return initialized account flag."""
         # Not sure about this implementation, not sure why,
         # it returns '\x03\x00\x00\x00\x00\x00\x00\x00', which means the 58th
         # and 57th bits are set, however I was expecting 64th and 63th.
@@ -113,11 +86,13 @@ class MarketState(NamedTuple):
         return res
 
     def get_market_flag(self):
+        """Return isMarket account flag."""
         res = (int.from_bytes(self.account_flags, "little") >> 1) & 1
         return res
 
 
 class Market:
+    """Represents a Serum Market."""
     _decode: Any
     _baseSplTokenDecimals: int
     _quoteSolTokenDecimals: int
@@ -125,12 +100,13 @@ class Market:
     _confirmations: int
     _porgram_id: PublicKey
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         decoded: MarketState,
         base_mint_decimals: int,
         quote_mint_decimals: int,
-        options: Any,
+        options: Any,  # pylint: disable=unused-argument
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ):
         # TODO: add options
@@ -144,7 +120,9 @@ class Market:
         self._program_id = program_id
 
     @staticmethod
+    # pylint: disable=unused-argument
     def load(endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID):
+        """Factory method to create a Market."""
         http_client = Client(endpoint)
         base64_res = http_client.get_account_info(market_address)["result"]["value"]["data"][0]
         res = Struct(_MARKET_FORMAT).unpack(base64.decodebytes(base64_res.encode("ascii")))
@@ -160,36 +138,52 @@ class Market:
         return Market(market_state, base_mint_decimals, quote_mint_decimals, options)
 
     def address(self):
-        pass
+        """Return market address."""
+        raise NotImplementedError("address is not implemented yet")
 
     def base_mint_address(self) -> PublicKey:
-        pass
+        """Returns base mint address."""
+        raise NotImplementedError("base_mint_address is not implemented yet")
 
     def quote_mint_address(self) -> PublicKey:
-        pass
+        """Returns quote mint address."""
+        raise NotImplementedError("quote_mint_address is not implemented yet")
 
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
+        """Get the mint decimals from given public key."""
         data = Client(endpoint).get_account_info(mint_pub_key)["result"]["value"]["data"][0]
         _, mint_decimals, _ = Struct(_MINT_LAYOUT).unpack(base64.decodebytes(data.encode("ascii")))
         return mint_decimals
 
     def load_bids(self, endpoint: str):
-        pass
+        """Load the bid order book"""
+        raise NotImplementedError("load_bids is not implemented yet")
 
     def load_asks(self, endpoint: str):
-        data = Client(endpoint).get_account_info(
-            PublicKey(self._decode.asks))["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
-        print(bytes_data[9:9 + 32])
-        print(SLAB_HEADER_LAYOUT.parse(bytes_data[9:9 + 32]))
+        """Load the Ask order book."""
+        raise NotImplementedError("load_asks is not implemented yet")
 
 
 class Slab:
-    pass
+    """Slab data structure."""
+    _header: Any
+    _nodes: Any
+
+    def __init__(self, header, nodes):
+        self._header = header
+        self._nodes = nodes
+
+    def get(self, key: int):
+        """Return slab node with the given key."""
+        raise NotImplementedError("get is not implemented yet")
+
+    def __iter__(self):
+        pass
 
 
 class OrderBook:
+    """Represents an order book."""
     market: Market
     is_bids: bool
     slab: Slab
@@ -201,16 +195,12 @@ class OrderBook:
 
     @staticmethod
     def decode(market: Market, buffer):
-        pass
+        """Decode the given buffer into an order book."""
+        raise NotImplementedError("decode is not implemented yet")
 
     def get_l2(self, depth: int):
-        pass
+        """Get the Level 2 market information."""
+        raise NotImplementedError("get_l2 is not implemented yet")
 
     def __iter__(self):
         pass
-
-
-if __name__ == "__main__":
-    market = Market.load(
-        "https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
-    print(market.load_asks("https://api.mainnet-beta.solana.com"))
