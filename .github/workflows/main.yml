@@ -38,7 +38,6 @@ jobs:
         run: |
           pipenv run black --check --diff --line-length=120 setup.py src tests
           pipenv run pylint --rcfile=.pylintrc setup.py src tests
-          pipenv run pydocstyle setup.py src tests
           pipenv run flake8 setup.py src tests
           pipenv run mypy src
 

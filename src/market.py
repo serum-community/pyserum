@@ -11,28 +11,28 @@ DEFAULT_DEX_PROGRAM_ID = PublicKey(
 )
 
 _MARKET_FORMAT = ""
-_MARKET_FORMAT += "<"  # little endian
-_MARKET_FORMAT += "5s"  # 5 bytes padding
-_MARKET_FORMAT += "8s"  # 8 bytes of accountFlag, treat it as string
+_MARKET_FORMAT += "<"    # little endian
+_MARKET_FORMAT += "5s"   # 5 bytes padding
+_MARKET_FORMAT += "8s"   # 8 bytes of accountFlag, treat it as string
 _MARKET_FORMAT += "32s"  # 32 bytes of ownAddress
-_MARKET_FORMAT += "Q"  # 8 bytes of vaultSignerNonce
+_MARKET_FORMAT += "Q"    # 8 bytes of vaultSignerNonce
 _MARKET_FORMAT += "32s"  # 32 bytes of baseMint
 _MARKET_FORMAT += "32s"  # 32 bytes of quoteMint
 _MARKET_FORMAT += "32s"  # 32 bytes of baseVault
-_MARKET_FORMAT += "Q"  # 8 bytes of baseDepositsTotal
-_MARKET_FORMAT += "Q"  # 8 bytes of baseFeesAccrued
+_MARKET_FORMAT += "Q"    # 8 bytes of baseDepositsTotal
+_MARKET_FORMAT += "Q"    # 8 bytes of baseFeesAccrued
 _MARKET_FORMAT += "32s"  # 32 bytes quoteVault
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteDepositsTotal
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteFeesAccrued
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteDustThreshold
+_MARKET_FORMAT += "Q"    # 8 bytes of quoteDepositsTotal
+_MARKET_FORMAT += "Q"    # 8 bytes of quoteFeesAccrued
+_MARKET_FORMAT += "Q"    # 8 bytes of quoteDustThreshold
 _MARKET_FORMAT += "32s"  # 32 bytes requestQueue
 _MARKET_FORMAT += "32s"  # 32 bytes eventQueue
 _MARKET_FORMAT += "32s"  # 32 bytes bids
 _MARKET_FORMAT += "32s"  # 32 bytes asks
-_MARKET_FORMAT += "Q"  # 8 bytes of baseLotSize
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteLotSize
-_MARKET_FORMAT += "Q"  # 8 bytes of feeRateBps
-_MARKET_FORMAT += "7s"  # 7 bytes padding
+_MARKET_FORMAT += "Q"    # 8 bytes of baseLotSize
+_MARKET_FORMAT += "Q"    # 8 bytes of quoteLotSize
+_MARKET_FORMAT += "Q"    # 8 bytes of feeRateBps
+_MARKET_FORMAT += "7s"   # 7 bytes padding
 
 _MINT_LAYOUT = ""
 _MINT_LAYOUT += "36s"
@@ -138,6 +138,30 @@ class Market:
         print(data)
         return Struct(_MINT_LAYOUT).unpack(base64.decodebytes(data.encode("ascii")))
 
+    def load_bids(self, endpoint: str):
+        pass
+
+    def load_asks(self, endpoint: str):
+        pass
+
+
+class Slab:
+    pass
+
+
+class OrderBook:
+    market: Market
+    isBids: bool
+    slab: Slab
+
+    def __init__(self, market:Market, accountFlags: Any, slab: Slab):
+        self.market = market
+        self.isBids = accountFlags
+        self.slab = slab
+
+    @staticmethod
+    def decode(market: Market, buffer):
+        pass
 
 if __name__ == "__main__":
     Market.load("https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
