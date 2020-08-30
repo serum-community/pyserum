@@ -2,6 +2,8 @@
 
 Python client library for interacting with the Project Serum DEX.
 
+## Development
+
 ### Setup
 
 1. Install pipenv.
@@ -31,12 +33,7 @@ make lint
 ### Tests
 
 ```sh
-# All tests
 make tests
-# Unit tests only
-make unit-tests
-# Integration tests only
-make int-tests
 ```
 
 ### Using Jupyter Notebook

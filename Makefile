@@ -6,7 +6,6 @@ format:
 	black --line-length=120 setup.py src tests
 
 lint:
-	pydocstyle setup.py src test
 	flake8 setup.py src tests
 	mypy src
 	pylint --rcfile=.pylintrc setup.py src tests
