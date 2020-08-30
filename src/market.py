@@ -2,7 +2,6 @@ import base64
 from struct import Struct
 from typing import Any, NamedTuple
 
-from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
@@ -129,7 +128,7 @@ class Market:
     def base_mint_address(self) -> PublicKey:
         pass
 
-    def quoteMintAddress(self) -> PublicKey:
+    def quote_mint_address(self) -> PublicKey:
         pass
 
     @staticmethod
@@ -151,16 +150,22 @@ class Slab:
 
 class OrderBook:
     market: Market
-    isBids: bool
+    is_bids: bool
     slab: Slab
 
-    def __init__(self, market: Market, accountFlags: Any, slab: Slab):
+    def __init__(self, market: Market, account_flags: Any, slab: Slab):
         self.market = market
-        self.isBids = accountFlags
+        self.is_bids = account_flags
         self.slab = slab
 
     @staticmethod
     def decode(market: Market, buffer):
+        pass
+
+    def get_l2(self, depth: int):
+        pass
+
+    def __iter__(self):
         pass
 
 
