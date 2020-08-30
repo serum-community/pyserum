@@ -2,11 +2,12 @@
 import base64
 from struct import Struct
 from typing import Any, NamedTuple
-from construct import Struct as cStruct  # type: ignore
-from construct import Padding  # type: ignore
 
+from construct import Padding  # type: ignore
+from construct import Struct as cStruct  # type: ignore
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+
 from .slab import SLAB_LAYOUT
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
@@ -93,6 +94,7 @@ class MarketState(NamedTuple):
 
 class Market:
     """Represents a Serum Market."""
+
     _decode: Any
     _baseSplTokenDecimals: int
     _quoteSolTokenDecimals: int
@@ -167,6 +169,7 @@ class Market:
 
 class Slab:
     """Slab data structure."""
+
     _header: Any
     _nodes: Any
 
@@ -184,6 +187,7 @@ class Slab:
 
 class OrderBook:
     """Represents an order book."""
+
     market: Market
     is_bids: bool
     slab: Slab
