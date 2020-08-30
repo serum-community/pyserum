@@ -22,6 +22,7 @@ isort = "*"
 
 [packages]
 solana = "*"
+construct = "*"
 
 [requires]
 python_version = "3.7"

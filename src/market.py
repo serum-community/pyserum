@@ -1,6 +1,9 @@
+"""Market module to interact with Serum DEX."""
 import base64
 from struct import Struct
 from typing import Any, NamedTuple
+from construct import Struct as cStruct
+from construct import Int32ul, Padding, Int8ul, Int64ul, Int128ul
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -38,8 +41,43 @@ _MINT_LAYOUT += "36s"
 _MINT_LAYOUT += "b"
 _MINT_LAYOUT += "3s"
 
+SLAB_HEADER_LAYOUT = cStruct(
+    "bump_index" / Int32ul,
+    "padding1" / Padding(4),
+    "free_list_length" / Int32ul,
+    "padding2" / Padding(4),
+    "free_list_head" / Int32ul,
+    "root" / Int32ul,
+    "leaf_count" / Int32ul,
+    "padding3" / Padding(4)
+)
+
+UNINTIALIZED = cStruct()
+
+LEAF_NODE = cStruct(
+    "owner_slot" / Int8ul,
+    "fee_tier" / Int8ul,
+    Padding(2),
+    "key" / Int128ul,
+    Padding(32),
+    "quantity" / Int64ul,
+)
+
+SLAB_LAYOUT = cStruct(
+    SLAB_HEADER_LAYOUT
+)
+
+ORDER_BOOK_LAYOUT = cStruct(
+    Padding(5),
+    "account_flag" / Padding(4),
+    "slab_layout" / SLAB_LAYOUT,
+    Padding(7)
+)
+
+
 # Represents the decoded market state
 class MarketState(NamedTuple):
+    """Market State to stored the parsed market data."""
     name: str
     account_flags: int
     ownAddress: str
@@ -72,7 +110,6 @@ class MarketState(NamedTuple):
         # it returns '\x03\x00\x00\x00\x00\x00\x00\x00', which means the 58th
         # and 57th bits are set, however I was expecting 64th and 63th.
         res = int.from_bytes(self.account_flags, "little") & 1
-        print(res)
         return res
 
     def get_market_flag(self):
@@ -90,14 +127,14 @@ class Market:
 
     def __init__(
         self,
-        decoded: Any,
+        decoded: MarketState,
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ):
         # TODO: add options
-        if not decoded.accountFlags.initialized or not decoded.accountFlags.market:
+        if not decoded.get_initialized_flag or not decoded.get_market_flag:
             raise Exception("Invalid market state")
         self._decode = decoded
         self._base_spl_token_decimals = base_mint_decimals
@@ -134,14 +171,18 @@ class Market:
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         data = Client(endpoint).get_account_info(mint_pub_key)["result"]["value"]["data"][0]
-        print(data)
-        return Struct(_MINT_LAYOUT).unpack(base64.decodebytes(data.encode("ascii")))
+        _, mint_decimals, _ = Struct(_MINT_LAYOUT).unpack(base64.decodebytes(data.encode("ascii")))
+        return mint_decimals
 
     def load_bids(self, endpoint: str):
         pass
 
     def load_asks(self, endpoint: str):
-        pass
+        data = Client(endpoint).get_account_info(
+            PublicKey(self._decode.asks))["result"]["value"]["data"][0]
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        print(bytes_data[9:9 + 32])
+        print(SLAB_HEADER_LAYOUT.parse(bytes_data[9:9 + 32]))
 
 
 class Slab:
@@ -170,4 +211,6 @@ class OrderBook:
 
 
 if __name__ == "__main__":
-    Market.load("https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
+    market = Market.load(
+        "https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
+    print(market.load_asks("https://api.mainnet-beta.solana.com"))
