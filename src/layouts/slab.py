@@ -50,3 +50,5 @@ SLAB_NODE_LAYOUT = cStruct(
 )
 
 SLAB_LAYOUT = cStruct("header" / SLAB_HEADER_LAYOUT, "nodes" / SLAB_NODE_LAYOUT[lambda this: this.header.bump_index])
+
+ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flag" / Padding(4), "slab_layout" / SLAB_LAYOUT)
