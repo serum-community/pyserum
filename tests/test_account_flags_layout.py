@@ -1,6 +1,6 @@
 """Tests for account flags layout."""
 
-from src.layouts.account_flags import decode_account_flags, encode_account_flags, _ACCOUNT_FLAGS_LAYOUT
+from src.layouts.account_flags import _ACCOUNT_FLAGS_LAYOUT, decode_account_flags, encode_account_flags
 
 
 def default_flags():

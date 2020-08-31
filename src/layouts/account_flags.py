@@ -1,6 +1,6 @@
 from typing import Dict
 
-from construct import BitsInteger, BitStruct, BitsSwapped, Flag  # type: ignore
+from construct import BitsInteger, BitsSwapped, BitStruct, Flag  # type: ignore
 
 _EMPTY_FLAG = ""
 

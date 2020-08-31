@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict
 
 
 class Enum:
@@ -8,14 +8,14 @@ class Enum:
 
     def __init__(self, values: Dict[str, int]):
         self._values: Dict[str, int] = {}
-        seen: Set[int] = set()
+        prev = -1
         for key, val in values.items():
-            if val in seen:
-                raise ValueError("duplicate enum value", val)
+            if val != prev + 1:
+                raise ValueError("duplicate enum sequence", prev, val)
             if val > self._MAX_VAL:
                 raise ValueError("invalid enum value", val)
             self._values[key] = val
-            seen.add(val)
+            prev = val
 
     def __validate_key(self, key: str):
         if key not in self._values:
