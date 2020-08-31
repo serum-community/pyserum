@@ -117,6 +117,24 @@ class Market:
         raise NotImplementedError("load_asks is not implemented yet")
 
 
+class Slab:
+    """Slab data structure."""
+
+    _header: Any
+    _nodes: Any
+
+    def __init__(self, header, nodes):
+        self._header = header
+        self._nodes = nodes
+
+    def get(self, key: int):
+        """Return slab node with the given key."""
+        raise NotImplementedError("get is not implemented yet")
+
+    def __iter__(self):
+        pass
+
+
 class OrderBook:
     """Represents an order book."""
 
