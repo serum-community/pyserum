@@ -11,7 +11,7 @@ class Enum:
         prev = -1
         for key, val in values.items():
             if val != prev + 1:
-                raise ValueError("duplicate enum sequence", prev, val)
+                raise ValueError("invlaid enum sequence", prev, val)
             if val > self._MAX_VAL:
                 raise ValueError("invalid enum value", val)
             self._values[key] = val
@@ -34,10 +34,10 @@ class Enum:
         self.__validate_key(key)
         return self._values[key]
 
-    def encode(self, key: str) -> bytes:
-        self.__validate_key(key)
-        return self._values[key].to_bytes(4, byteorder="little")
-
     def decode(self, encoded_enum: bytes) -> str:
         value = int.from_bytes(encoded_enum, byteorder="little")
         return self.__find_key(value)
+
+    def encode(self, key: str) -> bytes:
+        self.__validate_key(key)
+        return self._values[key].to_bytes(4, byteorder="little")
