@@ -1,21 +1,17 @@
-from typing import Dict
+from typing import Dict, List
 
 
 class Enum:
     """Mapping of str values to uint32 integer."""
 
-    _MAX_VAL = 4294967295  # 2^32 - 1
+    _MAX_VAL = 2 ** 32 - 1
 
-    def __init__(self, values: Dict[str, int]):
+    def __init__(self, values: List[str]):
         self._values: Dict[str, int] = {}
-        prev = -1
-        for key, val in values.items():
-            if val != prev + 1:
-                raise ValueError("invlaid enum sequence", prev, val)
-            if val > self._MAX_VAL:
-                raise ValueError("invalid enum value", val)
-            self._values[key] = val
-            prev = val
+        for enum_val, key in enumerate(values):
+            if enum_val > self._MAX_VAL:
+                raise ValueError("too many enum values", enum_val)
+            self._values[key] = enum_val
 
     def __validate_key(self, key: str):
         if key not in self._values:
