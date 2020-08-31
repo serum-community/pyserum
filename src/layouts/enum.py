@@ -30,8 +30,8 @@ class Enum:
         self.__validate_key(key)
         return self._values[key]
 
-    def decode(self, encoded_enum: bytes) -> str:
-        value = int.from_bytes(encoded_enum, byteorder="little")
+    def decode(self, encoded_enum: bytes, byteorder="little") -> str:
+        value = int.from_bytes(encoded_enum, byteorder=byteorder)
         return self.__find_key(value)
 
     def encode(self, key: str) -> bytes:
