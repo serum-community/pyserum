@@ -1,6 +1,6 @@
 """Tests for account flags layout."""
 
-from src.layouts.account_flags import decode_account_flags, encode_account_flags, _ACCOUNT_FLAGS_LAYOUT
+from src.layouts.account_flags import ACCOUNT_FLAGS_LAYOUT, decode_account_flags, encode_account_flags
 
 
 def default_flags():
@@ -17,7 +17,7 @@ def default_flags():
 
 def test_correct_size():
     """Test account flags layout has 8 bytes."""
-    assert _ACCOUNT_FLAGS_LAYOUT.sizeof() == 8
+    assert ACCOUNT_FLAGS_LAYOUT.sizeof() == 8
 
 
 def test_decode():
