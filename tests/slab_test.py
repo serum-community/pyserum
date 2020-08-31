@@ -19,7 +19,7 @@ def test_parse_node():
     """Test the parsing logic for a SLAB node."""
     # We only parse the data for the first node. The header is of length 32 bytes.
     # And the slab node layout requires 72 bytes (4 bytes for tag and 68 bytes for node data).
-    slab_node = SLAB_NODE_LAYOUT.parse(DATA[32: 32 + 72])
+    slab_node = SLAB_NODE_LAYOUT.parse(DATA[32 : 32 + 72]) # noqa
     assert slab_node.tag == 1
     assert slab_node.node.prefixLen == 30
     assert slab_node.node.children == [4, 3]
