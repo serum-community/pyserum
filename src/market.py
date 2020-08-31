@@ -37,6 +37,8 @@ MARKET_FORMAT = cStruct(
     Padding(7),
 )
 
+# TODO: probably need to change the amount of padding since they recently changed it.
+# See here: https://github.com/project-serum/serum-js/commit/87c25716c0f2f1092cf27467dd8bb06aabb83fdb
 MINT_LAYOUT = cStruct(Padding(36), "decimals" / Int8ul, Padding(3))
 
 
