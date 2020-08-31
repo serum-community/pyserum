@@ -44,9 +44,6 @@ _MINT_LAYOUT += "b"
 _MINT_LAYOUT += "3s"
 
 
-ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flag" / Padding(4), "slab_layout" / SLAB_LAYOUT)
-
-
 class MarketState(NamedTuple):
     """Market State to stored the parsed market data."""
 
