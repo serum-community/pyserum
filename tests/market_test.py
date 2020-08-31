@@ -16,7 +16,6 @@ def test_parse_market_state():
 
 
 def test_load_market():
-    market = Market.load(
-        "https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
+    market = Market.load("https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
     assert market is not None
     assert isinstance(market, Market)
