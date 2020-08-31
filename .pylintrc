@@ -60,7 +60,10 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=parameter-unpacking,
+disable=missing-class-docstring,
+        missing-function-docstring,
+        missing-module-docstring,
+        parameter-unpacking,
         unpacking-in-except,
         old-raise-syntax,
         bad-continuation,
