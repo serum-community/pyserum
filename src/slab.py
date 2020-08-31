@@ -1,7 +1,7 @@
 """Slab data stucture that is used to represent Order book."""
 from construct import Int8ul, Int32ul, Int64ul, PaddedString, Padding  # type: ignore
 from construct import Struct as cStruct
-from construct import Switch, Union
+from construct import Switch
 
 KEY = cStruct(
     "part1" / Int64ul,
