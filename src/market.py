@@ -8,6 +8,7 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
 from .layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
+from .layouts.slab import ORDER_BOOK_LAYOUT
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
     "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
@@ -148,12 +149,15 @@ class OrderBook:
         self.slab = slab
 
     @staticmethod
-    def decode(market: Market, buffer):
+    def decode(market: Market, buffer: bytes):
         """Decode the given buffer into an order book."""
-        raise NotImplementedError("decode is not implemented yet")
+        orderbook = ORDER_BOOK_LAYOUT.parse(buffer)
+        return OrderBook(market, orderbook.account_flags, orderbook.slab_layout)
 
     def get_l2(self, depth: int):
         """Get the Level 2 market information."""
+        # descending = self.is_bids
+        # levels = []
         raise NotImplementedError("get_l2 is not implemented yet")
 
     def __iter__(self):
