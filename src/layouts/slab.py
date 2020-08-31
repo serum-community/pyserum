@@ -1,22 +1,21 @@
 """Slab data stucture that is used to represent Order book."""
-from construct import Int8ul, Int32ul, Int64ul, PaddedString, Padding  # type: ignore
+from construct import Bytes, Int8ul, Int32ul, Int64ul, PaddedString, Padding  # type: ignore
 from construct import Struct as cStruct
 from construct import Switch
 
 KEY = cStruct(
-    "part1" / Int64ul,
-    "part2" / Int64ul,
+    "key" / Bytes(16),
 )
 
 SLAB_HEADER_LAYOUT = cStruct(
     "bump_index" / Int32ul,
-    "padding1" / Padding(4),
+    Padding(4),
     "free_list_length" / Int32ul,
-    "padding2" / Padding(4),
+    Padding(4),
     "free_list_head" / Int32ul,
     "root" / Int32ul,
     "leaf_count" / Int32ul,
-    "padding3" / Padding(4),
+    Padding(4),
 )
 
 # Different node types, we pad it all to size of 68 bytes.
