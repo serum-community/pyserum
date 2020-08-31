@@ -13,9 +13,3 @@ def test_parse_market_state():
     assert parsed_market.base_fees_accrued == 0
     assert parsed_market.quote_dust_threshold == 100
     assert parsed_market.fee_rate_bps == 0
-
-
-def test_load_market():
-    market = Market.load("https://api.mainnet-beta.solana.com", "6ibUz1BqSD3f8XP4wEGwoRH4YbYRZ1KDZBeXmrp3KosD", None)
-    assert market is not None
-    assert isinstance(market, Market)
