@@ -1,91 +1,43 @@
 """Market module to interact with Serum DEX."""
 import base64
-from struct import Struct
-from typing import Any, NamedTuple
+from typing import Any
 
-from construct import Padding  # type: ignore
+from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct  # type: ignore
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from .slab import SLAB_LAYOUT
+from .layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
     "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
 )
 
-_MARKET_FORMAT = ""
-_MARKET_FORMAT += "<"  # little endian
-_MARKET_FORMAT += "5s"  # 5 bytes padding
-_MARKET_FORMAT += "8s"  # 8 bytes of accountFlag, treat it as string
-_MARKET_FORMAT += "32s"  # 32 bytes of ownAddress
-_MARKET_FORMAT += "Q"  # 8 bytes of vaultSignerNonce
-_MARKET_FORMAT += "32s"  # 32 bytes of baseMint
-_MARKET_FORMAT += "32s"  # 32 bytes of quoteMint
-_MARKET_FORMAT += "32s"  # 32 bytes of baseVault
-_MARKET_FORMAT += "Q"  # 8 bytes of baseDepositsTotal
-_MARKET_FORMAT += "Q"  # 8 bytes of baseFeesAccrued
-_MARKET_FORMAT += "32s"  # 32 bytes quoteVault
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteDepositsTotal
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteFeesAccrued
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteDustThreshold
-_MARKET_FORMAT += "32s"  # 32 bytes requestQueue
-_MARKET_FORMAT += "32s"  # 32 bytes eventQueue
-_MARKET_FORMAT += "32s"  # 32 bytes bids
-_MARKET_FORMAT += "32s"  # 32 bytes asks
-_MARKET_FORMAT += "Q"  # 8 bytes of baseLotSize
-_MARKET_FORMAT += "Q"  # 8 bytes of quoteLotSize
-_MARKET_FORMAT += "Q"  # 8 bytes of feeRateBps
-_MARKET_FORMAT += "7s"  # 7 bytes padding
+MARKET_FORMAT = cStruct(
+    Padding(5),
+    "account_flags" / ACCOUNT_FLAGS_LAYOUT,
+    "own_address" / Bytes(32),
+    "vault_signer_nonce" / Int64ul,
+    "base_mint" / Bytes(32),
+    "quote_mint" / Bytes(32),
+    "base_vault" / Bytes(32),
+    "base_deposits_total" / Int64ul,
+    "base_fees_accrued" / Int64ul,
+    "quote_vault" / Bytes(32),
+    "quote_deposits_total" / Int64ul,
+    "quote_fees_accrued" / Int64ul,
+    "quote_dust_threshold" / Int64ul,
+    "request_queue" / Bytes(32),
+    "event_queue" / Bytes(32),
+    "bids" / Bytes(32),
+    "asks" / Bytes(32),
+    "base_lot_size" / Int64ul,
+    "quote_lot_size" / Int64ul,
+    "fee_rate_bps" / Int64ul,
+    Padding(7),
+)
 
-_MINT_LAYOUT = ""
-_MINT_LAYOUT += "36s"
-_MINT_LAYOUT += "b"
-_MINT_LAYOUT += "3s"
-
-
-class MarketState(NamedTuple):
-    """Market State to stored the parsed market data."""
-
-    name: str
-    account_flags: int
-    ownAddress: str
-    vault_signer_nonce: int
-    base_mint: str
-    quote_mint: str
-    base_vault: str
-    base_deposits_total: int
-    base_fees_accrued: int
-    quote_vault: str
-    quote_deposits_total: int
-    quote_fees_accrused: int
-    quote_dust_threshold: int
-
-    request_queue: int
-    event_queue: int
-
-    bids: str
-    asks: str
-
-    base_lot_size: int
-    quote_lot_size: int
-
-    fee_rate_bps: int
-
-    padding: str
-
-    def get_initialized_flag(self):
-        """Return initialized account flag."""
-        # Not sure about this implementation, not sure why,
-        # it returns '\x03\x00\x00\x00\x00\x00\x00\x00', which means the 58th
-        # and 57th bits are set, however I was expecting 64th and 63th.
-        res = int.from_bytes(self.account_flags, "little") & 1
-        return res
-
-    def get_market_flag(self):
-        """Return isMarket account flag."""
-        res = (int.from_bytes(self.account_flags, "little") >> 1) & 1
-        return res
+MINT_LAYOUT = cStruct(Padding(36), "decimals" / Int8ul, Padding(3))
 
 
 class Market:
@@ -101,14 +53,14 @@ class Market:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        decoded: MarketState,
+        decoded: Any,
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ):
         # TODO: add options
-        if not decoded.get_initialized_flag or not decoded.get_market_flag:
+        if not decoded.account_flags.initialized or not decoded.account_flags.market:
             raise Exception("Invalid market state")
         self._decode = decoded
         self._base_spl_token_decimals = base_mint_decimals
@@ -123,11 +75,11 @@ class Market:
         """Factory method to create a Market."""
         http_client = Client(endpoint)
         base64_res = http_client.get_account_info(market_address)["result"]["value"]["data"][0]
-        res = Struct(_MARKET_FORMAT).unpack(base64.decodebytes(base64_res.encode("ascii")))
-        market_state = MarketState._make(res)
+        bytes_data = base64.decodebytes(base64_res.encode("ascii"))
+        market_state = MARKET_FORMAT.parse(bytes_data)
 
         # TODO: add ownAddress check!
-        if not market_state.get_initialized_flag() or not market_state.get_market_flag():
+        if not market_state.account_flags.initialized or not market_state.account_flags.market:
             raise Exception("Invalid market")
 
         base_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.base_mint))
@@ -151,8 +103,8 @@ class Market:
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
         data = Client(endpoint).get_account_info(mint_pub_key)["result"]["value"]["data"][0]
-        _, mint_decimals, _ = Struct(_MINT_LAYOUT).unpack(base64.decodebytes(data.encode("ascii")))
-        return mint_decimals
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        return MINT_LAYOUT.parse(bytes_data).decimals
 
     def load_bids(self, endpoint: str):
         """Load the bid order book"""
