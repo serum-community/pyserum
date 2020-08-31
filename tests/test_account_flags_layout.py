@@ -1,6 +1,6 @@
 """Tests for account flags layout."""
 
-from src.layouts.account_flags import _ACCOUNT_FLAGS_LAYOUT, decode_account_flags, encode_account_flags
+from src.layouts.account_flags import ACCOUNT_FLAGS_LAYOUT, decode_account_flags, encode_account_flags
 
 
 def default_flags():
@@ -17,7 +17,7 @@ def default_flags():
 
 def test_correct_size():
     """Test account flags layout has 8 bytes."""
-    assert _ACCOUNT_FLAGS_LAYOUT.sizeof() == 8
+    assert ACCOUNT_FLAGS_LAYOUT.sizeof() == 8
 
 
 def test_decode():
@@ -39,7 +39,8 @@ def test_decode():
     assert parsed == expected
 
 
-def test_serializes():
+def test_encode():
+    """Test account flag layout serializes."""
     flags = default_flags()
     flags["initialized"] = True
     flags["asks"] = True
