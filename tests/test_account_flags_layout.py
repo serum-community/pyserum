@@ -39,7 +39,8 @@ def test_decode():
     assert parsed == expected
 
 
-def test_serializes():
+def test_encode():
+    """Test account flag layout serializes."""
     flags = default_flags()
     flags["initialized"] = True
     flags["asks"] = True
