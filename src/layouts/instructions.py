@@ -46,7 +46,7 @@ INSTRUCTIONS_LAYOUT = cStruct(
             2: MATCH_ORDERS,
             3: CONSUME_EVENTS,
             4: CANCEL_ORDER,
-            5: Bytes(0),  # Is this the right way to do an empty struct?
+            5: Bytes(0),  # Empty list
             6: CANCEL_ORDER_BY_CLIENTID,
         },
     ),
