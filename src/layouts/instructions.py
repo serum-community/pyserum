@@ -34,7 +34,7 @@ CANCEL_ORDER = cStruct(
 
 CANCEL_ORDER_BY_CLIENTID = cStruct("cancelOrderByClientId" / Int64ul)
 
-INSTRUCTION_LAYOUT = cStruct(
+INSTRUCTIONS_LAYOUT = cStruct(
     "version" / Int8ul,
     "instruction" / Int8ul,
     "params"
