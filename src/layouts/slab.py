@@ -5,6 +5,8 @@ from construct import Switch
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
+KEY = Bytes(16)
+
 SLAB_HEADER_LAYOUT = cStruct(
     "bump_index" / Int32ul,
     Padding(4),
@@ -18,12 +20,12 @@ SLAB_HEADER_LAYOUT = cStruct(
 
 # Different node types, we pad it all to size of 68 bytes.
 UNINTIALIZED = cStruct(Padding(68))
-INNER_NODE = cStruct("prefix_len" / Int32ul, "key" / Bytes(16), "children" / Int32ul[2], Padding(40))
+INNER_NODE = cStruct("prefix_len" / Int32ul, "key" / KEY, "children" / Int32ul[2], Padding(40))
 LEAF_NODE = cStruct(
     "owner_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(2),
-    "key" / Bytes(16),
+    "key" / KEY,
     "owner" / Bytes(32),
     "quantity" / Int64ul,
     "client_order_id" / Int64ul,
