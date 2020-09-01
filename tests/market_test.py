@@ -8,7 +8,7 @@ def test_parse_market_state():
     parsed_market = MARKET_FORMAT.parse(DATA)
     assert parsed_market.account_flags.initialized
     assert parsed_market.account_flags.market
-    assert not parsed_market.account_flags.openOrders
+    assert not parsed_market.account_flags.open_orders
     assert parsed_market.vault_signer_nonce == 0
     assert parsed_market.base_fees_accrued == 0
     assert parsed_market.quote_dust_threshold == 100

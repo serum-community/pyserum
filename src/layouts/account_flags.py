@@ -7,9 +7,9 @@ ACCOUNT_FLAGS_LAYOUT = BitsSwapped(  # Swap to little endian
     BitStruct(
         "initialized" / Flag,
         "market" / Flag,
-        "openOrders" / Flag,
-        "requestQueue" / Flag,
-        "eventQueue" / Flag,
+        "open_orders" / Flag,
+        "request_queue" / Flag,
+        "event_queue" / Flag,
         "bids" / Flag,
         "asks" / Flag,
         BitsInteger(57),
