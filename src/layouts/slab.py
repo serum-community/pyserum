@@ -68,20 +68,20 @@ class Slab:
         while True:
             # This contains `tag` and `node`.
             slab_node = self._nodes[index]
-            node_type:int = slab_node.tag
+            node_type: int = slab_node.tag
             node = slab_node.node
             # None of tree node or inner node
             if node_type not in (1, 2):
                 raise Exception("Cannot find " + str(key) + " in slab.")
 
             # Node key is in bytes, convert it to int.
-            node_key:int = int.from_bytes(node.key, "little")
+            node_key: int = int.from_bytes(node.key, "little")
             # Leaf Node that matches
-            if node_type == 2:
+            if node_type == 2:  # pylint: disable=no-else-return
                 if node_key == key:
                     return node
                 return None
-            elif node_type == 1:  # no-qa: no-else-return
+            elif node_type == 1:
                 if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
                     return None
                 # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set

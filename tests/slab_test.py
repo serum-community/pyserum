@@ -69,4 +69,3 @@ def test_slab_get():
     assert slab.get(123456789012345678901234567889) is None
     assert slab.get(123456789012345678901234567891) is None
     assert slab.get(99999999999999999999999999999) is None
-
