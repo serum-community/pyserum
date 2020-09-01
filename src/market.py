@@ -109,10 +109,9 @@ class Market:
         return 10 ** self._quote_spl_token_decimals
 
     def price_lots_to_number(self, price: int) -> float:
-        numerator = price * self._decode.quote_lot_size * self._base_spl_token_multiplier()
-        denominator = self._decode.base_lot_size * self._quote_spl_token_multiplier()
-        print(numerator, denominator)
-        return float(numerator) / (denominator)
+        return float(price * self._decode.quote_lot_size * self._base_spl_token_multiplier()) / (
+            self._decode.base_lot_size * self._quote_spl_token_multiplier()
+        )
 
     def price_number_to_lots(self, price: float) -> int:
         raise NotImplementedError("price_number_to_lots is not implemented")
