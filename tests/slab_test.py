@@ -69,3 +69,28 @@ def test_slab_get():
     assert slab.get(123456789012345678901234567889) is None
     assert slab.get(123456789012345678901234567891) is None
     assert slab.get(99999999999999999999999999999) is None
+
+
+def test_length_of_slab_iterator():
+    slab = Slab.decode(DATA)
+    assert sum(1 for _ in slab.items()) == 4
+
+
+def test_iterate_in_ascending_order():
+    slab = Slab.decode(DATA)
+    prev = None
+    for node in slab.items():
+        curr_key = int.from_bytes(node.key, "little")
+        if prev:
+            assert curr_key > prev
+        prev = curr_key
+
+
+def test_iterate_in_descending_order():
+    slab = Slab.decode(DATA)
+    prev = None
+    for node in slab.items(descending=True):
+        curr_key = int.from_bytes(node.key, "little")
+        if prev:
+            assert curr_key < prev
+        prev = curr_key
