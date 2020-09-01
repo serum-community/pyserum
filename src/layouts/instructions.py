@@ -6,19 +6,19 @@ from construct import Switch
 from .slab import KEY
 
 INITIALIZE_MARKET = cStruct(
-    "baseLotSize" / Int64ul,
-    "quoteLotSize" / Int64ul,
-    "feeRateBps" / Int16ul,
-    "vaultSignerNonce" / Int64ul,
-    "quoteDustThreshold" / Int64ul,
+    "base_lot_size" / Int64ul,
+    "quote_lot_size" / Int64ul,
+    "fee_rate_bps" / Int16ul,
+    "vault_signer_nonce" / Int64ul,
+    "quote_dust_threshold" / Int64ul,
 )
 
 NEW_ORDER = cStruct(
     "side" / Int32ul,  # Enum
-    "limitPrice" / Int64ul,
-    "maxQuantity" / Int64ul,
-    "orderType" / Int32ul,  # Enum
-    "clientId" / Int64ul,
+    "limit_price" / Int64ul,
+    "max_quantity" / Int64ul,
+    "order_type" / Int32ul,  # Enum
+    "client_id" / Int64ul,
 )
 
 MATCH_ORDERS = cStruct("limit" / Int16ul)
@@ -27,16 +27,16 @@ CONSUME_EVENTS = cStruct("limit" / Int16ul)
 
 CANCEL_ORDER = cStruct(
     "side" / Int32ul,  # Enum
-    "orderId" / KEY,
-    "openOrders" / Bytes(32),
-    "openOrdersSlot" / Int8ul,
+    "order_id" / KEY,
+    "open_orders" / Bytes(32),
+    "open_orders_slot" / Int8ul,
 )
 
-CANCEL_ORDER_BY_CLIENTID = cStruct("cancelOrderByClientId" / Int64ul)
+CANCEL_ORDER_BY_CLIENTID = cStruct("client_id" / Int64ul)
 
 INSTRUCTIONS_LAYOUT = cStruct(
     "version" / Int8ul,
-    "instruction" / Int8ul,
+    "instruction_type" / Int8ul,
     "params"
     / Switch(
         lambda this: this.instruction,
