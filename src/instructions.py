@@ -1,9 +1,8 @@
 """Serum Dex Instructions."""
-from typing import List, NamedTuple, Tuple
+from enum import Enum
+from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
-
-from .layouts.enum import Enum
 
 # Version
 _VERSION = 0
@@ -72,13 +71,13 @@ class NewOrderParams(NamedTuple):
     """"""
     quote_vault: PublicKey
     """"""
-    side: Tuple[Enum, str]
+    side: Enum
     """"""
     limit_price: int
     """"""
     max_quantity: int
     """"""
-    order_type: Tuple[Enum, str]
+    order_type: Enum
     """"""
     client_id: int
     """"""
@@ -137,7 +136,7 @@ class CancelOrderParams(NamedTuple):
     """"""
     request_queue: PublicKey
     """"""
-    side: Tuple[Enum, str]
+    side: Enum
     """"""
     order_id: int
     """"""
@@ -147,7 +146,7 @@ class CancelOrderParams(NamedTuple):
     """"""
 
 
-class CancelOrderClientByClientIDParams(NamedTuple):
+class CancelOrderByClientIDParams(NamedTuple):
     """Cancel order by client ID params."""
 
     market: PublicKey
@@ -164,7 +163,7 @@ class CancelOrderClientByClientIDParams(NamedTuple):
     """"""
 
 
-class SettleFundParams(NamedTuple):
+class SettleFundsParams(NamedTuple):
     """Settle fund params."""
 
     market: PublicKey
