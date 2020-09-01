@@ -108,16 +108,17 @@ class Market:
     def _quote_spl_token_multiplier(self):
         return 10 ** self._quote_spl_token_decimals
 
-    def price_lots_to_number(self, price: int):
-        return (price * self._decode.quote_lot_size * self._base_spl_token_multiplier) / (
-            self._decode.base_lot_size * self._quote_spl_token_multiplier()
-        )
+    def price_lots_to_number(self, price: int) -> float:
+        numerator = price * self._decode.quote_lot_size * self._base_spl_token_multiplier()
+        denominator = self._decode.base_lot_size * self._quote_spl_token_multiplier()
+        print(numerator, denominator)
+        return float(numerator) / (denominator)
 
-    def price_number_to_lots(self, price: int):
+    def price_number_to_lots(self, price: float) -> int:
         raise NotImplementedError("price_number_to_lots is not implemented")
 
-    def base_size_lots_to_number(self, size: int):
-        return size * self._decode.base_lot_size / self._base_spl_token_multiplier()
+    def base_size_lots_to_number(self, size: int) -> float:
+        return float(size * self._decode.base_lot_size) / self._base_spl_token_multiplier()
 
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
@@ -151,7 +152,7 @@ class OrderBook:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
         self.market = market
-        self.is_bids = account_flags
+        self.is_bids = account_flags.bids
         self.slab = slab
 
     @staticmethod
@@ -163,12 +164,13 @@ class OrderBook:
         slab = Slab.decode(buffer[13:])
         return OrderBook(market, account_flags, slab)
 
-    def get_l2(self, depth: int) -> List[Tuple[int, int, int, int]]:
+    def get_l2(self, depth: int) -> List[Tuple[float, float, int, int]]:
         """Get the Level 2 market information."""
         descending = self.is_bids
         levels: List[List[int]] = []
         for node in self.slab.items(descending):
             price = get_price_from_key(int.from_bytes(node.key, "little"))
+            print(price, levels)
             if len(levels) > 0 and levels[len(levels) - 1][0] == price:
                 levels[len(levels) - 1][1] += node.quantiy
             elif len(levels) == depth:
@@ -177,7 +179,7 @@ class OrderBook:
                 levels.append([price, node.quantity])
         return [
             (
-                self.market.price_lots_to_number(price),
+                self.market.price_lots_to_number(price_lots),
                 self.market.base_size_lots_to_number(size_lots),
                 price_lots,
                 size_lots,
@@ -190,7 +192,7 @@ class OrderBook:
 
     def orders(self):
         for node in self.slab.items():
-            key = int.from_bytes(node.key)
+            key = int.from_bytes(node.key, "little")
             price = get_price_from_key(key)
             open_orders_address = base64.b64encode(node.owner)
             yield {
