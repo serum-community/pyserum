@@ -1,6 +1,6 @@
 """Market module to interact with Serum DEX."""
 import base64
-from typing import Any
+from typing import Any, List, Tuple
 
 from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct  # type: ignore
@@ -8,7 +8,7 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
 from .layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
-from .layouts.slab import ORDER_BOOK_LAYOUT
+from .layouts.slab import Slab
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
     "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
@@ -48,7 +48,7 @@ class Market:
 
     _decode: Any
     _baseSplTokenDecimals: int
-    _quoteSolTokenDecimals: int
+    _quoteSplTokenDecimals: int
     _skipPreflight: bool
     _confirmations: int
     _porgram_id: PublicKey
@@ -102,6 +102,23 @@ class Market:
         """Returns quote mint address."""
         raise NotImplementedError("quote_mint_address is not implemented yet")
 
+    def _base_spl_token_multiplier(self):
+        return 10 ** self._base_spl_token_decimals
+
+    def _quote_spl_token_multiplier(self):
+        return 10 ** self._quote_spl_token_decimals
+
+    def price_lots_to_number(self, price: int):
+        return (price * self._decode.quote_lot_size * self._base_spl_token_multiplier) / (
+            self._decode.base_lot_size * self._quote_spl_token_multiplier()
+        )
+
+    def price_number_to_lots(self, price: int):
+        raise NotImplementedError("price_number_to_lots is not implemented")
+
+    def base_size_lots_to_number(self, size: int):
+        return size * self._decode.base_lot_size / self._base_spl_token_multiplier()
+
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
@@ -118,22 +135,9 @@ class Market:
         raise NotImplementedError("load_asks is not implemented yet")
 
 
-class Slab:
-    """Slab data structure."""
-
-    _header: Any
-    _nodes: Any
-
-    def __init__(self, header, nodes):
-        self._header = header
-        self._nodes = nodes
-
-    def get(self, key: int):
-        """Return slab node with the given key."""
-        raise NotImplementedError("get is not implemented yet")
-
-    def __iter__(self):
-        pass
+# The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
+def get_price_from_key(key: int):
+    return key >> 64
 
 
 class OrderBook:
@@ -144,6 +148,8 @@ class OrderBook:
     slab: Slab
 
     def __init__(self, market: Market, account_flags: Any, slab: Slab):
+        if not account_flags.initialized or not (account_flags.bids ^ account_flags.asks):
+            raise Exception("Invalid order book, either not initialized or neither of bids or asks")
         self.market = market
         self.is_bids = account_flags
         self.slab = slab
@@ -151,14 +157,50 @@ class OrderBook:
     @staticmethod
     def decode(market: Market, buffer: bytes):
         """Decode the given buffer into an order book."""
-        orderbook = ORDER_BOOK_LAYOUT.parse(buffer)
-        return OrderBook(market, orderbook.account_flags, orderbook.slab_layout)
+        # This is a bit hacky at the moment. The first 5 bytes are padding, the
+        # total length is 8 bytes which is 5 + 8 = 13 bytes.
+        account_flags = ACCOUNT_FLAGS_LAYOUT.parse(buffer[5:13])
+        slab = Slab.decode(buffer[13:])
+        return OrderBook(market, account_flags, slab)
 
-    def get_l2(self, depth: int):
+    def get_l2(self, depth: int) -> List[Tuple[int, int, int, int]]:
         """Get the Level 2 market information."""
-        # descending = self.is_bids
-        # levels = []
-        raise NotImplementedError("get_l2 is not implemented yet")
+        descending = self.is_bids
+        levels: List[List[int]] = []
+        for node in self.slab.items(descending):
+            price = get_price_from_key(int.from_bytes(node.key, "little"))
+            if len(levels) > 0 and levels[len(levels) - 1][0] == price:
+                levels[len(levels) - 1][1] += node.quantiy
+            elif len(levels) == depth:
+                break
+            else:
+                levels.append([price, node.quantity])
+        return [
+            (
+                self.market.price_lots_to_number(price),
+                self.market.base_size_lots_to_number(size_lots),
+                price_lots,
+                size_lots,
+            )
+            for price_lots, size_lots in levels
+        ]
 
     def __iter__(self):
         pass
+
+    def orders(self):
+        for node in self.slab.items():
+            key = int.from_bytes(node.key)
+            price = get_price_from_key(key)
+            open_orders_address = base64.b64encode(node.owner)
+            yield {
+                "order_id": key,
+                "client_id": node.client_order_id,
+                "open_orders_address": open_orders_address,
+                "fee_tier": node.fee_tier,
+                "price": self.market.price_lots_to_number(price),
+                "price_lots": price,
+                "size": self.market.base_size_lots_to_number(node.quantity),
+                "size_lots": node.quantity,
+                "side": "buy" if self.is_bids else "sell",
+            }
