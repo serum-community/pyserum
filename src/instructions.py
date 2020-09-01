@@ -3,9 +3,7 @@ from enum import Enum
 from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
-
-# Version
-_VERSION = 0
+from solana.transaction import TransactionInstruction
 
 # Instruction Indices
 _INITIALIZE_MARKET = 0
@@ -16,7 +14,6 @@ _CANCEL_ORDER = 4
 _SETTLE_FUND = 5
 _CANCEL_ORDER_BY_CLIENT_ID = 6
 
-# Mainnet?
 DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
 
 
@@ -185,3 +182,59 @@ class SettleFundsParams(NamedTuple):
     vault_signer: PublicKey
     """"""
     program_id: PublicKey = DEX_PROGRAM_ID
+
+
+def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
+    raise NotImplementedError("decode_initialize_market not implemented.")
+
+
+def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
+    raise NotImplementedError("decode_new_order not implemented")
+
+
+def decode_match_order(instruction: TransactionInstruction) -> MatchOrderParams:
+    raise NotImplementedError("decode_match_order not implemented")
+
+
+def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
+    raise NotImplementedError("decode_consume_events not implemented")
+
+
+def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
+    raise NotImplementedError("decode_cancel_order not implemented")
+
+
+def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
+    raise NotImplementedError("decode_settle_funds not implemented")
+
+
+def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
+    raise NotImplementedError("decode_cancel_order_by_client_id not implemented")
+
+
+def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
+    raise NotImplementedError("initialize_market not implemented")
+
+
+def new_order(params: NewOrderParams) -> TransactionInstruction:
+    raise NotImplementedError("new_order not implemented")
+
+
+def match_order(params: MatchOrderParams) -> TransactionInstruction:
+    raise NotImplementedError("match_order not implemented")
+
+
+def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
+    raise NotImplementedError("consume_events not implemented")
+
+
+def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
+    raise NotImplementedError("cancel_order not implemented")
+
+
+def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
+    raise NotImplementedError("settle_funds not implemented")
+
+
+def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> TransactionInstruction:
+    raise NotImplementedError("cancel_order_by_client_id not implemented")
