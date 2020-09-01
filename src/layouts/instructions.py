@@ -39,7 +39,7 @@ INSTRUCTIONS_LAYOUT = cStruct(
     "instruction_type" / Int8ul,
     "params"
     / Switch(
-        lambda this: this.instruction,
+        lambda this: this.instruction_type,
         {
             0: INITIALIZE_MARKET,
             1: NEW_ORDER,
