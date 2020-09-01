@@ -7,9 +7,9 @@ def default_flags():
     return {
         "initialized": False,
         "market": False,
-        "openOrders": False,
-        "requestQueue": False,
-        "eventQueue": False,
+        "open_orders": False,
+        "request_queue": False,
+        "event_queue": False,
         "bids": False,
         "asks": False,
     }
@@ -23,7 +23,7 @@ def test_correct_size():
 def test_decode():
     """Test account flag layout parses."""
     parsed = decode_account_flags(bytes(16))
-    assert not parsed["initialized"]
+    assert not parsed.initialized
     assert parsed == default_flags()
 
     expected = default_flags()
@@ -34,7 +34,7 @@ def test_decode():
 
     expected = default_flags()
     expected["initialized"] = True
-    expected["openOrders"] = True
+    expected["open_orders"] = True
     parsed = decode_account_flags(bytes.fromhex("0500000000000000"))
     assert parsed == expected
 
