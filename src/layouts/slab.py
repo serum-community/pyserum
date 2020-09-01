@@ -66,7 +66,55 @@ class Slab:
         return Slab(slab_layout.header, slab_layout.nodes)
 
     def get(self, key: int):
-        pass
+        if self._header.leaf_count == 0:
+            return None
+        index: int = self._header.root
+        while True:
+            # This contains `tag` and `node`.
+            slab_node = self._nodes[index]
+            node_type:int = slab_node.tag
+            node = slab_node.node
+            # None of tree node or inner node
+            if node_type not in (1, 2):
+                raise Exception("Cannot find " + str(key) + " in slab.")
+
+            # Node key is in bytes, convert it to int.
+            node_key:int = int.from_bytes(node.key, "little")
+            # Leaf Node that matches
+            if node_type == 2:
+                if node_key == key:
+                    return node
+                return None
+            elif node_type == 1:  # no-qa: no-else-return
+                if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
+                    return None
+                # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set
+                index = node.children[(key >> (128 - node.prefix_len - 1)) & 1]
 
     def __iter__(self):
-        pass
+        return self
+
+    def __next__(self):
+        return self.items(False)
+
+    def items(self, descending=False):
+        """Depth first traversal of the Binary Tree.
+        Parameter descending decides if the price should descending or not.
+        """
+        if self._header.leaf_count == 0:
+            return
+        stack = [self._header.root]
+        while stack:
+            index = stack.pop()
+            slab_node = self._nodes[index]
+            node_type = slab_node.tag
+            node = slab_node.node
+            if node_type == 2:
+                yield node
+            elif node_type == 1:
+                if descending:
+                    stack.append(node.children[0])
+                    stack.append(node.children[1])
+                else:
+                    stack.append(node.children[1])
+                    stack.append(node.children[0])
