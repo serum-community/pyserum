@@ -5,7 +5,7 @@ from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
 from .enums import OrderType, Side
-from .layouts.instructions import CONSUME_EVENTS, INITIALIZE_MARKET, MATCH_ORDERS
+from .layouts.instructions import INSTRUCTIONS_LAYOUT
 
 # Instruction Indices
 _INITIALIZE_MARKET = 0
@@ -187,7 +187,7 @@ class SettleFundsParams(NamedTuple):
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
     verify_instruction_keys(instruction, 9)
-    params = INITIALIZE_MARKET.parse(instruction.data)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -198,11 +198,11 @@ def decode_initialize_market(instruction: TransactionInstruction) -> InitializeM
         quote_vault=instruction.keys[6].pubkey,
         base_mint=instruction.keys[7].pubkey,
         quote_mint=instruction.keys[8].pubkey,
-        base_lot_size=params.base_lot_size,
-        quote_lot_size=params.quote_lot_size,
-        fee_rate_bps=params.fee_rate_bps,
-        vault_signer_nonce=params.vault_signer_nonce,
-        quote_dust_threshold=params.quote_dust_threshold,
+        base_lot_size=data.args.base_lot_size,
+        quote_lot_size=data.args.quote_lot_size,
+        fee_rate_bps=data.args.fee_rate_bps,
+        vault_signer_nonce=data.args.vault_signer_nonce,
+        quote_dust_threshold=data.args.quote_dust_threshold,
         program_id=instruction.program_id,
     )
 
@@ -214,7 +214,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
     verify_instruction_keys(instruction, 7)
-    params = MATCH_ORDERS.parse(instruction.data)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -223,19 +223,19 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
         asks=instruction.keys[4].pubkey,
         base_vault=instruction.keys[5].pubkey,
         quote_vault=instruction.keys[6].pubkey,
-        limit=params.limit,
+        limit=data.args.limit,
     )
 
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
     verify_instruction_keys(instruction, 2)
-    params = CONSUME_EVENTS.parse(instruction.data)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
         market=instruction.keys[-2].pubkey,
         event_queue=instruction.keys[-1].pubkey,
-        limit=params.limit,
+        limit=data.args.limit,
     )
 
 
@@ -266,14 +266,17 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
             AccountMeta(pubkey=params.quote_mint, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
-        data=INITIALIZE_MARKET.build(
-            {
-                "base_lot_size": params.base_lot_size,
-                "quote_lot_size": params.quote_lot_size,
-                "fee_rate_bps": params.fee_rate_bps,
-                "vault_signer_nonce": params.vault_signer_nonce,
-                "quote_dust_threshold": params.quote_dust_threshold,
-            }
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=_INITIALIZE_MARKET,
+                args=dict(
+                    base_lot_size=params.base_lot_size,
+                    quote_lot_size=params.quote_lot_size,
+                    fee_rate_bps=params.fee_rate_bps,
+                    vault_signer_nonce=params.vault_signer_nonce,
+                    quote_dust_threshold=params.quote_dust_threshold,
+                ),
+            ),
         ),
     )
 
@@ -295,7 +298,7 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
             AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
         ],
         program_id=params.program_id,
-        data=MATCH_ORDERS.build({"limit": params.limit}),
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=_MATCH_ORDER, args=dict(limit=params.limit))),
     )
 
 
@@ -306,7 +309,9 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
         for pubkey in params.open_orders_accounts + [params.market, params.event_queue]
     ]
     return TransactionInstruction(
-        keys=keys, program_id=params.program_id, data=CONSUME_EVENTS.build({"limit": params.limit})
+        keys=keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=_CONSUME_EVENTS, args=dict(limit=params.limit))),
     )
 
 

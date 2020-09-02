@@ -1,9 +1,11 @@
 """Layouts for dex instructions data."""
-from construct import Bytes, Int8ul, Int16ul, Int32ul, Int64ul  # type: ignore
+from construct import Bytes, Const, Int8ul, Int16ul, Int32ul, Int64ul, Pass  # type: ignore
 from construct import Struct as cStruct
 from construct import Switch
 
 from .slab import KEY
+
+VERSION = 0
 
 INITIALIZE_MARKET = cStruct(
     "base_lot_size" / Int64ul,
@@ -35,9 +37,9 @@ CANCEL_ORDER = cStruct(
 CANCEL_ORDER_BY_CLIENTID = cStruct("client_id" / Int64ul)
 
 INSTRUCTIONS_LAYOUT = cStruct(
-    "version" / Int8ul,
+    "version" / Const(VERSION, Int8ul),
     "instruction_type" / Int8ul,
-    "params"
+    "args"
     / Switch(
         lambda this: this.instruction_type,
         {
@@ -46,7 +48,7 @@ INSTRUCTIONS_LAYOUT = cStruct(
             2: MATCH_ORDERS,
             3: CONSUME_EVENTS,
             4: CANCEL_ORDER,
-            5: Bytes(0),  # Empty list
+            5: Pass,  # Empty list
             6: CANCEL_ORDER_BY_CLIENTID,
         },
     ),
