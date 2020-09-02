@@ -169,7 +169,6 @@ class OrderBook:
         levels: List[List[int]] = []
         for node in self.slab.items(descending):
             price = get_price_from_key(int.from_bytes(node.key, "little"))
-            print(price, levels)
             if len(levels) > 0 and levels[len(levels) - 1][0] == price:
                 levels[len(levels) - 1][1] += node.quantiy
             elif len(levels) == depth:
