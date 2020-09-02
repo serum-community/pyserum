@@ -213,7 +213,7 @@ class OrderBook:
             for price_lots, size_lots in levels
         ]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Order]:
         return self.orders()
 
     def orders(self) -> Iterable[Order]:
