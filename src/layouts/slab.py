@@ -1,4 +1,6 @@
 """Slab data stucture that is used to represent Order book."""
+from enum import IntEnum
+
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct
 from construct import Switch
@@ -17,6 +19,15 @@ SLAB_HEADER_LAYOUT = cStruct(
     "leaf_count" / Int32ul,
     Padding(4),
 )
+
+
+class NodeType(IntEnum):
+    UNINTIALIZED = 0
+    INNER_NODE = 1
+    LEAF_NODE = 2
+    FREE_NODE = 3
+    LAST_FREE_NODE = 4
+
 
 # Different node types, we pad it all to size of 68 bytes.
 UNINTIALIZED = cStruct(Padding(68))
@@ -39,11 +50,11 @@ SLAB_NODE_LAYOUT = cStruct(
     / Switch(
         lambda this: this.tag,
         {
-            0: UNINTIALIZED,
-            1: INNER_NODE,
-            2: LEAF_NODE,
-            3: FREE_NODE,
-            4: LAST_FREE_NODE,
+            NodeType.UNINTIALIZED: UNINTIALIZED,
+            NodeType.INNER_NODE: INNER_NODE,
+            NodeType.LEAF_NODE: LEAF_NODE,
+            NodeType.FREE_NODE: FREE_NODE,
+            NodeType.LAST_FREE_NODE: LAST_FREE_NODE,
         },
     ),
 )
@@ -73,15 +84,15 @@ class Slab:
             node_type: int = slab_node.tag
             node = slab_node.node
             # None of tree node or inner node
-            if node_type not in (1, 2):
+            if node_type not in (NodeType.INNER_NODE, NodeType.LEAF_NODE):
                 raise Exception("Cannot find " + str(key) + " in slab.")
 
             # Node key is in bytes, convert it to int.
             node_key: int = int.from_bytes(node.key, "little")
             # Leaf Node that matches
-            if node_type == 2:  # pylint: disable=no-else-return
+            if node_type == NodeType.LEAF_NODE:  # pylint: disable=no-else-return
                 return node if node_key == key else None
-            elif node_type == 1:
+            elif node_type == NodeType.INNER_NODE:
                 if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
                     return None
                 # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set

@@ -1,6 +1,6 @@
 """Market module to interact with Serum DEX."""
 import base64
-from typing import Any, List, Tuple
+from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct  # type: ignore
@@ -135,6 +135,18 @@ class Market:
         raise NotImplementedError("load_asks is not implemented yet")
 
 
+class Order(NamedTuple):
+    order_id: int
+    client_id: int
+    open_order_address: PublicKey
+    fee_tier: int
+    price: float
+    price_lots: int
+    size: float
+    size_lots: int
+    side: str
+
+
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
 def get_price_from_key(key: int):
     return key >> 64
@@ -155,7 +167,7 @@ class OrderBook:
         self.slab = slab
 
     @staticmethod
-    def decode(market: Market, buffer: bytes) -> Orderbook:
+    def decode(market: Market, buffer: bytes):
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
@@ -186,21 +198,22 @@ class OrderBook:
         ]
 
     def __iter__(self):
-        pass
+        return self.orders()
 
     def orders(self) -> Iterable[Order]:
         for node in self.slab.items():
             key = int.from_bytes(node.key, "little")
             price = get_price_from_key(key)
-            open_orders_address = base64.b64encode(node.owner)
-            yield {
-                "order_id": key,
-                "client_id": node.client_order_id,
-                "open_orders_address": open_orders_address,
-                "fee_tier": node.fee_tier,
-                "price": self.market.price_lots_to_number(price),
-                "price_lots": price,
-                "size": self.market.base_size_lots_to_number(node.quantity),
-                "size_lots": node.quantity,
-                "side": "buy" if self.is_bids else "sell",
-            }
+            open_orders_address = PublicKey(node.owner)
+
+            yield Order(
+                order_id=key,
+                client_id=node.client_order_id,
+                open_order_address=open_orders_address,
+                fee_tier=node.fee_tier,
+                price=self.market.price_lots_to_number(price),
+                price_lots=price,
+                size=self.market.base_size_lots_to_number(node.quantity),
+                size_lots=node.quantity,
+                side="buy" if self.is_bids else "sell",
+            )
