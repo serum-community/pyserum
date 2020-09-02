@@ -10,13 +10,13 @@ def test_initialize_market():
     params = inlib.InitializeMarketParams(
         market=PublicKey(0),
         request_queue=PublicKey(1),
-        event_queue=PublicKey(3),
-        bids=PublicKey(4),
-        asks=PublicKey(5),
-        base_vault=PublicKey(6),
-        quote_vault=PublicKey(7),
-        base_mint=PublicKey(8),
-        quote_mint=PublicKey(9),
+        event_queue=PublicKey(2),
+        bids=PublicKey(3),
+        asks=PublicKey(4),
+        base_vault=PublicKey(5),
+        quote_vault=PublicKey(6),
+        base_mint=PublicKey(7),
+        quote_mint=PublicKey(8),
         base_lot_size=1,
         quote_lot_size=2,
         fee_rate_bps=3,
@@ -32,12 +32,23 @@ def test_match_orders():
     params = inlib.MatchOrdersParams(
         market=PublicKey(0),
         request_queue=PublicKey(1),
-        event_queue=PublicKey(3),
-        bids=PublicKey(4),
-        asks=PublicKey(5),
-        base_vault=PublicKey(6),
-        quote_vault=PublicKey(7),
+        event_queue=PublicKey(2),
+        bids=PublicKey(3),
+        asks=PublicKey(4),
+        base_vault=PublicKey(5),
+        quote_vault=PublicKey(6),
         limit=1,
     )
     instruction = inlib.match_orders(params)
     assert inlib.decode_match_orders(instruction) == params
+
+
+def test_consume_events():
+    params = inlib.ConsumeEventsParams(
+        market=PublicKey(0),
+        event_queue=PublicKey(1),
+        open_orders_accounts=[PublicKey(i + 2) for i in range(8)],
+        limit=1,
+    )
+    instruction = inlib.consume_events(params)
+    assert inlib.decode_consume_events(instruction) == params

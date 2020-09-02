@@ -5,7 +5,7 @@ from typing import List, NamedTuple
 from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
-from .layouts.instructions import INITIALIZE_MARKET, MATCH_ORDERS
+from .layouts.instructions import CONSUME_EVENTS, INITIALIZE_MARKET, MATCH_ORDERS
 
 # Instruction Indices
 _INITIALIZE_MARKET = 0
@@ -111,8 +111,6 @@ class ConsumeEventsParams(NamedTuple):
     """Consume events params."""
 
     market: PublicKey
-    """"""
-    request_queue: PublicKey
     """"""
     event_queue: PublicKey
     """"""
@@ -230,7 +228,15 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
-    raise NotImplementedError("decode_consume_events not implemented")
+    """Decode a consume events instruction and retrieve the instruction params."""
+    verify_instruction_keys(instruction, 2)
+    params = CONSUME_EVENTS.parse(instruction.data)
+    return ConsumeEventsParams(
+        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
+        market=instruction.keys[-2].pubkey,
+        event_queue=instruction.keys[-1].pubkey,
+        limit=params.limit,
+    )
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
@@ -294,7 +300,14 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
 
 
 def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
-    raise NotImplementedError("consume_events not implemented")
+    """Generate a transaction instruction to consume market events."""
+    keys = [
+        AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
+        for pubkey in params.open_orders_accounts + [params.market, params.event_queue]
+    ]
+    return TransactionInstruction(
+        keys=keys, program_id=params.program_id, data=CONSUME_EVENTS.build({"limit": params.limit})
+    )
 
 
 def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
