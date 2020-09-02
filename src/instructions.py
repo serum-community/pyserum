@@ -3,7 +3,9 @@ from enum import Enum
 from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
-from solana.transaction import TransactionInstruction
+from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
+
+from .layouts.instructions import INITIALIZE_MARKET
 
 # Instruction Indices
 _INITIALIZE_MARKET = 0
@@ -185,7 +187,26 @@ class SettleFundsParams(NamedTuple):
 
 
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
-    raise NotImplementedError("decode_initialize_market not implemented.")
+    """Decode a instialize market instruction and retrieve the instruction params."""
+    verify_instruction_keys(instruction, 9)
+    params = INITIALIZE_MARKET.parse(instruction.data)
+    return InitializeMarketParams(
+        market=instruction.keys[0].pubkey,
+        request_queue=instruction.keys[1].pubkey,
+        event_queue=instruction.keys[2].pubkey,
+        bids=instruction.keys[3].pubkey,
+        asks=instruction.keys[4].pubkey,
+        base_vault=instruction.keys[5].pubkey,
+        quote_vault=instruction.keys[6].pubkey,
+        base_mint=instruction.keys[7].pubkey,
+        quote_mint=instruction.keys[8].pubkey,
+        base_lot_size=params.base_lot_size,
+        quote_lot_size=params.quote_lot_size,
+        fee_rate_bps=params.fee_rate_bps,
+        vault_signer_nonce=params.vault_signer_nonce,
+        quote_dust_threshold=params.quote_dust_threshold,
+        program_id=instruction.program_id,
+    )
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
@@ -213,7 +234,30 @@ def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> Can
 
 
 def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
-    raise NotImplementedError("initialize_market not implemented")
+    """Generate a transaction instruction to initialize a Serum market."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_mint, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.quote_mint, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INITIALIZE_MARKET.build(
+            {
+                "base_lot_size": params.base_lot_size,
+                "quote_lot_size": params.quote_lot_size,
+                "fee_rate_bps": params.fee_rate_bps,
+                "vault_signer_nonce": params.vault_signer_nonce,
+                "quote_dust_threshold": params.quote_dust_threshold,
+            }
+        ),
+    )
 
 
 def new_order(params: NewOrderParams) -> TransactionInstruction:
