@@ -25,3 +25,19 @@ def test_initialize_market():
     )
     instruction = inlib.initialize_market(params)
     assert inlib.decode_initialize_market(instruction) == params
+
+
+def test_match_orders():
+    """Test match orders."""
+    params = inlib.MatchOrdersParams(
+        market=PublicKey(0),
+        request_queue=PublicKey(1),
+        event_queue=PublicKey(3),
+        bids=PublicKey(4),
+        asks=PublicKey(5),
+        base_vault=PublicKey(6),
+        quote_vault=PublicKey(7),
+        limit=1,
+    )
+    instruction = inlib.match_orders(params)
+    assert inlib.decode_match_orders(instruction) == params
