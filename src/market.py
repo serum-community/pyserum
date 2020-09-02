@@ -1,6 +1,8 @@
 """Market module to interact with Serum DEX."""
+from __future__ import annotations
+
 import base64
-from typing import Any, Iterable, List, NamedTuple, Tuple
+from typing import Any, Iterable, List, NamedTuple
 
 from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct  # type: ignore
@@ -38,8 +40,6 @@ MARKET_FORMAT = cStruct(
     Padding(7),
 )
 
-# TODO: probably need to change the amount of padding since they recently changed it.
-# See here: https://github.com/project-serum/serum-js/commit/87c25716c0f2f1092cf27467dd8bb06aabb83fdb
 MINT_LAYOUT = cStruct(Padding(44), "decimals" / Int8ul, Padding(37))
 
 
@@ -155,6 +155,13 @@ class Order(NamedTuple):
     side: str
 
 
+class PriceAndSize(NamedTuple):
+    price: float
+    size: float
+    price_lots: int
+    size_lots: int
+
+
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
 def get_price_from_key(key: int):
     return key >> 64
@@ -175,7 +182,7 @@ class OrderBook:
         self._slab = slab
 
     @staticmethod
-    def decode(market: Market, buffer: bytes):
+    def decode(market: Market, buffer: bytes) -> OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
@@ -183,9 +190,10 @@ class OrderBook:
         slab = Slab.decode(buffer[13:])
         return OrderBook(market, account_flags, slab)
 
-    def get_l2(self, depth: int) -> List[Tuple[float, float, int, int]]:
+    def get_l2(self, depth: int) -> List[PriceAndSize]:
         """Get the Level 2 market information."""
         descending = self._is_bids
+        # The first elment of the inner list is price, the second is quantity.
         levels: List[List[int]] = []
         for node in self._slab.items(descending):
             price = get_price_from_key(int.from_bytes(node.key, "little"))
@@ -196,11 +204,11 @@ class OrderBook:
             else:
                 levels.append([price, node.quantity])
         return [
-            (
-                self._market.price_lots_to_number(price_lots),
-                self._market.base_size_lots_to_number(size_lots),
-                price_lots,
-                size_lots,
+            PriceAndSize(
+                price=self._market.price_lots_to_number(price_lots),
+                size=self._market.base_size_lots_to_number(size_lots),
+                price_lots=price_lots,
+                size_lots=size_lots,
             )
             for price_lots, size_lots in levels
         ]

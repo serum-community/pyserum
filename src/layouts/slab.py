@@ -1,4 +1,6 @@
 """Slab data stucture that is used to represent Order book."""
+from __future__ import annotations
+
 from enum import IntEnum
 
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
@@ -70,7 +72,7 @@ class Slab:
         self._nodes = nodes
 
     @staticmethod
-    def decode(buffer: bytes):
+    def decode(buffer: bytes) -> Slab:
         slab_layout = SLAB_LAYOUT.parse(buffer)
         return Slab(slab_layout.header, slab_layout.nodes)
 
@@ -83,13 +85,11 @@ class Slab:
             slab_node = self._nodes[index]
             node_type: int = slab_node.tag
             node = slab_node.node
-            # None of tree node or inner node
             if node_type not in (NodeType.INNER_NODE, NodeType.LEAF_NODE):
                 raise Exception("Cannot find " + str(key) + " in slab.")
 
             # Node key is in bytes, convert it to int.
             node_key: int = int.from_bytes(node.key, "little")
-            # Leaf Node that matches
             if node_type == NodeType.LEAF_NODE:  # pylint: disable=no-else-return
                 return node if node_key == key else None
             elif node_type == NodeType.INNER_NODE:
@@ -97,6 +97,8 @@ class Slab:
                     return None
                 # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set
                 index = node.children[(key >> (128 - node.prefix_len - 1)) & 1]
+            else:
+                raise RuntimeError("Should not go here! Node type not recognize.")
 
     def __iter__(self):
         return self.items(False)
