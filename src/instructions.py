@@ -1,10 +1,10 @@
 """Serum Dex Instructions."""
-from enum import Enum
 from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
+from .enums import OrderType, Side
 from .layouts.instructions import CONSUME_EVENTS, INITIALIZE_MARKET, MATCH_ORDERS
 
 # Instruction Indices
@@ -70,13 +70,13 @@ class NewOrderParams(NamedTuple):
     """"""
     quote_vault: PublicKey
     """"""
-    side: Enum
+    side: Side
     """"""
     limit_price: int
     """"""
     max_quantity: int
     """"""
-    order_type: Enum
+    order_type: OrderType
     """"""
     client_id: int
     """"""
@@ -133,7 +133,7 @@ class CancelOrderParams(NamedTuple):
     """"""
     request_queue: PublicKey
     """"""
-    side: Enum
+    side: Side
     """"""
     order_id: int
     """"""
