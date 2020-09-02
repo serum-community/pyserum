@@ -189,7 +189,7 @@ class OrderBook:
     def __iter__(self):
         pass
 
-    def orders(self):
+    def orders(self) -> Iterable[Order]:
         for node in self.slab.items():
             key = int.from_bytes(node.key, "little")
             price = get_price_from_key(key)
