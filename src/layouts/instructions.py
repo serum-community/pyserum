@@ -51,7 +51,7 @@ _CANCEL_ORDER_BY_CLIENTID = cStruct("client_id" / Int64ul)
 
 INSTRUCTIONS_LAYOUT = cStruct(
     "version" / Const(_VERSION, Int8ul),
-    "instruction_type" / Int8ul,
+    "instruction_type" / Int32ul,
     "args"
     / Switch(
         lambda this: this.instruction_type,
