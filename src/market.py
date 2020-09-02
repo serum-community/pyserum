@@ -143,23 +143,20 @@ class Market:
         return OrderBook.decode(self, bytes_data)
 
 
+class OrderInfo(NamedTuple):
+    price: float
+    size: float
+    price_lots: int
+    size_lots: int
+
+
 class Order(NamedTuple):
     order_id: int
     client_id: int
     open_order_address: PublicKey
     fee_tier: int
-    price: float
-    price_lots: int
-    size: float
-    size_lots: int
+    order_info: OrderInfo
     side: str
-
-
-class PriceAndSize(NamedTuple):
-    price: float
-    size: float
-    price_lots: int
-    size_lots: int
 
 
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
@@ -190,7 +187,7 @@ class OrderBook:
         slab = Slab.decode(buffer[13:])
         return OrderBook(market, account_flags, slab)
 
-    def get_l2(self, depth: int) -> List[PriceAndSize]:
+    def get_l2(self, depth: int) -> List[OrderInfo]:
         """Get the Level 2 market information."""
         descending = self._is_bids
         # The first elment of the inner list is price, the second is quantity.
@@ -204,7 +201,7 @@ class OrderBook:
             else:
                 levels.append([price, node.quantity])
         return [
-            PriceAndSize(
+            OrderInfo(
                 price=self._market.price_lots_to_number(price_lots),
                 size=self._market.base_size_lots_to_number(size_lots),
                 price_lots=price_lots,
@@ -227,9 +224,11 @@ class OrderBook:
                 client_id=node.client_order_id,
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
-                price=self._market.price_lots_to_number(price),
-                price_lots=price,
-                size=self._market.base_size_lots_to_number(node.quantity),
-                size_lots=node.quantity,
+                order_info=OrderInfo(
+                    price=self._market.price_lots_to_number(price),
+                    price_lots=price,
+                    size=self._market.base_size_lots_to_number(node.quantity),
+                    size_lots=node.quantity,
+                ),
                 side="buy" if self._is_bids else "sell",
             )
