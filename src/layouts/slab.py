@@ -1,13 +1,15 @@
 """Slab data stucture that is used to represent Order book."""
+from __future__ import annotations
+
+from enum import IntEnum
+
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct
 from construct import Switch
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
-KEY = cStruct(
-    "key" / Bytes(16),
-)
+KEY = Bytes(16)
 
 SLAB_HEADER_LAYOUT = cStruct(
     "bump_index" / Int32ul,
@@ -19,6 +21,15 @@ SLAB_HEADER_LAYOUT = cStruct(
     "leaf_count" / Int32ul,
     Padding(4),
 )
+
+
+class NodeType(IntEnum):
+    UNINTIALIZED = 0
+    INNER_NODE = 1
+    LEAF_NODE = 2
+    FREE_NODE = 3
+    LAST_FREE_NODE = 4
+
 
 # Different node types, we pad it all to size of 68 bytes.
 UNINTIALIZED = cStruct(Padding(68))
@@ -41,11 +52,11 @@ SLAB_NODE_LAYOUT = cStruct(
     / Switch(
         lambda this: this.tag,
         {
-            0: UNINTIALIZED,
-            1: INNER_NODE,
-            2: LEAF_NODE,
-            3: FREE_NODE,
-            4: LAST_FREE_NODE,
+            NodeType.UNINTIALIZED: UNINTIALIZED,
+            NodeType.INNER_NODE: INNER_NODE,
+            NodeType.LEAF_NODE: LEAF_NODE,
+            NodeType.FREE_NODE: FREE_NODE,
+            NodeType.LAST_FREE_NODE: LAST_FREE_NODE,
         },
     ),
 )
@@ -53,3 +64,63 @@ SLAB_NODE_LAYOUT = cStruct(
 SLAB_LAYOUT = cStruct("header" / SLAB_HEADER_LAYOUT, "nodes" / SLAB_NODE_LAYOUT[lambda this: this.header.bump_index])
 
 ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flags" / ACCOUNT_FLAGS_LAYOUT, "slab_layout" / SLAB_LAYOUT, Padding(7))
+
+
+class Slab:
+    def __init__(self, header, nodes):
+        self._header = header
+        self._nodes = nodes
+
+    @staticmethod
+    def decode(buffer: bytes) -> Slab:
+        slab_layout = SLAB_LAYOUT.parse(buffer)
+        return Slab(slab_layout.header, slab_layout.nodes)
+
+    def get(self, key: int):
+        if self._header.leaf_count == 0:
+            return None
+        index: int = self._header.root
+        while True:
+            # This contains `tag` and `node`.
+            slab_node = self._nodes[index]
+            node_type: int = slab_node.tag
+            node = slab_node.node
+            if node_type not in (NodeType.INNER_NODE, NodeType.LEAF_NODE):
+                raise Exception("Cannot find " + str(key) + " in slab.")
+
+            # Node key is in bytes, convert it to int.
+            node_key: int = int.from_bytes(node.key, "little")
+            if node_type == NodeType.LEAF_NODE:  # pylint: disable=no-else-return
+                return node if node_key == key else None
+            elif node_type == NodeType.INNER_NODE:
+                if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
+                    return None
+                # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set
+                index = node.children[(key >> (128 - node.prefix_len - 1)) & 1]
+            else:
+                raise RuntimeError("Should not go here! Node type not recognize.")
+
+    def __iter__(self):
+        return self.items(False)
+
+    def items(self, descending=False):
+        """Depth first traversal of the Binary Tree.
+        Parameter descending decides if the price should descending or not.
+        """
+        if self._header.leaf_count == 0:
+            return
+        stack = [self._header.root]
+        while stack:
+            index = stack.pop()
+            slab_node = self._nodes[index]
+            node_type = slab_node.tag
+            node = slab_node.node
+            if node_type == 2:
+                yield node
+            elif node_type == 1:
+                if descending:
+                    stack.append(node.children[0])
+                    stack.append(node.children[1])
+                else:
+                    stack.append(node.children[1])
+                    stack.append(node.children[0])
