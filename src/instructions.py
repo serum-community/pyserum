@@ -5,7 +5,7 @@ from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
 from .enums import OrderType, Side
-from .layouts.instructions import INSTRUCTIONS_LAYOUT
+from .layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
 # Instruction Indices
 _INITIALIZE_MARKET = 0
@@ -268,7 +268,7 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=_INITIALIZE_MARKET,
+                instruction_type=InstructionType.InitializeMarket,
                 args=dict(
                     base_lot_size=params.base_lot_size,
                     quote_lot_size=params.quote_lot_size,
@@ -298,7 +298,9 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
             AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
         ],
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=_MATCH_ORDER, args=dict(limit=params.limit))),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.MatchOrder, args=dict(limit=params.limit))
+        ),
     )
 
 
@@ -311,7 +313,9 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
     return TransactionInstruction(
         keys=keys,
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=_CONSUME_EVENTS, args=dict(limit=params.limit))),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.ConsumeEvents, args=dict(limit=params.limit))
+        ),
     )
 
 
