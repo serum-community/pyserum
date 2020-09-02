@@ -117,7 +117,6 @@ class Market:
         raise NotImplementedError("price_number_to_lots is not implemented")
 
     def base_size_lots_to_number(self, size: int) -> float:
-        print(self._decode.base_lot_size, self._base_spl_token_multiplier())
         return float(size * self._decode.base_lot_size) / self._base_spl_token_multiplier()
 
     @staticmethod
@@ -129,15 +128,15 @@ class Market:
 
     def load_bids(self, endpoint: str):
         """Load the bid order book"""
-        data = Client(endpoint).get_account_info(
-            PublicKey(self._decode.bids))["result"]["value"]["data"][0]
+        bids_addr = PublicKey(self._decode.bids)
+        res = Client(endpoint).get_account_info(bids_addr)
+        data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self, endpoint: str):
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        print(asks_addr)
         res = Client(endpoint).get_account_info(asks_addr)
         data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
