@@ -80,9 +80,7 @@ class Slab:
             node_key: int = int.from_bytes(node.key, "little")
             # Leaf Node that matches
             if node_type == 2:  # pylint: disable=no-else-return
-                if node_key == key:
-                    return node
-                return None
+                return node if node_key == key else None
             elif node_type == 1:
                 if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
                     return None
