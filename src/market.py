@@ -155,16 +155,16 @@ def get_price_from_key(key: int):
 class OrderBook:
     """Represents an order book."""
 
-    market: Market
-    is_bids: bool
-    slab: Slab
+    _market: Market
+    _is_bids: bool
+    _slab: Slab
 
     def __init__(self, market: Market, account_flags: Any, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
-        self.market = market
-        self.is_bids = account_flags.bids
-        self.slab = slab
+        self._market = market
+        self._is_bids = account_flags.bids
+        self._slab = slab
 
     @staticmethod
     def decode(market: Market, buffer: bytes):
@@ -177,9 +177,9 @@ class OrderBook:
 
     def get_l2(self, depth: int) -> List[Tuple[float, float, int, int]]:
         """Get the Level 2 market information."""
-        descending = self.is_bids
+        descending = self._is_bids
         levels: List[List[int]] = []
-        for node in self.slab.items(descending):
+        for node in self._slab.items(descending):
             price = get_price_from_key(int.from_bytes(node.key, "little"))
             if len(levels) > 0 and levels[len(levels) - 1][0] == price:
                 levels[len(levels) - 1][1] += node.quantiy
@@ -189,8 +189,8 @@ class OrderBook:
                 levels.append([price, node.quantity])
         return [
             (
-                self.market.price_lots_to_number(price_lots),
-                self.market.base_size_lots_to_number(size_lots),
+                self._market.price_lots_to_number(price_lots),
+                self._market.base_size_lots_to_number(size_lots),
                 price_lots,
                 size_lots,
             )
@@ -201,7 +201,7 @@ class OrderBook:
         return self.orders()
 
     def orders(self) -> Iterable[Order]:
-        for node in self.slab.items():
+        for node in self._slab.items():
             key = int.from_bytes(node.key, "little")
             price = get_price_from_key(key)
             open_orders_address = PublicKey(node.owner)
@@ -211,9 +211,9 @@ class OrderBook:
                 client_id=node.client_order_id,
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
-                price=self.market.price_lots_to_number(price),
+                price=self._market.price_lots_to_number(price),
                 price_lots=price,
-                size=self.market.base_size_lots_to_number(node.quantity),
+                size=self._market.base_size_lots_to_number(node.quantity),
                 size_lots=node.quantity,
-                side="buy" if self.is_bids else "sell",
+                side="buy" if self._is_bids else "sell",
             )

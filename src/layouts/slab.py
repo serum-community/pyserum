@@ -99,9 +99,6 @@ class Slab:
                 index = node.children[(key >> (128 - node.prefix_len - 1)) & 1]
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         return self.items(False)
 
     def items(self, descending=False):
