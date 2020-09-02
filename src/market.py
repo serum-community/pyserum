@@ -155,7 +155,7 @@ class OrderBook:
         self.slab = slab
 
     @staticmethod
-    def decode(market: Market, buffer: bytes):
+    def decode(market: Market, buffer: bytes) -> Orderbook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
