@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Iterable
 
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct
@@ -115,14 +115,6 @@ class SlabLastFreeNode(SlabNode):
 
 
 def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
-    # mappings = {
-    #     NodeType.UNINTIALIZED: SlabUninitializedNode,
-    #     NodeType.LEAF_NODE: SlabLeafNode,
-    #     NodeType.INNER_NODE: SlabInnerNode,
-    #     NodeType.FREE_NODE: SlabFreeNode,
-    #     NodeType.LAST_FREE_NODE: SlabLastFreeNode
-    # }
-    # return [mappings[construct_node.tag](**construct_node.node) for construct_node in construct_nodes]
     res: List[SlabNode] = []
     for construct_node in construct_nodes:
         node_type = construct_node.tag
@@ -192,10 +184,10 @@ class Slab:
             else:
                 raise RuntimeError("Should not go here! Node type not recognize.")
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[SlabLeafNode]:
         return self.items(False)
 
-    def items(self, descending=False):
+    def items(self, descending=False) -> Iterable[SlabLeafNode]:
         """Depth first traversal of the Binary Tree.
         Parameter descending decides if the price should descending or not.
         """
