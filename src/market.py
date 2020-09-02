@@ -40,7 +40,7 @@ MARKET_FORMAT = cStruct(
 
 # TODO: probably need to change the amount of padding since they recently changed it.
 # See here: https://github.com/project-serum/serum-js/commit/87c25716c0f2f1092cf27467dd8bb06aabb83fdb
-MINT_LAYOUT = cStruct(Padding(36), "decimals" / Int8ul, Padding(3))
+MINT_LAYOUT = cStruct(Padding(44), "decimals" / Int8ul, Padding(37))
 
 
 class Market:
@@ -117,6 +117,7 @@ class Market:
         raise NotImplementedError("price_number_to_lots is not implemented")
 
     def base_size_lots_to_number(self, size: int) -> float:
+        print(self._decode.base_lot_size, self._base_spl_token_multiplier())
         return float(size * self._decode.base_lot_size) / self._base_spl_token_multiplier()
 
     @staticmethod
@@ -128,11 +129,19 @@ class Market:
 
     def load_bids(self, endpoint: str):
         """Load the bid order book"""
-        raise NotImplementedError("load_bids is not implemented yet")
+        data = Client(endpoint).get_account_info(
+            PublicKey(self._decode.bids))["result"]["value"]["data"][0]
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        return OrderBook.decode(self, bytes_data)
 
     def load_asks(self, endpoint: str):
         """Load the Ask order book."""
-        raise NotImplementedError("load_asks is not implemented yet")
+        asks_addr = PublicKey(self._decode.asks)
+        print(asks_addr)
+        res = Client(endpoint).get_account_info(asks_addr)
+        data = res["result"]["value"]["data"][0]
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        return OrderBook.decode(self, bytes_data)
 
 
 class Order(NamedTuple):
