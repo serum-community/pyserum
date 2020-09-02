@@ -193,7 +193,7 @@ class OrderBook:
         # The first elment of the inner list is price, the second is quantity.
         levels: List[List[int]] = []
         for node in self._slab.items(descending):
-            price = get_price_from_key(int.from_bytes(node.key, "little"))
+            price = get_price_from_key(node.key)
             if len(levels) > 0 and levels[len(levels) - 1][0] == price:
                 levels[len(levels) - 1][1] += node.quantiy
             elif len(levels) == depth:
@@ -215,7 +215,7 @@ class OrderBook:
 
     def orders(self) -> Iterable[Order]:
         for node in self._slab.items():
-            key = int.from_bytes(node.key, "little")
+            key = node.key
             price = get_price_from_key(key)
             open_orders_address = PublicKey(node.owner)
 

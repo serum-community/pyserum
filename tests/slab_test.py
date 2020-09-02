@@ -80,7 +80,7 @@ def test_iterate_in_ascending_order():
     slab = Slab.decode(DATA)
     prev = None
     for node in slab.items():
-        curr_key = int.from_bytes(node.key, "little")
+        curr_key = node.key
         if prev:
             assert curr_key > prev
         prev = curr_key
@@ -90,7 +90,7 @@ def test_iterate_in_descending_order():
     slab = Slab.decode(DATA)
     prev = None
     for node in slab.items(descending=True):
-        curr_key = int.from_bytes(node.key, "little")
+        curr_key = node.key
         if prev:
             assert curr_key < prev
         prev = curr_key

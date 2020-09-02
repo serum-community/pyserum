@@ -1,11 +1,14 @@
 """Slab data stucture that is used to represent Order book."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import IntEnum
+from typing import List, NamedTuple, Optional
 
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct
 from construct import Switch
+from solana.publickey import PublicKey
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
@@ -66,37 +69,126 @@ SLAB_LAYOUT = cStruct("header" / SLAB_HEADER_LAYOUT, "nodes" / SLAB_NODE_LAYOUT[
 ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flags" / ACCOUNT_FLAGS_LAYOUT, "slab_layout" / SLAB_LAYOUT, Padding(7))
 
 
+class SlabHeader(NamedTuple):
+    bump_index: int
+    free_list_length: int
+    free_list_root: int
+    root: int
+    leaf_count: int
+
+
+@dataclass
+class SlabNode:
+    pass
+
+
+@dataclass
+class SlabUninitializedNode(SlabNode):
+    pass
+
+
+@dataclass
+class SlabLeafNode(SlabNode):
+    owner_slot: int
+    fee_tier: int
+    key: int
+    owner: PublicKey
+    quantity: int
+    client_order_id: int
+
+
+@dataclass
+class SlabInnerNode(SlabNode):
+    prefix_len: int
+    key: int
+    children: List[int]
+
+
+@dataclass
+class SlabFreeNode(SlabNode):
+    next: int
+
+
+@dataclass
+class SlabLastFreeNode(SlabNode):
+    pass
+
+
+def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
+    # mappings = {
+    #     NodeType.UNINTIALIZED: SlabUninitializedNode,
+    #     NodeType.LEAF_NODE: SlabLeafNode,
+    #     NodeType.INNER_NODE: SlabInnerNode,
+    #     NodeType.FREE_NODE: SlabFreeNode,
+    #     NodeType.LAST_FREE_NODE: SlabLastFreeNode
+    # }
+    # return [mappings[construct_node.tag](**construct_node.node) for construct_node in construct_nodes]
+    res: List[SlabNode] = []
+    for construct_node in construct_nodes:
+        node_type = construct_node.tag
+        node = construct_node.node
+        if node_type == NodeType.UNINTIALIZED:
+            res.append(SlabUninitializedNode())
+        elif node_type == NodeType.LEAF_NODE:
+            res.append(
+                SlabLeafNode(
+                    owner_slot=node.owner_slot,
+                    fee_tier=node.fee_tier,
+                    key=int.from_bytes(node.key, "little"),
+                    owner=PublicKey(node.owner),
+                    quantity=node.quantity,
+                    client_order_id=node.client_order_id,
+                )
+            )
+        elif node_type == NodeType.INNER_NODE:
+            res.append(
+                SlabInnerNode(
+                    prefix_len=node.prefix_len, key=int.from_bytes(node.key, "little"), children=node.children
+                )
+            )
+        elif node_type == NodeType.FREE_NODE:
+            res.append(SlabFreeNode(next=node.next))
+        elif node_type == NodeType.LAST_FREE_NODE:
+            res.append(SlabLastFreeNode())
+        else:
+            raise RuntimeError("Unrecognized node type" + node.tag)
+    return res
+
+
 class Slab:
-    def __init__(self, header, nodes):
+    def __init__(self, header: SlabHeader, nodes: List[SlabNode]):
         self._header = header
         self._nodes = nodes
 
     @staticmethod
     def decode(buffer: bytes) -> Slab:
         slab_layout = SLAB_LAYOUT.parse(buffer)
-        return Slab(slab_layout.header, slab_layout.nodes)
+        header = slab_layout.header
+        nodes = slab_layout.nodes
+        return Slab(
+            SlabHeader(
+                bump_index=header.bump_index,
+                free_list_length=header.free_list_length,
+                free_list_root=header.free_list_head,
+                root=header.root,
+                leaf_count=header.leaf_count,
+            ),
+            convert_construct_node_to_class(nodes),
+        )
 
-    def get(self, key: int):
+    def get(self, search_key: int) -> Optional[SlabLeafNode]:
         if self._header.leaf_count == 0:
             return None
         index: int = self._header.root
         while True:
-            # This contains `tag` and `node`.
-            slab_node = self._nodes[index]
-            node_type: int = slab_node.tag
-            node = slab_node.node
-            if node_type not in (NodeType.INNER_NODE, NodeType.LEAF_NODE):
-                raise Exception("Cannot find " + str(key) + " in slab.")
-
-            # Node key is in bytes, convert it to int.
-            node_key: int = int.from_bytes(node.key, "little")
-            if node_type == NodeType.LEAF_NODE:  # pylint: disable=no-else-return
-                return node if node_key == key else None
-            elif node_type == NodeType.INNER_NODE:
-                if (node_key ^ key) >> (128 - slab_node.node.prefix_len) != 0:
+            node: SlabNode = self._nodes[index]
+            if isinstance(node, SlabLeafNode):  # pylint: disable=no-else-return
+                return node if node.key == search_key else None
+            elif isinstance(node, SlabInnerNode):
+                if (node.key ^ search_key) >> (128 - node.prefix_len) != 0:
                     return None
                 # Check if the n-th bit (start from the least significant, i.e. rightmost) of the key is set
-                index = node.children[(key >> (128 - node.prefix_len - 1)) & 1]
+                index = node.children[(search_key >> (128 - node.prefix_len - 1)) & 1]
             else:
                 raise RuntimeError("Should not go here! Node type not recognize.")
 
@@ -112,15 +204,15 @@ class Slab:
         stack = [self._header.root]
         while stack:
             index = stack.pop()
-            slab_node = self._nodes[index]
-            node_type = slab_node.tag
-            node = slab_node.node
-            if node_type == 2:
+            node: SlabNode = self._nodes[index]
+            if isinstance(node, SlabLeafNode):
                 yield node
-            elif node_type == 1:
+            elif isinstance(node, SlabInnerNode):
                 if descending:
                     stack.append(node.children[0])
                     stack.append(node.children[1])
                 else:
                     stack.append(node.children[1])
                     stack.append(node.children[0])
+            else:
+                raise RuntimeError("Neither of leaf node or tree node!")
