@@ -10,10 +10,7 @@ from solana.rpc.api import Client
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
-
-DEFAULT_DEX_PROGRAM_ID = PublicKey(
-    "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
-)
+from .instructions import DEFAULT_DEX_PROGRAM_ID
 
 
 class Market:
