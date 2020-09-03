@@ -77,6 +77,10 @@ class SlabHeader(NamedTuple):
     leaf_count: int
 
 
+# Used as dummy value for SlabNode#next.
+NONE_NEXT = -1
+
+
 # UninitializedNode, FreeNode and LastFreeNode all maps to this class.
 @dataclass
 class SlabNode:
@@ -118,7 +122,7 @@ def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
                     quantity=node.quantity,
                     client_order_id=node.client_order_id,
                     is_initialized=True,
-                    next=-1,
+                    next=NONE_NEXT,
                 )
             )
         elif node_type == NodeType.INNER_NODE:
@@ -128,13 +132,13 @@ def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
                     key=int.from_bytes(node.key, "little"),
                     children=node.children,
                     is_initialized=True,
-                    next=-1,
+                    next=NONE_NEXT,
                 )
             )
         elif node_type == NodeType.FREE_NODE:
-            res.append(SlabNode(next=node.next, is_initialized=True))
+            res.append(SlabNode(is_initialized=True, next=node.next))
         elif node_type == NodeType.LAST_FREE_NODE:
-            res.append(SlabNode(next=-1, is_initialized=True))
+            res.append(SlabNode(is_initialized=True, next=NONE_NEXT))
         else:
             raise RuntimeError("Unrecognized node type" + node.tag)
     return res
