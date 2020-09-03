@@ -4,10 +4,10 @@ from typing import List, NamedTuple
 from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
+from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
-from .layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
-DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
+DEFAULT_DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
 
 
 class InitializeMarketParams(NamedTuple):
@@ -41,7 +41,7 @@ class InitializeMarketParams(NamedTuple):
     """"""
     quote_dust_threshold: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
 
 
 class NewOrderParams(NamedTuple):
@@ -71,7 +71,7 @@ class NewOrderParams(NamedTuple):
     """"""
     client_id: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
 
 
@@ -94,7 +94,7 @@ class MatchOrdersParams(NamedTuple):
     """"""
     limit: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
 
 
@@ -109,7 +109,7 @@ class ConsumeEventsParams(NamedTuple):
     """"""
     limit: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
 
 
@@ -130,7 +130,7 @@ class CancelOrderParams(NamedTuple):
     """"""
     open_orders_slot: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
 
 
@@ -147,7 +147,7 @@ class CancelOrderByClientIDParams(NamedTuple):
     """"""
     client_id: int
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
 
 
@@ -172,7 +172,7 @@ class SettleFundsParams(NamedTuple):
     """"""
     vault_signer: PublicKey
     """"""
-    program_id: PublicKey = DEX_PROGRAM_ID
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
 
 
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
