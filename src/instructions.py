@@ -1,18 +1,11 @@
 """Serum Dex Instructions."""
-from enum import Enum
 from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
-from solana.transaction import TransactionInstruction
+from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
-# Instruction Indices
-_INITIALIZE_MARKET = 0
-_NEW_ORDER = 1
-_MATCH_ORDER = 2
-_CONSUME_EVENTS = 3
-_CANCEL_ORDER = 4
-_SETTLE_FUND = 5
-_CANCEL_ORDER_BY_CLIENT_ID = 6
+from .enums import OrderType, Side
+from .layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
 DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
 
@@ -68,13 +61,13 @@ class NewOrderParams(NamedTuple):
     """"""
     quote_vault: PublicKey
     """"""
-    side: Enum
+    side: Side
     """"""
     limit_price: int
     """"""
     max_quantity: int
     """"""
-    order_type: Enum
+    order_type: OrderType
     """"""
     client_id: int
     """"""
@@ -82,7 +75,7 @@ class NewOrderParams(NamedTuple):
     """"""
 
 
-class MatchOrderParams(NamedTuple):
+class MatchOrdersParams(NamedTuple):
     """"Match order params."""
 
     market: PublicKey
@@ -110,8 +103,6 @@ class ConsumeEventsParams(NamedTuple):
 
     market: PublicKey
     """"""
-    request_queue: PublicKey
-    """"""
     event_queue: PublicKey
     """"""
     open_orders_accounts: List[PublicKey]
@@ -133,7 +124,7 @@ class CancelOrderParams(NamedTuple):
     """"""
     request_queue: PublicKey
     """"""
-    side: Enum
+    side: Side
     """"""
     order_id: int
     """"""
@@ -185,19 +176,58 @@ class SettleFundsParams(NamedTuple):
 
 
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
-    raise NotImplementedError("decode_initialize_market not implemented.")
+    """Decode an instialize market instruction and retrieve the instruction params."""
+    verify_instruction_keys(instruction, 9)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return InitializeMarketParams(
+        market=instruction.keys[0].pubkey,
+        request_queue=instruction.keys[1].pubkey,
+        event_queue=instruction.keys[2].pubkey,
+        bids=instruction.keys[3].pubkey,
+        asks=instruction.keys[4].pubkey,
+        base_vault=instruction.keys[5].pubkey,
+        quote_vault=instruction.keys[6].pubkey,
+        base_mint=instruction.keys[7].pubkey,
+        quote_mint=instruction.keys[8].pubkey,
+        base_lot_size=data.args.base_lot_size,
+        quote_lot_size=data.args.quote_lot_size,
+        fee_rate_bps=data.args.fee_rate_bps,
+        vault_signer_nonce=data.args.vault_signer_nonce,
+        quote_dust_threshold=data.args.quote_dust_threshold,
+        program_id=instruction.program_id,
+    )
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
     raise NotImplementedError("decode_new_order not implemented")
 
 
-def decode_match_order(instruction: TransactionInstruction) -> MatchOrderParams:
-    raise NotImplementedError("decode_match_order not implemented")
+def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
+    """Decode a match orders instruction and retrieve the instruction params."""
+    verify_instruction_keys(instruction, 7)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return MatchOrdersParams(
+        market=instruction.keys[0].pubkey,
+        request_queue=instruction.keys[1].pubkey,
+        event_queue=instruction.keys[2].pubkey,
+        bids=instruction.keys[3].pubkey,
+        asks=instruction.keys[4].pubkey,
+        base_vault=instruction.keys[5].pubkey,
+        quote_vault=instruction.keys[6].pubkey,
+        limit=data.args.limit,
+    )
 
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
-    raise NotImplementedError("decode_consume_events not implemented")
+    """Decode a consume events instruction and retrieve the instruction params."""
+    verify_instruction_keys(instruction, 2)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return ConsumeEventsParams(
+        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
+        market=instruction.keys[-2].pubkey,
+        event_queue=instruction.keys[-1].pubkey,
+        limit=data.args.limit,
+    )
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
@@ -213,19 +243,71 @@ def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> Can
 
 
 def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
-    raise NotImplementedError("initialize_market not implemented")
+    """Generate a transaction instruction to initialize a Serum market."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_mint, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.quote_mint, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.InitializeMarket,
+                args=dict(
+                    base_lot_size=params.base_lot_size,
+                    quote_lot_size=params.quote_lot_size,
+                    fee_rate_bps=params.fee_rate_bps,
+                    vault_signer_nonce=params.vault_signer_nonce,
+                    quote_dust_threshold=params.quote_dust_threshold,
+                ),
+            ),
+        ),
+    )
 
 
 def new_order(params: NewOrderParams) -> TransactionInstruction:
     raise NotImplementedError("new_order not implemented")
 
 
-def match_order(params: MatchOrderParams) -> TransactionInstruction:
-    raise NotImplementedError("match_order not implemented")
+def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
+    """Generate a transaction instruction to match order."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.MatchOrder, args=dict(limit=params.limit))
+        ),
+    )
 
 
 def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
-    raise NotImplementedError("consume_events not implemented")
+    """Generate a transaction instruction to consume market events."""
+    keys = [
+        AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
+        for pubkey in params.open_orders_accounts + [params.market, params.event_queue]
+    ]
+    return TransactionInstruction(
+        keys=keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.ConsumeEvents, args=dict(limit=params.limit))
+        ),
+    )
 
 
 def cancel_order(params: CancelOrderParams) -> TransactionInstruction:

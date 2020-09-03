@@ -134,11 +134,11 @@
         },
         "solana": {
             "hashes": [
-                "sha256:187b03bb4d4c33bcadfcfdfd0334363f6e67dbe994b8ff3c93c77e8c53c744c8",
-                "sha256:b2533a84d58847a4eac044f07a21a9324c556467e34eef8b6f1b320195e54251"
+                "sha256:2af566a15bda2641c37634fb6fa784c70102862ea3505e5059bb4b683472d28e",
+                "sha256:7ab9490f1c59582be1917b79f860aef2eafd9e8018bfeb28f0f99c0d9eb45310"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.1.1"
         },
         "typing-extensions": {
             "hashes": [
@@ -164,6 +164,14 @@
                 "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"
             ],
             "version": "==1.4.4"
+        },
+        "appnope": {
+            "hashes": [
+                "sha256:5b26757dc6f79a3b7dc9fab95359328d5747fcb2409d331ea66d0272b90ab2a0",
+                "sha256:8b995ffe925347a2138d7ac0fe77155e4311a0ea6d6da4f5128fe4b3cbe5ed71"
+            ],
+            "markers": "sys_platform == 'darwin' and platform_system == 'Darwin'",
+            "version": "==0.1.0"
         },
         "argon2-cffi": {
             "hashes": [
@@ -864,10 +872,11 @@
         },
         "traitlets": {
             "hashes": [
-                "sha256:70b4c6a1d9019d7b4f6846832288f86998aa3b9207c6821f3578a6a6a467fe44",
-                "sha256:d023ee369ddd2763310e4c3eae1ff649689440d4ae59d7485eb4cfbbe3e359f7"
+                "sha256:0d9c4005506b306b0a99551e96174b8bedc675c2dd048f92b3bbbb7d86ac93a9",
+                "sha256:62a037f12ccb823fb05823afbe35fe0273bc18fa3202d0cf0ea8f24e97e464be"
             ],
-            "version": "==4.3.3"
+            "markers": "python_version >= '3.7'",
+            "version": "==5.0.0"
         },
         "typed-ast": {
             "hashes": [
