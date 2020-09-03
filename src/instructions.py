@@ -7,15 +7,6 @@ from solana.transaction import AccountMeta, TransactionInstruction, verify_instr
 from .enums import OrderType, Side
 from .layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
-# Instruction Indices
-_INITIALIZE_MARKET = 0
-_NEW_ORDER = 1
-_MATCH_ORDER = 2
-_CONSUME_EVENTS = 3
-_CANCEL_ORDER = 4
-_SETTLE_FUND = 5
-_CANCEL_ORDER_BY_CLIENT_ID = 6
-
 DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
 
 
