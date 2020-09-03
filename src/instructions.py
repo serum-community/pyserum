@@ -4,8 +4,8 @@ from typing import List, NamedTuple
 from solana.publickey import PublicKey
 from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
 
+from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
-from .layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
 DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
 

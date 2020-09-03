@@ -4,43 +4,16 @@ from __future__ import annotations
 import base64
 from typing import Any, Iterable, List, NamedTuple
 
-from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
-from construct import Struct as cStruct  # type: ignore
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from .layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
-from .layouts.slab import Slab
+from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
+from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
+from ._layouts.slab import Slab
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey(
     "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn",
 )
-
-MARKET_FORMAT = cStruct(
-    Padding(5),
-    "account_flags" / ACCOUNT_FLAGS_LAYOUT,
-    "own_address" / Bytes(32),
-    "vault_signer_nonce" / Int64ul,
-    "base_mint" / Bytes(32),
-    "quote_mint" / Bytes(32),
-    "base_vault" / Bytes(32),
-    "base_deposits_total" / Int64ul,
-    "base_fees_accrued" / Int64ul,
-    "quote_vault" / Bytes(32),
-    "quote_deposits_total" / Int64ul,
-    "quote_fees_accrued" / Int64ul,
-    "quote_dust_threshold" / Int64ul,
-    "request_queue" / Bytes(32),
-    "event_queue" / Bytes(32),
-    "bids" / Bytes(32),
-    "asks" / Bytes(32),
-    "base_lot_size" / Int64ul,
-    "quote_lot_size" / Int64ul,
-    "fee_rate_bps" / Int64ul,
-    Padding(7),
-)
-
-MINT_LAYOUT = cStruct(Padding(44), "decimals" / Int8ul, Padding(37))
 
 
 class Market:
@@ -61,7 +34,7 @@ class Market:
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
-    ):
+    ) -> None:
         # TODO: add options
         if not decoded.account_flags.initialized or not decoded.account_flags.market:
             raise Exception("Invalid market state")
@@ -74,12 +47,14 @@ class Market:
 
     @staticmethod
     # pylint: disable=unused-argument
-    def load(endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID):
+    def load(
+        endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    ) -> Market:
         """Factory method to create a Market."""
         http_client = Client(endpoint)
         base64_res = http_client.get_account_info(market_address)["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(base64_res.encode("ascii"))
-        market_state = MARKET_FORMAT.parse(bytes_data)
+        market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
         if not market_state.account_flags.initialized or not market_state.account_flags.market:
@@ -90,7 +65,7 @@ class Market:
 
         return Market(market_state, base_mint_decimals, quote_mint_decimals, options)
 
-    def address(self):
+    def address(self) -> PublicKey:
         """Return market address."""
         raise NotImplementedError("address is not implemented yet")
 
@@ -102,22 +77,22 @@ class Market:
         """Returns quote mint address."""
         raise NotImplementedError("quote_mint_address is not implemented yet")
 
-    def _base_spl_token_multiplier(self):
+    def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
 
-    def _quote_spl_token_multiplier(self):
+    def __quote_spl_token_multiplier(self) -> int:
         return 10 ** self._quote_spl_token_decimals
 
     def price_lots_to_number(self, price: int) -> float:
-        return float(price * self._decode.quote_lot_size * self._base_spl_token_multiplier()) / (
-            self._decode.base_lot_size * self._quote_spl_token_multiplier()
+        return float(price * self._decode.quote_lot_size * self.__base_spl_token_multiplier()) / (
+            self._decode.base_lot_size * self.__quote_spl_token_multiplier()
         )
 
     def price_number_to_lots(self, price: float) -> int:
         raise NotImplementedError("price_number_to_lots is not implemented")
 
     def base_size_lots_to_number(self, size: int) -> float:
-        return float(size * self._decode.base_lot_size) / self._base_spl_token_multiplier()
+        return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
 
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
@@ -160,7 +135,7 @@ class Order(NamedTuple):
 
 
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
-def get_price_from_key(key: int):
+def get_price_from_key(key: int) -> int:
     return key >> 64
 
 
