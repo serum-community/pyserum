@@ -30,6 +30,7 @@ class Market:
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
+        endpoint: str,
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ) -> None:
         # TODO: add options
@@ -41,6 +42,7 @@ class Market:
         self._skip_preflight = False
         self._confirmations = 10
         self._program_id = program_id
+        self._endpoint = endpoint
 
     @staticmethod
     # pylint: disable=unused-argument
@@ -60,7 +62,7 @@ class Market:
         base_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.base_mint))
         quote_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.quote_mint))
 
-        return Market(market_state, base_mint_decimals, quote_mint_decimals, options)
+        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint)
 
     def address(self) -> PublicKey:
         """Return market address."""
@@ -98,18 +100,18 @@ class Market:
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return MINT_LAYOUT.parse(bytes_data).decimals
 
-    def load_bids(self, endpoint: str):
+    def load_bids(self):
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        res = Client(endpoint).get_account_info(bids_addr)
+        res = Client(self._endpoint).get_account_info(bids_addr)
         data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return OrderBook.decode(self, bytes_data)
 
-    def load_asks(self, endpoint: str):
+    def load_asks(self):
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        res = Client(endpoint).get_account_info(asks_addr)
+        res = Client(self._endpoint).get_account_info(asks_addr)
         data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return OrderBook.decode(self, bytes_data)

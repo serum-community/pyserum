@@ -24,6 +24,8 @@ MARKET_ENCODE = SimpleNamespace(
     }
 )
 
+BTC_USDC_MARKET = Market(MARKET_ENCODE, 6, 6, None, "https://api.mainnet-beta.solana.com/")
+
 
 def test_parse_market_state():
     parsed_market = MARKET_LAYOUT.parse(DATA)
@@ -41,7 +43,7 @@ def test_order_book_iterator():
     with open("tests/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(Market(MARKET_ENCODE, 0, 0, None), data)
+        order_book = OrderBook.decode(BTC_USDC_MARKET, data)
         total_orders = sum([1 for _ in order_book.orders()])
         assert total_orders == 15
 
@@ -50,7 +52,7 @@ def test_order_book_get_l2():
     with open("tests/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(Market(MARKET_ENCODE, 6, 6, None), data)
+        order_book = OrderBook.decode(BTC_USDC_MARKET, data)
         for i in range(1, 16):
             assert i == len(order_book.get_l2(i))
         assert [(11744.6, 4.0632, 117446, 40632)] == order_book.get_l2(1)
@@ -60,7 +62,7 @@ def test_order_book_iterable():
     with open("tests/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(Market(MARKET_ENCODE, 0, 0, None), data)
+        order_book = OrderBook.decode(BTC_USDC_MARKET, data)
         cnt = 0
         for order in order_book:
             cnt += 1

@@ -11,18 +11,20 @@ market_address = "CAgAeMD7quTdnr6RPa7JySQpjf3irAmefYNdTb6anemq" # Address for BT
 
 # Load the given market
 market = Market.load(endpoint, market_address, None)
-asks = market.load_asks(endpoint)
+asks = market.load_asks()
 # Show all current ask order
 print("Ask Orders:")
 for ask in asks:
-    print("Order id: %d, price: %f, size: %f." % (ask.order_id, ask.order_info.price, ask.order_info.size))
+    print("Order id: %d, price: %f, size: %f." % (
+          ask.order_id, ask.order_info.price, ask.order_info.size))
 
 print("\n")
 # Show all current bid order
 print("Bid Orders:")
-bids = market.load_bids(endpoint)
+bids = market.load_bids()
 for bid in bids:
-    print("Order id: %d, price: %f, size: %f." % (bid.order_id, bid.order_info.price, bid.order_info.size))
+    print("Order id: %d, price: %f, size: %f." % (
+          bid.order_id, bid.order_info.price, bid.order_info.size))
 ```
 ### Market Addresses in Main Net
 | Currency Pair   | Address                                             |
