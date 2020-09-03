@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import List, NamedTuple, Optional, Iterable
+from typing import Iterable, List, NamedTuple, Optional
 
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct
@@ -77,14 +77,11 @@ class SlabHeader(NamedTuple):
     leaf_count: int
 
 
+# UninitializedNode, FreeNode and LastFreeNode all maps to this class.
 @dataclass
 class SlabNode:
-    pass
-
-
-@dataclass
-class SlabUninitializedNode(SlabNode):
-    pass
+    is_initialized: bool
+    next: int
 
 
 @dataclass
@@ -104,23 +101,13 @@ class SlabInnerNode(SlabNode):
     children: List[int]
 
 
-@dataclass
-class SlabFreeNode(SlabNode):
-    next: int
-
-
-@dataclass
-class SlabLastFreeNode(SlabNode):
-    pass
-
-
 def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
     res: List[SlabNode] = []
     for construct_node in construct_nodes:
         node_type = construct_node.tag
         node = construct_node.node
         if node_type == NodeType.UNINTIALIZED:
-            res.append(SlabUninitializedNode())
+            res.append(SlabNode(is_initialized=False, next=-1))
         elif node_type == NodeType.LEAF_NODE:
             res.append(
                 SlabLeafNode(
@@ -130,18 +117,24 @@ def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
                     owner=PublicKey(node.owner),
                     quantity=node.quantity,
                     client_order_id=node.client_order_id,
+                    is_initialized=True,
+                    next=-1,
                 )
             )
         elif node_type == NodeType.INNER_NODE:
             res.append(
                 SlabInnerNode(
-                    prefix_len=node.prefix_len, key=int.from_bytes(node.key, "little"), children=node.children
+                    prefix_len=node.prefix_len,
+                    key=int.from_bytes(node.key, "little"),
+                    children=node.children,
+                    is_initialized=True,
+                    next=-1,
                 )
             )
         elif node_type == NodeType.FREE_NODE:
-            res.append(SlabFreeNode(next=node.next))
+            res.append(SlabNode(next=node.next, is_initialized=True))
         elif node_type == NodeType.LAST_FREE_NODE:
-            res.append(SlabLastFreeNode())
+            res.append(SlabNode(next=-1, is_initialized=True))
         else:
             raise RuntimeError("Unrecognized node type" + node.tag)
     return res
