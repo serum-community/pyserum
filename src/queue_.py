@@ -13,8 +13,8 @@ def _decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: 
     for i in range(num_of_nodes):
         node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
         nodes.append(
-            node_layout.parse(
-                buffer[header_layout.sizeof() + node_index * node_layout.sizeof() :]))  # noqa: E203
+            node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof() :])  # noqa: E203
+        )
     return header, nodes
 
 

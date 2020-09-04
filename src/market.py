@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import math
 from typing import Any, Iterable, List, NamedTuple
 
 from solana.publickey import PublicKey
@@ -10,6 +11,7 @@ from solana.rpc.api import Client
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
+from .enums import Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .queue_ import decode_event_queue, decode_request_queue
 
@@ -87,6 +89,12 @@ class Market:
     def __quote_spl_token_multiplier(self) -> int:
         return 10 ** self._quote_spl_token_decimals
 
+    def base_spl_size_to_number(self, size: int) -> float:
+        return size / self.__base_spl_token_multiplier()
+
+    def quote_spl_size_to_number(self, size: int) -> float:
+        return size / self.__quote_spl_token_multiplier()
+
     def price_lots_to_number(self, price: int) -> float:
         return float(price * self._decode.quote_lot_size * self.__base_spl_token_multiplier()) / (
             self._decode.base_lot_size * self.__quote_spl_token_multiplier()
@@ -97,6 +105,9 @@ class Market:
 
     def base_size_lots_to_number(self, size: int) -> float:
         return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
+
+    def base_size_number_to_lots(self, size: float) -> int:
+        return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._decode.base_lot_size)
 
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
@@ -130,7 +141,48 @@ class Market:
         event_queue_addr = PublicKey(self._decode.event_queue)
         bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
-        return list(filter(lambda event: event.event_flags.fill and event.native_quantity_paid > 0, events))
+        return list(
+            map(
+                self.parse_fill_event,
+                filter(lambda event: event.event_flags.fill and event.native_quantity_paid > 0, events),
+            )
+        )
+
+    def parse_fill_event(self, event):
+        if event.event_flags.bid:
+            side = Side.Buy
+            price_before_fees = (
+                event.native_quantity_released + event.native_fee_or_rebate
+                if event.event_flags.maker
+                else event.native_quantity_released - event.native_fee_or_rebate
+            )
+        else:
+            side = Side.Sell
+            price_before_fees = (
+                event.native_quantity_released - event.native_fee_or_rebate
+                if event.event_flags.maker
+                else event.native_quantity_released + event.native_fee_or_rebate
+            )
+
+        price = (price_before_fees * self.__base_spl_token_multiplier()) / (
+            self.__quote_spl_token_multiplier() * event.native_quantity_paid
+        )
+        size = event.native_quantity_paid / self.__base_spl_token_multiplier()
+        return FilledOrder(
+            order_id=int.from_bytes(event.order_id, "little"),
+            side=side,
+            price=price,
+            size=size,
+            fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
+        )
+
+
+class FilledOrder(NamedTuple):
+    order_id: int
+    side: Side
+    price: float
+    size: float
+    fee_cost: int
 
 
 class OrderInfo(NamedTuple):
