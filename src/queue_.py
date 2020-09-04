@@ -1,7 +1,7 @@
 import math
 from typing import Any, Optional, Tuple
 
-from ._layouts.queue import EVENT, QUEUE_HEADER, REQUEST
+from ._layouts.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
 
 
 # Expect header_layout and node_layout to be construct layout
@@ -19,14 +19,14 @@ def _decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: 
 
 
 def decode_request_queue(buffer: bytes, history: Optional[int] = None):
-    header, nodes = _decode_queue(QUEUE_HEADER, REQUEST, buffer, history)
+    header, nodes = _decode_queue(QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT, buffer, history)
     if not header.account_flags.initialized or not header.account_flags.request_queue:
         raise Exception("Invalid requests queue, either not initialized or not a request queue.")
     return nodes
 
 
 def decode_event_queue(buffer: bytes, history: Optional[int] = None):
-    header, nodes = _decode_queue(QUEUE_HEADER, EVENT, buffer, history)
+    header, nodes = _decode_queue(QUEUE_HEADER_LAYOUT, EVENT_LAYOUT, buffer, history)
     if not header.account_flags.initialized or not header.account_flags.event_queue:
         raise Exception("Invalid events queue, either not initialized or not a request queue.")
     return nodes

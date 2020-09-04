@@ -4,7 +4,7 @@ from construct import Struct as cStruct  # type: ignore
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
-QUEUE_HEADER = cStruct(  # Swap to little endian
+QUEUE_HEADER_LAYOUT = cStruct(  # Swap to little endian
     Padding(5),
     "account_flags" / ACCOUNT_FLAGS_LAYOUT,
     "head" / Int32ul,
@@ -15,7 +15,7 @@ QUEUE_HEADER = cStruct(  # Swap to little endian
     Padding(4),
 )
 
-REQUEST_FLAGS = BitsSwapped(
+REQUEST_FLAGS_LAYOUT = BitsSwapped(
     BitStruct(
         "new_order" / Flag,
         "cancel_order" / Flag,
@@ -26,8 +26,8 @@ REQUEST_FLAGS = BitsSwapped(
     )
 )
 
-REQUEST = cStruct(
-    "request_flags" / REQUEST_FLAGS,
+REQUEST_LAYOUT = cStruct(
+    "request_flags" / REQUEST_FLAGS_LAYOUT,
     "open_order_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(5),
@@ -38,7 +38,7 @@ REQUEST = cStruct(
     "client_order_id" / Int64ul,
 )
 
-EVENT_FLAGS = BitsSwapped(
+EVENT_FLAGS_LAYOUT = BitsSwapped(
     BitStruct(
         "fill" / Flag,
         "out" / Flag,
@@ -48,8 +48,8 @@ EVENT_FLAGS = BitsSwapped(
     )
 )
 
-EVENT = cStruct(
-    "event_flags" / EVENT_FLAGS,
+EVENT_LAYOUT = cStruct(
+    "event_flags" / EVENT_FLAGS_LAYOUT,
     "open_order_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(5),
