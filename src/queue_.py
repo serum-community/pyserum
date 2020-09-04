@@ -12,7 +12,7 @@ def decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: i
     num_of_nodes = min(history, alloc_len) if history else header.count
     for i in range(num_of_nodes):
         node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
-        nodes.append(node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof():]))
+        nodes.append(node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof() :]))
     return header, nodes
 
 
