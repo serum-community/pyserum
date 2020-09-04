@@ -24,7 +24,7 @@ MARKET_ENCODE = SimpleNamespace(
     }
 )
 
-BTC_USDC_MARKET = Market(MARKET_ENCODE, 6, 6, None, None)
+BTC_USDC_MARKET = Market(MARKET_ENCODE, 6, 6, None, "http://stubbed_endpoint:123/")
 
 
 def test_parse_market_state():
