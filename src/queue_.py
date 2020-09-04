@@ -1,5 +1,5 @@
 import math
-from typing import Any, Tuple, Optional
+from typing import Any, Optional, Tuple
 
 from ._layouts.queue import EVENT, QUEUE_HEADER, REQUEST
 

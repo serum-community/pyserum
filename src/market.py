@@ -14,6 +14,12 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .queue_ import decode_event_queue, decode_request_queue
 
 
+def _load_bytes_data(addr: PublicKey, endpoint: str):
+    res = Client(endpoint).get_account_info(addr)
+    data = res["result"]["value"]["data"][0]
+    return base64.decodebytes(data.encode("ascii"))
+
+
 class Market:
     """Represents a Serum Market."""
 
@@ -51,9 +57,7 @@ class Market:
         endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     ) -> Market:
         """Factory method to create a Market."""
-        http_client = Client(endpoint)
-        base64_res = http_client.get_account_info(market_address)["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(base64_res.encode("ascii"))
+        bytes_data = _load_bytes_data(PublicKey(market_address), endpoint)
         market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
@@ -97,47 +101,37 @@ class Market:
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
-        data = Client(endpoint).get_account_info(mint_pub_key)["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(mint_pub_key, endpoint)
         return MINT_LAYOUT.parse(bytes_data).decimals
 
     def load_bids(self):
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        res = Client(self._endpoint).get_account_info(bids_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(bids_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self):
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        res = Client(self._endpoint).get_account_info(asks_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(asks_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
     def load_event_queue(self):
         event_queue_addr = PublicKey(self._decode.event_queue)
-        res = Client(self._endpoint).get_account_info(event_queue_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
         return decode_event_queue(bytes_data)
 
     def load_request_queue(self):
-        event_queue_addr = PublicKey(self._decode.event_queue)
-        res = Client(self._endpoint).get_account_info(event_queue_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        request_queue_addr = PublicKey(self._decode.request_queue)
+        bytes_data = _load_bytes_data(request_queue_addr, self._endpoint)
         return decode_request_queue(bytes_data)
 
     def load_fills(self, limit=100):
         event_queue_addr = PublicKey(self._decode.event_queue)
-        res = Client(self._endpoint).get_account_info(event_queue_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
         return list(filter(lambda event: event.event_flags.fill and event.native_quantity_paid > 0, events))
+
 
 class OrderInfo(NamedTuple):
     price: float
