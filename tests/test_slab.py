@@ -10,7 +10,7 @@ DATA = bytes.fromhex(HEX_DATA)
 
 def test_parse_order_book():
     """Test order book parsing."""
-    with open("tests/ask_order_binary.txt", "r") as input_file:
+    with open("tests/binary/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
         res = ORDER_BOOK_LAYOUT.parse(data)

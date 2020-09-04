@@ -40,7 +40,7 @@ def test_parse_market_state():
 
 def test_order_book_iterator():
     """Test order book parsing."""
-    with open("tests/ask_order_binary.txt", "r") as input_file:
+    with open("tests/binary/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
         order_book = OrderBook.decode(BTC_USDC_MARKET, data)
@@ -49,7 +49,7 @@ def test_order_book_iterator():
 
 
 def test_order_book_get_l2():
-    with open("tests/ask_order_binary.txt", "r") as input_file:
+    with open("tests/binary/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
         order_book = OrderBook.decode(BTC_USDC_MARKET, data)
@@ -59,7 +59,7 @@ def test_order_book_get_l2():
 
 
 def test_order_book_iterable():
-    with open("tests/ask_order_binary.txt", "r") as input_file:
+    with open("tests/binary/ask_order_binary.txt", "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
         order_book = OrderBook.decode(BTC_USDC_MARKET, data)
