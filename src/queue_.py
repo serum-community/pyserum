@@ -7,12 +7,12 @@ from ._layouts.queue import EVENT, QUEUE_HEADER, REQUEST
 # Expect header_layout and node_layout to be construct layout
 def decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: int) -> Tuple[Any, Any]:
     header = header_layout.parse(buffer)
-    alloc_len = math.floor(float(len(buffer) - header.sizeof()) / node_layout.sizeof())
+    alloc_len = math.floor(float(len(buffer) - header_layout.sizeof() / node_layout.sizeof()))
     nodes = []
     num_of_nodes = min(history, alloc_len) if history else header.count
     for i in range(num_of_nodes):
         node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
-        nodes.append(node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof()]))
+        nodes.append(node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof():]))
     return header, nodes
 
 

@@ -18,7 +18,7 @@ QUEUE_HEADER = cStruct(  # Swap to little endian
     Padding(4),
 )
 
-REQUEST_FLAG = BitsSwapped(
+REQUEST_FLAGS = BitsSwapped(
     BitStruct(
         "new_order" / Flag,
         "cancel_order" / Flag,
@@ -30,7 +30,7 @@ REQUEST_FLAG = BitsSwapped(
 )
 
 REQUEST = cStruct(
-    REQUEST_FLAG,
+    "request_flags" / REQUEST_FLAGS,
     "open_order_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(5),
@@ -41,18 +41,18 @@ REQUEST = cStruct(
     "client_order_id" / Int64ul,
 )
 
-EVENT_FLAG = BitsSwapped(
+EVENT_FLAGS = BitsSwapped(
     BitStruct(
         "fill" / Flag,
         "out" / Flag,
         "bid" / Flag,
-        "bid" / Flag,
+        "maker" / Flag,
         Const(0, BitsInteger(4)),  # Padding
     )
 )
 
 EVENT = cStruct(
-    EVENT_FLAG,
+    "event_flags" / EVENT_FLAGS,
     "open_order_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(5),
