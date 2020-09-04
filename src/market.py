@@ -141,12 +141,11 @@ class Market:
         event_queue_addr = PublicKey(self._decode.event_queue)
         bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
-        return list(
-            map(
-                self.parse_fill_event,
-                filter(lambda event: event.event_flags.fill and event.native_quantity_paid > 0, events),
-            )
-        )
+        return [
+            self.parse_fill_event(event)
+            for event in events
+            if event.event_flags.fill and event.native_quantity_paid > 0
+        ]
 
     def parse_fill_event(self, event):
         if event.event_flags.bid:

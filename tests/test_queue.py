@@ -2,10 +2,12 @@ import base64
 
 from src.queue_ import decode_event_queue
 
+from .binary_file_path import EVENT_QUEUE_BIN_PATH
+
 
 def test_decode_event_queue():
-    """Test order book parsing."""
-    with open("tests/binary/event_queue_binary.txt", "r") as input_file:
+    """Test decode event queue."""
+    with open(EVENT_QUEUE_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
         event_queue = decode_event_queue(data, 99)

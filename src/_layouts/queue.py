@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 from construct import BitStruct  # type: ignore
 from construct import BitsInteger, BitsSwapped, Bytes, Const, Flag, Int8ul, Int32ul, Int64ul, Padding
 from construct import Struct as cStruct  # type: ignore
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
-# We will use a bitstruct with 64 bits instead of the widebits implementation in serum-js.
 QUEUE_HEADER = cStruct(  # Swap to little endian
     Padding(5),
     "account_flags" / ACCOUNT_FLAGS_LAYOUT,
