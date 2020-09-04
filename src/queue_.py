@@ -1,11 +1,11 @@
 import math
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 
 from ._layouts.queue import EVENT, QUEUE_HEADER, REQUEST
 
 
 # Expect header_layout and node_layout to be construct layout
-def decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: int) -> Tuple[Any, Any]:
+def _decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: int) -> Tuple[Any, Any]:
     header = header_layout.parse(buffer)
     alloc_len = math.floor(float(len(buffer) - header_layout.sizeof() / node_layout.sizeof()))
     nodes = []
@@ -16,15 +16,15 @@ def decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: i
     return header, nodes
 
 
-def decode_request_queue(buffer: bytes, history: int):
-    header, nodes = decode_queue(QUEUE_HEADER, REQUEST, buffer, history)
+def decode_request_queue(buffer: bytes, history: Optional[int] = None):
+    header, nodes = _decode_queue(QUEUE_HEADER, REQUEST, buffer, history)
     if not header.account_flags.initialized or not header.account_flags.request_queue:
         raise Exception("Invalid requests queue, either not initialized or not a request queue.")
     return nodes
 
 
-def decode_event_queue(buffer: bytes, history: int):
-    header, nodes = decode_queue(QUEUE_HEADER, EVENT, buffer, history)
+def decode_event_queue(buffer: bytes, history: Optional[int] = None):
+    header, nodes = _decode_queue(QUEUE_HEADER, EVENT, buffer, history)
     if not header.account_flags.initialized or not header.account_flags.event_queue:
         raise Exception("Invalid events queue, either not initialized or not a request queue.")
     return nodes

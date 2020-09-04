@@ -11,7 +11,7 @@ from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
 from .instructions import DEFAULT_DEX_PROGRAM_ID
-from .queue_ import decode_event_queue
+from .queue_ import decode_event_queue, decode_request_queue
 
 
 class Market:
@@ -117,15 +117,27 @@ class Market:
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return OrderBook.decode(self, bytes_data)
 
+    def load_event_queue(self):
+        event_queue_addr = PublicKey(self._decode.event_queue)
+        res = Client(self._endpoint).get_account_info(event_queue_addr)
+        data = res["result"]["value"]["data"][0]
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        return decode_event_queue(bytes_data)
+
+    def load_request_queue(self):
+        event_queue_addr = PublicKey(self._decode.event_queue)
+        res = Client(self._endpoint).get_account_info(event_queue_addr)
+        data = res["result"]["value"]["data"][0]
+        bytes_data = base64.decodebytes(data.encode("ascii"))
+        return decode_request_queue(bytes_data)
+
     def load_fills(self, limit=100):
         event_queue_addr = PublicKey(self._decode.event_queue)
         res = Client(self._endpoint).get_account_info(event_queue_addr)
         data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
         events = decode_event_queue(bytes_data, limit)
-        print("raw events", events)
         return list(filter(lambda event: event.event_flags.fill and event.native_quantity_paid > 0, events))
-
 
 class OrderInfo(NamedTuple):
     price: float
