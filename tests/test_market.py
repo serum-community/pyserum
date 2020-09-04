@@ -24,7 +24,7 @@ MARKET_ENCODE = SimpleNamespace(
     }
 )
 
-BTC_USDC_MARKET = Market(MARKET_ENCODE, 6, 6, None, "https://api.mainnet-beta.solana.com/")
+BTC_USDC_MARKET = Market(MARKET_ENCODE, 6, 6, None, None)
 
 
 def test_parse_market_state():
