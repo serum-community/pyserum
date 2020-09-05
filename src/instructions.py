@@ -312,6 +312,7 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
                     limit_price=params.limit_price,
                     max_quantity=params.max_quantity,
                     order_type=params.order_type,
+                    client_id=params.client_id
                 ),
             )
         ),
