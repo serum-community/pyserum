@@ -1,5 +1,5 @@
 """Serum Dex Instructions."""
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
@@ -71,7 +71,7 @@ class NewOrderParams(NamedTuple):
     """"""
     order_type: OrderType
     """"""
-    client_id: Optional[int]
+    client_id: int
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
@@ -291,15 +291,6 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
 
 def new_order(params: NewOrderParams) -> TransactionInstruction:
     """Generate a transaction instruction to place new order."""
-    args = {
-        "side": params.side,
-        "limit_price": params.limit_price,
-        "max_quantity": params.max_quantity,
-        "order_type": params.order_type,
-    }
-    if params.client_id:
-        args["client_id"] = params.client_id
-
     return TransactionInstruction(
         keys=[
             AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
@@ -313,7 +304,17 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
             AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.NewOrder, args=args)),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.NewOrder,
+                args=dict(
+                    side=params.side,
+                    limit_price=params.limit_price,
+                    max_quantity=params.max_quantity,
+                    order_type=params.order_type,
+                ),
+            )
+        ),
     )
 
 
