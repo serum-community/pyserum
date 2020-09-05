@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from solana.publickey import PublicKey
@@ -11,7 +12,15 @@ from solana.transaction import Transaction
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
+from .enums import Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
+from .queue_ import decode_event_queue, decode_request_queue
+
+
+def _load_bytes_data(addr: PublicKey, endpoint: str):
+    res = Client(endpoint).get_account_info(addr)
+    data = res["result"]["value"]["data"][0]
+    return base64.decodebytes(data.encode("ascii"))
 
 
 class Market:
@@ -51,9 +60,7 @@ class Market:
         endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     ) -> Market:
         """Factory method to create a Market."""
-        http_client = Client(endpoint)
-        base64_res = http_client.get_account_info(market_address)["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(base64_res.encode("ascii"))
+        bytes_data = _load_bytes_data(PublicKey(market_address), endpoint)
         market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
@@ -83,6 +90,12 @@ class Market:
     def __quote_spl_token_multiplier(self) -> int:
         return 10 ** self._quote_spl_token_decimals
 
+    def base_spl_size_to_number(self, size: int) -> float:
+        return size / self.__base_spl_token_multiplier()
+
+    def quote_spl_size_to_number(self, size: int) -> float:
+        return size / self.__quote_spl_token_multiplier()
+
     def price_lots_to_number(self, price: int) -> float:
         return float(price * self._decode.quote_lot_size * self.__base_spl_token_multiplier()) / (
             self._decode.base_lot_size * self.__quote_spl_token_multiplier()
@@ -94,28 +107,74 @@ class Market:
     def base_size_lots_to_number(self, size: int) -> float:
         return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
 
+    def base_size_number_to_lots(self, size: float) -> int:
+        return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._decode.base_lot_size)
+
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
-        data = Client(endpoint).get_account_info(mint_pub_key)["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(mint_pub_key, endpoint)
         return MINT_LAYOUT.parse(bytes_data).decimals
 
     def load_bids(self):
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        res = Client(self._endpoint).get_account_info(bids_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(bids_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self):
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        res = Client(self._endpoint).get_account_info(asks_addr)
-        data = res["result"]["value"]["data"][0]
-        bytes_data = base64.decodebytes(data.encode("ascii"))
+        bytes_data = _load_bytes_data(asks_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
+
+    def load_event_queue(self):
+        event_queue_addr = PublicKey(self._decode.event_queue)
+        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        return decode_event_queue(bytes_data)
+
+    def load_request_queue(self):
+        request_queue_addr = PublicKey(self._decode.request_queue)
+        bytes_data = _load_bytes_data(request_queue_addr, self._endpoint)
+        return decode_request_queue(bytes_data)
+
+    def load_fills(self, limit=100):
+        event_queue_addr = PublicKey(self._decode.event_queue)
+        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        events = decode_event_queue(bytes_data, limit)
+        return [
+            self.parse_fill_event(event)
+            for event in events
+            if event.event_flags.fill and event.native_quantity_paid > 0
+        ]
+
+    def parse_fill_event(self, event):
+        if event.event_flags.bid:
+            side = Side.Buy
+            price_before_fees = (
+                event.native_quantity_released + event.native_fee_or_rebate
+                if event.event_flags.maker
+                else event.native_quantity_released - event.native_fee_or_rebate
+            )
+        else:
+            side = Side.Sell
+            price_before_fees = (
+                event.native_quantity_released - event.native_fee_or_rebate
+                if event.event_flags.maker
+                else event.native_quantity_released + event.native_fee_or_rebate
+            )
+
+        price = (price_before_fees * self.__base_spl_token_multiplier()) / (
+            self.__quote_spl_token_multiplier() * event.native_quantity_paid
+        )
+        size = event.native_quantity_paid / self.__base_spl_token_multiplier()
+        return FilledOrder(
+            order_id=int.from_bytes(event.order_id, "little"),
+            side=side,
+            price=price,
+            size=size,
+            fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
+        )
 
     def place_order(self, order_params: NewOrderParams):
         pass
@@ -125,6 +184,14 @@ class Market:
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
         pass
+
+
+class FilledOrder(NamedTuple):
+    order_id: int
+    side: Side
+    price: float
+    size: float
+    fee_cost: int
 
 
 class OrderInfo(NamedTuple):

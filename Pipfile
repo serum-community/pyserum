@@ -19,6 +19,7 @@ mypy = "*"
 pydocstyle = "*"
 flake8 = "*"
 isort = "*"
+rope = "*"
 
 [packages]
 solana = "*"
