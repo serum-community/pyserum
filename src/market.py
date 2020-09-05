@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 import base64
-from typing import Any, Iterable, List, NamedTuple
+from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.transaction import Transaction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
-from .instructions import DEFAULT_DEX_PROGRAM_ID
+from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
 
 
 class Market:
@@ -115,6 +116,15 @@ class Market:
         data = res["result"]["value"]["data"][0]
         bytes_data = base64.decodebytes(data.encode("ascii"))
         return OrderBook.decode(self, bytes_data)
+
+    def place_order(self, order_params: NewOrderParams):
+        pass
+
+    def make_place_order_transaction(self, order_params: NewOrderParams) -> Tuple[Transaction, List[PublicKey]]:
+        pass
+
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
+        pass
 
 
 class OrderInfo(NamedTuple):
