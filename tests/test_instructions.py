@@ -3,7 +3,7 @@
 from solana.publickey import PublicKey
 
 import src.instructions as inlib
-from enums import OrderType, Side
+from src.enums import OrderType, Side
 
 
 def test_initialize_market():
