@@ -71,7 +71,7 @@ class NewOrderParams(NamedTuple):
     """"""
     order_type: OrderType
     """"""
-    client_id: int
+    client_id: int = 0
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
@@ -300,7 +300,7 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
             AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
             AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
             AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=DEFAULT_DEX_PROGRAM_ID, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
             AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
@@ -312,7 +312,7 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
                     limit_price=params.limit_price,
                     max_quantity=params.max_quantity,
                     order_type=params.order_type,
-                    client_id=params.client_id
+                    client_id=params.client_id,
                 ),
             )
         ),
