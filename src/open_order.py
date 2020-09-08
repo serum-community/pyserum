@@ -36,7 +36,7 @@ class OpenOrder:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, data_bytes: bytes):
+    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrder:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(data_bytes)
         return OpenOrder(
             address=address,
