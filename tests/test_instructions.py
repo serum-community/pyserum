@@ -3,6 +3,7 @@
 from solana.publickey import PublicKey
 
 import src.instructions as inlib
+from src.enums import OrderType, Side
 
 
 def test_initialize_market():
@@ -25,6 +26,26 @@ def test_initialize_market():
     )
     instruction = inlib.initialize_market(params)
     assert inlib.decode_initialize_market(instruction) == params
+
+
+def test_new_orders():
+    """Test match orders."""
+    params = inlib.NewOrderParams(
+        market=PublicKey(0),
+        open_orders=PublicKey(1),
+        payer=PublicKey(2),
+        owner=PublicKey(3),
+        request_queue=PublicKey(4),
+        base_vault=PublicKey(5),
+        quote_vault=PublicKey(6),
+        side=Side.Buy,
+        limit_price=1,
+        max_quantity=1,
+        order_type=OrderType.IOC,
+        client_id=1,
+    )
+    instruction = inlib.new_order(params)
+    assert inlib.decode_new_order(instruction) == params
 
 
 def test_match_orders():

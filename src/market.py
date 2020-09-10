@@ -3,16 +3,17 @@ from __future__ import annotations
 
 import base64
 import math
-from typing import Any, Iterable, List, NamedTuple
+from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.transaction import Transaction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
 from .enums import Side
-from .instructions import DEFAULT_DEX_PROGRAM_ID
+from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
 from .queue_ import decode_event_queue, decode_request_queue
 
 
@@ -174,6 +175,15 @@ class Market:
             size=size,
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
+
+    def place_order(self, order_params: NewOrderParams):
+        pass
+
+    def make_place_order_transaction(self, order_params: NewOrderParams) -> Tuple[Transaction, List[PublicKey]]:
+        pass
+
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
+        pass
 
 
 class FilledOrder(NamedTuple):

@@ -2,12 +2,15 @@
 from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
-from solana.transaction import AccountMeta, TransactionInstruction, verify_instruction_keys
+from solana.sysvar import SYSVAR_RENT_PUBKEY
+from solana.transaction import AccountMeta, TransactionInstruction
+from solana.utils.validate import validate_instruction_keys
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
 
 DEFAULT_DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
+TOKEN_PROGRAM_ID = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
 
 
 class InitializeMarketParams(NamedTuple):
@@ -69,7 +72,7 @@ class NewOrderParams(NamedTuple):
     """"""
     order_type: OrderType
     """"""
-    client_id: int
+    client_id: int = 0
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
@@ -177,7 +180,7 @@ class SettleFundsParams(NamedTuple):
 
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
-    verify_instruction_keys(instruction, 9)
+    validate_instruction_keys(instruction, 9)
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
@@ -199,12 +202,27 @@ def decode_initialize_market(instruction: TransactionInstruction) -> InitializeM
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
-    raise NotImplementedError("decode_new_order not implemented")
+    validate_instruction_keys(instruction, 9)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return NewOrderParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        payer=instruction.keys[3].pubkey,
+        owner=instruction.keys[4].pubkey,
+        base_vault=instruction.keys[5].pubkey,
+        quote_vault=instruction.keys[6].pubkey,
+        side=data.args.side,
+        limit_price=data.args.limit_price,
+        max_quantity=data.args.max_quantity,
+        order_type=data.args.order_type,
+        client_id=data.args.client_id,
+    )
 
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    verify_instruction_keys(instruction, 7)
+    validate_instruction_keys(instruction, 7)
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
@@ -220,7 +238,7 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
-    verify_instruction_keys(instruction, 2)
+    validate_instruction_keys(instruction, 2)
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
@@ -273,7 +291,33 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
 
 
 def new_order(params: NewOrderParams) -> TransactionInstruction:
-    raise NotImplementedError("new_order not implemented")
+    """Generate a transaction instruction to place new order."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.payer, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.NewOrder,
+                args=dict(
+                    side=params.side,
+                    limit_price=params.limit_price,
+                    max_quantity=params.max_quantity,
+                    order_type=params.order_type,
+                    client_id=params.client_id,
+                ),
+            )
+        ),
+    )
 
 
 def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
