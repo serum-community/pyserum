@@ -73,3 +73,27 @@ def test_consume_events():
     )
     instruction = inlib.consume_events(params)
     assert inlib.decode_consume_events(instruction) == params
+
+
+def test_cancel_order():
+    """Test match orders."""
+    params = inlib.CancelOrderParams(
+        market=PublicKey(0),
+        request_queue=PublicKey(1),
+        owner=PublicKey(2),
+        open_orders=PublicKey(3),
+        side=Side.Buy,
+        order_id=1,
+        open_orders_slot=1,
+    )
+    instruction = inlib.cancel_order(params)
+    assert inlib.decode_cancel_order(instruction) == params
+
+
+def test_cancel_order_by_client_id():
+    """Test match orders."""
+    params = inlib.CancelOrderByClientIDParams(
+        market=PublicKey(0), request_queue=PublicKey(1), owner=PublicKey(2), open_orders=PublicKey(3), client_id=1
+    )
+    instruction = inlib.cancel_order_by_client_id(params)
+    assert inlib.decode_cancel_order_by_client_id(instruction) == params

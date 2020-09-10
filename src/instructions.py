@@ -249,7 +249,17 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
-    raise NotImplementedError("decode_cancel_order not implemented")
+    validate_instruction_keys(instruction, 4)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return CancelOrderParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        owner=instruction.keys[3].pubkey,
+        side=Side(data.args.side),
+        order_id=int.from_bytes(data.args.order_id, "big"),
+        open_orders_slot=data.args.open_orders_slot,
+    )
 
 
 def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
@@ -257,7 +267,15 @@ def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParam
 
 
 def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
-    raise NotImplementedError("decode_cancel_order_by_client_id not implemented")
+    validate_instruction_keys(instruction, 4)
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    return CancelOrderByClientIDParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        owner=instruction.keys[3].pubkey,
+        client_id=data.args.client_id,
+    )
 
 
 def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
@@ -355,7 +373,27 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
 
 
 def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
-    raise NotImplementedError("cancel_order not implemented")
+    """Generate a transaction instruction to cancel order."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrder,
+                args=dict(
+                    side=params.side,
+                    order_id=params.order_id,
+                    open_orders=bytes(params.open_orders),
+                    open_orders_slot=params.open_orders_slot,
+                ),
+            )
+        ),
+    )
 
 
 def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
@@ -363,4 +401,21 @@ def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
 
 
 def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> TransactionInstruction:
-    raise NotImplementedError("cancel_order_by_client_id not implemented")
+    """Generate a transaction instruction to cancel order by client id."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrderByClientID,
+                args=dict(
+                    client_id=params.client_id,
+                ),
+            )
+        ),
+    )
