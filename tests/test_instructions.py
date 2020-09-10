@@ -76,7 +76,7 @@ def test_consume_events():
 
 
 def test_cancel_order():
-    """Test match orders."""
+    """Test cancel order."""
     params = inlib.CancelOrderParams(
         market=PublicKey(0),
         request_queue=PublicKey(1),
@@ -90,8 +90,8 @@ def test_cancel_order():
     assert inlib.decode_cancel_order(instruction) == params
 
 
-def test_cancel_order_by_client_id():
-    """Test match orders."""
+def test_cancel_order_by_client_id_():
+    """Test cancel by client id order."""
     params = inlib.CancelOrderByClientIDParams(
         market=PublicKey(0), request_queue=PublicKey(1), owner=PublicKey(2), open_orders=PublicKey(3), client_id=1
     )
