@@ -10,7 +10,7 @@ DEX_PROGRAM_ID="$(solana deploy --use-deprecated-loader dex/target/bpfel-unknown
 echo DEX_PROGRAM_ID: $DEX_PROGRAM_ID
 cd crank
 cargo run -- l pyserum-setup ~/.config/solana/id.json $DEX_PROGRAM_ID
-echo "dex_program_id: $DEX_PROGRAM_ID" &> crank.log
+echo "dex_program_id: $DEX_PROGRAM_ID" >> crank.log
 cp crank.log ../../tests
 cd ../..
 cat tests/crank.log
