@@ -2,8 +2,8 @@ clean:
 	rm -rf dist build _build __pycache__ *.egg-info
 
 format:
-	isort setup.py src tests
-	black --line-length=120 setup.py src tests
+	isort setup.py src tests tests/integration
+	black --line-length=120 setup.py src tests tests/integration
 
 lint:
 	flake8 setup.py src tests
@@ -16,7 +16,13 @@ notebook:
 
 .PHONY: tests
 tests:
-	PYTHONPATH=./src pytest -v
+	pytest -v
+
+unit-tests:
+	pytest -v -m "not integration"
+
+int-tests:
+	pytest -v -m integration
 
 # Minimal makefile for Sphinx documentation
 #

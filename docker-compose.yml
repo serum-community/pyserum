@@ -1,7 +1,7 @@
 version: '3'
 services:
   localnet:
-    image: "michaelhly/serum_dex_localnet:edge"
+    image: "michaelhly/serum_dex_localnet:stable"
     ports:
       - "8899:8899"
       - "8900:8900"
