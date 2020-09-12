@@ -14,3 +14,6 @@ echo "dex_program_id: $DEX_PROGRAM_ID" >> crank.log
 cp crank.log ../../tests
 cd ../..
 cat tests/crank.log
+pytest -v -m integration
+rm -rf tests/crank.log
+docker-compose down
