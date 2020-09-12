@@ -45,4 +45,4 @@ jobs:
           solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
 
       - name: Run integration tests
-        run: ./scripts/run_int_tests.sh
+        run: sudo ./scripts/run_int_tests.sh
