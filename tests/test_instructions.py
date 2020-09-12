@@ -103,13 +103,13 @@ def test_settle_funds():
     """Test settle funds."""
     params = inlib.SettleFundsParams(
         market=PublicKey(0),
-        owner=PublicKey(2),
-        open_orders=PublicKey(3),
-        base_vault=PublicKey(1),
-        quote_vault=PublicKey(1),
-        base_wallet=PublicKey(1),
-        quote_wallet=PublicKey(1),
-        vault_signer=PublicKey(1),
+        owner=PublicKey(1),
+        open_orders=PublicKey(2),
+        base_vault=PublicKey(3),
+        quote_vault=PublicKey(4),
+        base_wallet=PublicKey(5),
+        quote_wallet=PublicKey(6),
+        vault_signer=PublicKey(7),
     )
     instruction = inlib.settle_funds(params)
     assert inlib.decode_settle_funds(instruction) == params
