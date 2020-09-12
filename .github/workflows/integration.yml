@@ -27,6 +27,12 @@ jobs:
           repository: serum-community/serum-dex
           path: serum-dex
 
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+
+      - name: Install Cargo
+        uses: actions-rs/cargo@v1.0.1
+
       # Runs a single command using the runners shell
       - name: Dex setup
         run: |
