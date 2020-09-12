@@ -1,12 +1,10 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
-import base64
 import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from solana.publickey import PublicKey
-from solana.rpc.api import Client
 from solana.transaction import Transaction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
@@ -15,14 +13,10 @@ from ._layouts.slab import Slab
 from .enums import Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
 from .queue_ import decode_event_queue, decode_request_queue
+from .utils import load_bytes_data
 
 
-def _load_bytes_data(addr: PublicKey, endpoint: str):
-    res = Client(endpoint).get_account_info(addr)
-    data = res["result"]["value"]["data"][0]
-    return base64.decodebytes(data.encode("ascii"))
-
-
+# pylint: disable=too-many-public-methods
 class Market:
     """Represents a Serum Market."""
 
@@ -60,7 +54,7 @@ class Market:
         endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     ) -> Market:
         """Factory method to create a Market."""
-        bytes_data = _load_bytes_data(PublicKey(market_address), endpoint)
+        bytes_data = load_bytes_data(PublicKey(market_address), endpoint)
         market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
@@ -74,15 +68,18 @@ class Market:
 
     def address(self) -> PublicKey:
         """Return market address."""
-        raise NotImplementedError("address is not implemented yet")
+        return PublicKey(self._decode.own_address)
+
+    def public_key(self) -> PublicKey:
+        return self.address()
 
     def base_mint_address(self) -> PublicKey:
         """Returns base mint address."""
-        raise NotImplementedError("base_mint_address is not implemented yet")
+        return PublicKey(self._decode.base_mint_address)
 
     def quote_mint_address(self) -> PublicKey:
         """Returns quote mint address."""
-        raise NotImplementedError("quote_mint_address is not implemented yet")
+        return PublicKey(self._decode.quote_mint_address)
 
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
@@ -113,34 +110,34 @@ class Market:
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
-        bytes_data = _load_bytes_data(mint_pub_key, endpoint)
+        bytes_data = load_bytes_data(mint_pub_key, endpoint)
         return MINT_LAYOUT.parse(bytes_data).decimals
 
     def load_bids(self):
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        bytes_data = _load_bytes_data(bids_addr, self._endpoint)
+        bytes_data = load_bytes_data(bids_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self):
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        bytes_data = _load_bytes_data(asks_addr, self._endpoint)
+        bytes_data = load_bytes_data(asks_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
     def load_event_queue(self):
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         return decode_event_queue(bytes_data)
 
     def load_request_queue(self):
         request_queue_addr = PublicKey(self._decode.request_queue)
-        bytes_data = _load_bytes_data(request_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(request_queue_addr, self._endpoint)
         return decode_request_queue(bytes_data)
 
     def load_fills(self, limit=100):
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
         return [
             self.parse_fill_event(event)

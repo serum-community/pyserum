@@ -1,11 +1,55 @@
 from __future__ import annotations
 
-from typing import List
+import base64
+from typing import Any, Dict, List
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.system_program import CreateAccountParams, create_account
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from .instructions import DEFAULT_DEX_PROGRAM_ID
+from .utils import load_bytes_data
+
+
+def make_create_account_transaction(
+    owner_address: PublicKey,
+    new_account_address: PublicKey,
+    lamports: int,
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
+):
+    return create_account(
+        CreateAccountParams(
+            from_pubkey=owner_address,
+            new_account_pubkey=new_account_address,
+            lamports=lamports,
+            space=OPEN_ORDERS_LAYOUT.sizeof(),
+            program_id=program_id,
+        )
+    )
+
+
+def get_filtered_program_accounts(
+    address: str, program_id: str, filters: Dict[str, Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    resp = Client(address).get_program_accounts(
+        program_id, encoding="base64", filter_opts=filters, data_size=OPEN_ORDERS_LAYOUT.sizeof()
+    )
+    accounts = []
+    for account in resp["result"]:
+        account_details = account["account"]
+        accounts.append(
+            {
+                "public_key": PublicKey(account["pubkey"]),
+                "account_info": {
+                    "data": base64.decodebytes(account_details["data"].encode("ascii")),
+                    "executable": account_details["executable"],
+                    "owner": PublicKey(account_details["owner"]),
+                    "lamports": account_details["owner"],
+                },
+            }
+        )
+    return accounts
 
 
 class OpenOrder:
@@ -54,5 +98,12 @@ class OpenOrder:
             client_ids=open_order_decoded.client_ids,
         )
 
-    def find_for_market_and_owner(self, connection: Client, market: PublicKey, owner: PublicKey):
+    @staticmethod
+    def find_for_market_and_owner(connection: Client, market: PublicKey, owner: PublicKey):
         pass
+
+    @staticmethod
+    def load(endpoint: str, address: str) -> OpenOrder:
+        addr_pub_key = PublicKey(address)
+        bytes_data = load_bytes_data(addr_pub_key, endpoint)
+        return OpenOrder.from_bytes(addr_pub_key, bytes_data)
