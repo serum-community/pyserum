@@ -17,6 +17,13 @@ notebook:
 .PHONY: tests
 tests:
 	PYTHONPATH=./src pytest -v
+	pytest -v
+
+unit-tests:
+	pytest -v -m "not integration"
+
+int-tests:
+	sh scripts/run-int-tests.sh
 
 # Minimal makefile for Sphinx documentation
 #
