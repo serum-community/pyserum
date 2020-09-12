@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
 if [ ! -d "serum-dex" ]; then
     git clone https://github.com/serum-community/serum-dex.git
 fi
