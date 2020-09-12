@@ -32,8 +32,11 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install libudev-dev
+        run: sudo apt-get install libudev-dev
+
       # Runs a single command using the runners shell
-      - name: Dex setup
+      - name: Build and setup dex
         run: |
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
