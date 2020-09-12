@@ -31,7 +31,11 @@ jobs:
       - name: Dex setup
         run: |
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           solana -V
+          solana-keygen new -o ~/.config/solana/id.json
+          solana address
+          solana config get
 
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
