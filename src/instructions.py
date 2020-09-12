@@ -1,10 +1,10 @@
 """Serum Dex Instructions."""
-from typing import List, NamedTuple
+from typing import Any, Dict, List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
-from solana.utils.validate import validate_instruction_keys
+from solana.utils.validate import validate_instruction_keys, validate_instruction_type
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
@@ -163,8 +163,6 @@ class SettleFundsParams(NamedTuple):
     """"""
     owner: PublicKey
     """"""
-    request_queue: PublicKey
-    """"""
     base_vault: PublicKey
     """"""
     quote_vault: PublicKey
@@ -178,10 +176,25 @@ class SettleFundsParams(NamedTuple):
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
 
 
+def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:
+    instruction_type_to_length_map: Dict[InstructionType, int] = {
+        InstructionType.InitializeMarket: 9,
+        InstructionType.NewOrder: 9,
+        InstructionType.MatchOrder: 7,
+        InstructionType.ConsumeEvents: 2,
+        InstructionType.CancelOrder: 4,
+        InstructionType.CancelOrderByClientID: 4,
+        InstructionType.SettleFunds: 9,
+    }
+    validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    validate_instruction_type(data, instruction_type)
+    return data
+
+
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 9)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.InitializeMarket)
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -202,8 +215,7 @@ def decode_initialize_market(instruction: TransactionInstruction) -> InitializeM
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
-    validate_instruction_keys(instruction, 9)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.NewOrder)
     return NewOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -222,8 +234,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 7)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.MatchOrder)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -238,8 +249,7 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 2)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.ConsumeEvents)
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
         market=instruction.keys[-2].pubkey,
@@ -249,15 +259,41 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
-    raise NotImplementedError("decode_cancel_order not implemented")
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrder)
+    return CancelOrderParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        owner=instruction.keys[3].pubkey,
+        side=Side(data.args.side),
+        order_id=int.from_bytes(data.args.order_id, "big"),
+        open_orders_slot=data.args.open_orders_slot,
+    )
 
 
 def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
-    raise NotImplementedError("decode_settle_funds not implemented")
+    # data = __parse_and_validate_instruction(instruction, InstructionType.SettleFunds)
+    return SettleFundsParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        owner=instruction.keys[2].pubkey,
+        base_vault=instruction.keys[3].pubkey,
+        quote_vault=instruction.keys[4].pubkey,
+        base_wallet=instruction.keys[5].pubkey,
+        quote_wallet=instruction.keys[6].pubkey,
+        vault_signer=instruction.keys[7].pubkey,
+    )
 
 
 def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
-    raise NotImplementedError("decode_cancel_order_by_client_id not implemented")
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientID)
+    return CancelOrderByClientIDParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        owner=instruction.keys[3].pubkey,
+        client_id=data.args.client_id,
+    )
 
 
 def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
@@ -355,12 +391,64 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
 
 
 def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
-    raise NotImplementedError("cancel_order not implemented")
+    """Generate a transaction instruction to cancel order."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrder,
+                args=dict(
+                    side=params.side,
+                    order_id=params.order_id,
+                    open_orders=bytes(params.open_orders),
+                    open_orders_slot=params.open_orders_slot,
+                ),
+            )
+        ),
+    )
 
 
 def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
-    raise NotImplementedError("settle_funds not implemented")
+    """Generate a transaction instruction to settle fund."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_wallet, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_wallet, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.vault_signer, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SettleFunds, args=dict())),
+    )
 
 
 def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> TransactionInstruction:
-    raise NotImplementedError("cancel_order_by_client_id not implemented")
+    """Generate a transaction instruction to cancel order by client id."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrderByClientID,
+                args=dict(
+                    client_id=params.client_id,
+                ),
+            )
+        ),
+    )
