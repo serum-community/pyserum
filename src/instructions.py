@@ -1,10 +1,10 @@
 """Serum Dex Instructions."""
-from typing import List, NamedTuple
+from typing import Any, Dict, List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
-from solana.utils.validate import validate_instruction_keys
+from solana.utils.validate import validate_instruction_keys, validate_instruction_type
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
@@ -178,10 +178,24 @@ class SettleFundsParams(NamedTuple):
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
 
 
+def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:
+    instruction_type_to_length_map: Dict[InstructionType, int] = {
+        InstructionType.InitializeMarket: 9,
+        InstructionType.NewOrder: 9,
+        InstructionType.MatchOrder: 7,
+        InstructionType.ConsumeEvents: 2,
+        InstructionType.CancelOrder: 4,
+        InstructionType.CancelOrderByClientID: 4,
+    }
+    validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
+    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    validate_instruction_type(data, instruction_type)
+    return data
+
+
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 9)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.InitializeMarket)
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -202,8 +216,7 @@ def decode_initialize_market(instruction: TransactionInstruction) -> InitializeM
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
-    validate_instruction_keys(instruction, 9)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.NewOrder)
     return NewOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -222,8 +235,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 7)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.MatchOrder)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -238,8 +250,7 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
-    validate_instruction_keys(instruction, 2)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.ConsumeEvents)
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
         market=instruction.keys[-2].pubkey,
@@ -249,8 +260,7 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
-    validate_instruction_keys(instruction, 4)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrder)
     return CancelOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -267,8 +277,7 @@ def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParam
 
 
 def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
-    validate_instruction_keys(instruction, 4)
-    data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientID)
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
