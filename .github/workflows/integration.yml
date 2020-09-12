@@ -23,9 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run integration tests
-        run: |
-          ls
-          sudo scripts/run_int_tests.sh
+        run: scripts/run_int_tests.sh
 
       - name: Checkout serum-dex
         uses: actions/checkout@v2
