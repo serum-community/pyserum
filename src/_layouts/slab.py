@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Iterable, List, NamedTuple, Optional
 
-from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding  # type: ignore
+from construct import Switch  # type: ignore
+from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding
 from construct import Struct as cStruct
-from construct import Switch
 from solana.publickey import PublicKey
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
