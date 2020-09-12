@@ -3,6 +3,7 @@
 Python client library for interacting with the Project Serum DEX.
 
 ## Get Started
+
 ```python
 from src.market import Market
 
@@ -26,23 +27,25 @@ for bid in bids:
     print("Order id: %d, price: %f, size: %f." % (
           bid.order_id, bid.order_info.price, bid.order_info.size))
 ```
+
 ### Market Addresses in Main Net
-| Currency Pair   | Address                                             |
-|:----------------:|:---------------------------------------------------:|
-| MSRM/USDT        | H4snTKK9adiU15gP22ErfZYtro3aqR9BTMXiH3AwiUTQ        |
-| MSRM/USDC        | 7kgkDyW7dmyMeP8KFXzbcUZz1R2WHsovDZ7n3ihZuNDS        |
-| BTC/USDT         | 8AcVjMG2LTbpkjNoyq8RwysokqZunkjy3d5JDzxC6BJa        |
-| BTC/USDC         | CAgAeMD7quTdnr6RPa7JySQpjf3irAmefYNdTb6anemq        |
-| ETH/USDT         | HfCZdJ1wfsWKfYP2qyWdXTT5PWAGWFctzFjLH48U1Hsd        |
-| ETH/USDC         | ASKiV944nKg1W9vsf7hf3fTsjawK6DwLwrnB2LH9n61c        |
-| SRM/USDT         | HARFLhSq8nECZk4DVFKvzqXMNMA9a3hjvridGMFizeLa        |
-| SRM/USDC         | 68J6nkWToik6oM9rTatKSR5ibVSykAtzftBUEAvpRsys        |
-| FTT/USDT         | DHDdghmkBhEpReno3tbzBPtsxCt6P3KrMzZvxavTktJt        |
-| FTT/USDC         | FZqrBXz7ADGsmDf1TM9YgysPUfvtG8rJiNUrqDpHc9Au        |
-| YFI/USDT         | 5zu5bTZZvqESAAgFsr12CUMxdQvMrvU9CgvC1GW8vJdf        |
-| YFI/USDC         | FJg9FUtbN3fg3YFbMCFiZKjGh5Bn4gtzxZmtxFzmz9kT        |
-| LINK/USDT        | F5xschQBMpu1gD2q1babYEAVJHR1buj1YazLiXyQNqSW        |
-| LINK/USDC        | 7GZ59DMgJ7D6dfoJTpszPayTRyua9jwcaGJXaRMMF1my        |
+
+| Currency Pair |                   Address                    |
+| :-----------: | :------------------------------------------: |
+|   MSRM/USDT   | H4snTKK9adiU15gP22ErfZYtro3aqR9BTMXiH3AwiUTQ |
+|   MSRM/USDC   | 7kgkDyW7dmyMeP8KFXzbcUZz1R2WHsovDZ7n3ihZuNDS |
+|   BTC/USDT    | 8AcVjMG2LTbpkjNoyq8RwysokqZunkjy3d5JDzxC6BJa |
+|   BTC/USDC    | CAgAeMD7quTdnr6RPa7JySQpjf3irAmefYNdTb6anemq |
+|   ETH/USDT    | HfCZdJ1wfsWKfYP2qyWdXTT5PWAGWFctzFjLH48U1Hsd |
+|   ETH/USDC    | ASKiV944nKg1W9vsf7hf3fTsjawK6DwLwrnB2LH9n61c |
+|   SRM/USDT    | HARFLhSq8nECZk4DVFKvzqXMNMA9a3hjvridGMFizeLa |
+|   SRM/USDC    | 68J6nkWToik6oM9rTatKSR5ibVSykAtzftBUEAvpRsys |
+|   FTT/USDT    | DHDdghmkBhEpReno3tbzBPtsxCt6P3KrMzZvxavTktJt |
+|   FTT/USDC    | FZqrBXz7ADGsmDf1TM9YgysPUfvtG8rJiNUrqDpHc9Au |
+|   YFI/USDT    | 5zu5bTZZvqESAAgFsr12CUMxdQvMrvU9CgvC1GW8vJdf |
+|   YFI/USDC    | FJg9FUtbN3fg3YFbMCFiZKjGh5Bn4gtzxZmtxFzmz9kT |
+|   LINK/USDT   | F5xschQBMpu1gD2q1babYEAVJHR1buj1YazLiXyQNqSW |
+|   LINK/USDC   | 7GZ59DMgJ7D6dfoJTpszPayTRyua9jwcaGJXaRMMF1my |
 
 ## Development
 
@@ -75,7 +78,10 @@ make lint
 ### Tests
 
 ```sh
-make tests
+# Unit tests
+make unit-tests
+# Integration tests
+make int-tests
 ```
 
 ### Using Jupyter Notebook
