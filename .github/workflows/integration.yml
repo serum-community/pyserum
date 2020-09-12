@@ -28,10 +28,10 @@ jobs:
           path: serum-dex
 
       # Runs a single command using the runners shell
-      - name: Setup Dex
+      - name: Dex setup
         run: |
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
-          ls
+          solana -V
 
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
