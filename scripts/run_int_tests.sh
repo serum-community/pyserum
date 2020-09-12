@@ -8,6 +8,7 @@ fi
 
 cd serum-dex
 docker-compose up -d
+solana config set --url "http://localhost:8899"
 ./do.sh build dex
 solana airdrop 10000
 DEX_PROGRAM_ID="$(solana deploy --use-deprecated-loader dex/target/bpfel-unknown-unknown/release/serum_dex.so | jq .programId -r)"

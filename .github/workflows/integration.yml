@@ -39,13 +39,9 @@ jobs:
       - name: Build dex
         run: ./serum-dex/do.sh build dex
 
-      - name: Install Solana tool suite
+      - name: Install Solana tool suite and run integration tests
         run: |
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
-
-      - name: Run integration tests
-        run: |
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           scripts/run_int_tests.sh
