@@ -90,10 +90,26 @@ def test_cancel_order():
     assert inlib.decode_cancel_order(instruction) == params
 
 
-def test_cancel_order_by_client_id_():
-    """Test cancel by client id order."""
+def test_cancel_order_by_client_id():
+    """Test cancel order by client id."""
     params = inlib.CancelOrderByClientIDParams(
         market=PublicKey(0), request_queue=PublicKey(1), owner=PublicKey(2), open_orders=PublicKey(3), client_id=1
     )
     instruction = inlib.cancel_order_by_client_id(params)
     assert inlib.decode_cancel_order_by_client_id(instruction) == params
+
+
+def test_settle_funds():
+    """Test settle funds."""
+    params = inlib.SettleFundsParams(
+        market=PublicKey(0),
+        owner=PublicKey(2),
+        open_orders=PublicKey(3),
+        base_vault=PublicKey(1),
+        quote_vault=PublicKey(1),
+        base_wallet=PublicKey(1),
+        quote_wallet=PublicKey(1),
+        vault_signer=PublicKey(1),
+    )
+    instruction = inlib.settle_funds(params)
+    assert inlib.decode_settle_funds(instruction) == params

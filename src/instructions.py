@@ -163,8 +163,6 @@ class SettleFundsParams(NamedTuple):
     """"""
     owner: PublicKey
     """"""
-    request_queue: PublicKey
-    """"""
     base_vault: PublicKey
     """"""
     quote_vault: PublicKey
@@ -186,6 +184,7 @@ def __parse_and_validate_instruction(instruction: TransactionInstruction, instru
         InstructionType.ConsumeEvents: 2,
         InstructionType.CancelOrder: 4,
         InstructionType.CancelOrderByClientID: 4,
+        InstructionType.SettleFunds: 9,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -273,7 +272,17 @@ def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParam
 
 
 def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
-    raise NotImplementedError("decode_settle_funds not implemented")
+    # data = __parse_and_validate_instruction(instruction, InstructionType.SettleFunds)
+    return SettleFundsParams(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        owner=instruction.keys[2].pubkey,
+        base_vault=instruction.keys[3].pubkey,
+        quote_vault=instruction.keys[4].pubkey,
+        base_wallet=instruction.keys[5].pubkey,
+        quote_wallet=instruction.keys[6].pubkey,
+        vault_signer=instruction.keys[7].pubkey,
+    )
 
 
 def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
@@ -406,7 +415,22 @@ def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
 
 
 def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
-    raise NotImplementedError("settle_funds not implemented")
+    """Generate a transaction instruction to settle fund."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.base_wallet, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.quote_wallet, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.vault_signer, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SettleFunds, args=dict())),
+    )
 
 
 def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> TransactionInstruction:
