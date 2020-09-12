@@ -22,9 +22,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Run integration tests
-        run: scripts/run_int_tests.sh
-
       - name: Checkout serum-dex
         uses: actions/checkout@v2
         with:
@@ -47,3 +44,6 @@ jobs:
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
+
+      - name: Run integration tests
+      run: scripts/run_int_tests.sh
