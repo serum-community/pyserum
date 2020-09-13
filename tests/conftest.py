@@ -4,58 +4,131 @@ import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
 
-__dex_fixtures = {}
+__cached_params = {}
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def serum_dex() -> Dict[str, PublicKey]:
-    if not __dex_fixtures:
+def __bs_params() -> Dict[str, str]:
+    if not __cached_params:
         with open("tests/crank.log") as crank_log:
             for line in crank_log.readlines():
                 if ":" not in line:
                     continue
                 key, val = line.strip().replace(",", "").split(": ")
-                assert val is not None
-                __dex_fixtures[key] = PublicKey(val)
-    return __dex_fixtures
+                assert key, "key must not be None"
+                assert val, "val must not be None"
+                __cached_params[key] = val
+    return __cached_params
 
 
+def __bootstrap_account(pubkey: str, secret: str) -> Account:
+    secret = [int(b) for b in secret[1:-1].split(" ")]
+    account = Account(secret)
+    assert str(account.public_key()) == pubkey, "account must map to provided public key"
+    return account
+
+
+@pytest.mark.integration
 @pytest.fixture(scope="session")
-def wallet() -> Account:
-    """Account fixture with token balances."""
-    __secret = [
-        80,
-        153,
-        206,
-        2,
-        83,
-        121,
-        34,
-        148,
-        53,
-        118,
-        38,
-        177,
-        28,
-        133,
-        4,
-        35,
-        155,
-        181,
-        188,
-        184,
-        134,
-        8,
-        118,
-        116,
-        56,
-        126,
-        76,
-        49,
-        126,
-        79,
-        137,
-        220,
-    ]
-    return Account(__secret)
+def stubbed_payer(__bs_params) -> Account:
+    """Bootstrapped payer account."""
+    return __bootstrap_account(__bs_params["payer"], __bs_params["payer_secret"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_base_mint(__bs_params) -> Account:
+    """Bootstrapped base mint account."""
+    return __bootstrap_account(__bs_params["coin_mint"], __bs_params["coin_mint_secret"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_quote_mint(__bs_params) -> Account:
+    """Bootstrapped quote mint account."""
+    return __bootstrap_account(__bs_params["pc_mint"], __bs_params["pc_mint_secret"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_base_wallet(__bs_params) -> Account:
+    """Bootstrapped base mint account."""
+    return __bootstrap_account(__bs_params["coin_wallet"], __bs_params["coin_wallet_secret"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_quote_wallet(__bs_params) -> Account:
+    """Bootstrapped quote mint account."""
+    return __bootstrap_account(__bs_params["pc_wallet"], __bs_params["pc_wallet_secret"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_market_pk(__bs_params) -> PublicKey:
+    """Public key of the boostrapped market."""
+    return PublicKey(__bs_params["market"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_req_q_pk(__bs_params) -> PublicKey:
+    """Public key of the bootstrapped request queue."""
+    return PublicKey(__bs_params["req_q"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_event_q_pk(__bs_params) -> PublicKey:
+    """Public key of the bootstrapped request queue."""
+    return PublicKey(__bs_params["event_q"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_bids_pk(__bs_params) -> PublicKey:
+    """Public key of the bootstrapped bids book."""
+    return PublicKey(__bs_params["bids"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_asks_pk(__bs_params) -> PublicKey:
+    """Public key of the bootstrapped asks book."""
+    return PublicKey(__bs_params["asks"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_base_vault_pk(__bs_params) -> PublicKey:
+    """Public key of the base vault account."""
+    return PublicKey(__bs_params["coin_vault"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_quote_vault_pk(__bs_params) -> PublicKey:
+    """Public key of the quote vault account."""
+    return PublicKey(__bs_params["pc_vault"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_vault_signer_pk(__bs_params) -> PublicKey:
+    """Public key of the bootstrapped vault signer."""
+    return PublicKey(__bs_params["vault_signer_key"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_bid_account_pk(__bs_params) -> PublicKey:
+    """Public key of the initial bid order account."""
+    return PublicKey(__bs_params["bid_account"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def stubbed_ask_account_pk(__bs_params) -> PublicKey:
+    """Public key of the initial ask order account."""
+    return PublicKey(__bs_params["ask_account"])
