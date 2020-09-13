@@ -19,4 +19,4 @@ def test_serum_dex(serum_dex, wallet):
     assert isinstance(serum_dex["bid_account"], PublicKey)
     assert isinstance(serum_dex["ask_account"], PublicKey)
     assert isinstance(serum_dex["dex_program_id"], PublicKey)
-    assert serum_dex["wallet"] == str(wallet.public_key())
+    assert serum_dex["wallet"] == wallet.public_key()
