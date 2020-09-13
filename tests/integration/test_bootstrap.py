@@ -1,10 +1,9 @@
 import pytest
-
 from solana.publickey import PublicKey
 
 
 @pytest.mark.integration
-def test_serum_dex(serum_dex):
+def test_serum_dex(serum_dex, wallet):
     """Make sure serum_dex fixture is populated with public keys."""
     assert isinstance(serum_dex["coin_mint"], PublicKey)
     assert isinstance(serum_dex["pc_mint"], PublicKey)
@@ -20,3 +19,4 @@ def test_serum_dex(serum_dex):
     assert isinstance(serum_dex["bid_account"], PublicKey)
     assert isinstance(serum_dex["ask_account"], PublicKey)
     assert isinstance(serum_dex["dex_program_id"], PublicKey)
+    assert serum_dex["wallet"] == str(wallet.public_key())
