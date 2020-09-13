@@ -14,9 +14,11 @@ lint:
 notebook:
 	cd notebooks && PYTHONPATH=../ jupyter notebook
 
-.PHONY: tests
-tests:
-	PYTHONPATH=./src pytest -v
+unit-tests:
+	pytest -v -m "not integration"
+
+int-tests:
+	sh scripts/run_int_tests.sh
 
 # Minimal makefile for Sphinx documentation
 #

@@ -17,6 +17,7 @@ log/*
 # other temps files
 .DS_Store
 .tmp/*
+serum-dex
 
 # sphinx stuff
 _build
