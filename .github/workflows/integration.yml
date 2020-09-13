@@ -47,6 +47,9 @@ jobs:
       - name: Build dex
         run: ./serum-dex/do.sh build dex
 
+      - name: Install test dependencies
+        run: pipenv install --skip-lock pytest
+
       - name: Install Solana tool suite and run integration tests
         run: |
           curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
