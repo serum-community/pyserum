@@ -20,6 +20,6 @@ echo "dex_program_id: $DEX_PROGRAM_ID" >> crank.log
 cp crank.log ../../tests
 cd ../..
 cat tests/crank.log
-pipenv run pytest -v -m integration
+pipenv run pytest -vv -m integration
 rm -rf tests/crank.log
 docker kill serum-dex_localnet_1
