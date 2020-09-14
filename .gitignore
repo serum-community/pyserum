@@ -18,6 +18,12 @@ log/*
 .DS_Store
 .tmp/*
 
+# integration test artifacts
+crank.log
+tests/crank.log
+serum_dex.so
+crank
+
 # sphinx stuff
 _build
 make.bat

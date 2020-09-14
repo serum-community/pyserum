@@ -73,3 +73,43 @@ def test_consume_events():
     )
     instruction = inlib.consume_events(params)
     assert inlib.decode_consume_events(instruction) == params
+
+
+def test_cancel_order():
+    """Test cancel order."""
+    params = inlib.CancelOrderParams(
+        market=PublicKey(0),
+        request_queue=PublicKey(1),
+        owner=PublicKey(2),
+        open_orders=PublicKey(3),
+        side=Side.Buy,
+        order_id=1,
+        open_orders_slot=1,
+    )
+    instruction = inlib.cancel_order(params)
+    assert inlib.decode_cancel_order(instruction) == params
+
+
+def test_cancel_order_by_client_id():
+    """Test cancel order by client id."""
+    params = inlib.CancelOrderByClientIDParams(
+        market=PublicKey(0), request_queue=PublicKey(1), owner=PublicKey(2), open_orders=PublicKey(3), client_id=1
+    )
+    instruction = inlib.cancel_order_by_client_id(params)
+    assert inlib.decode_cancel_order_by_client_id(instruction) == params
+
+
+def test_settle_funds():
+    """Test settle funds."""
+    params = inlib.SettleFundsParams(
+        market=PublicKey(0),
+        owner=PublicKey(1),
+        open_orders=PublicKey(2),
+        base_vault=PublicKey(3),
+        quote_vault=PublicKey(4),
+        base_wallet=PublicKey(5),
+        quote_wallet=PublicKey(6),
+        vault_signer=PublicKey(7),
+    )
+    instruction = inlib.settle_funds(params)
+    assert inlib.decode_settle_funds(instruction) == params
