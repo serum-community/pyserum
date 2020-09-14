@@ -13,8 +13,9 @@ from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
 from .enums import Side
-from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, NewOrderParams
+from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
 from .instructions import cancel_order as cancel_order_inst
+from .instructions import match_orders as match_order_inst
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -192,8 +193,14 @@ class Market:
         pass
 
     def cancel_order(self, owner: Account, order: Order):
-        instruction = self._make_cancel_order_transaction(owner.public_key(), order)
-        return self._send_transaction(instruction, [owner])
+        transaction = Transaction()
+        transaction.add(self._make_cancel_order_transaction(owner.public_key(), order))
+        return self._send_transaction(transaction, [owner])
+
+    def match_orders(self, fee_payer: Account, limit: int):
+        transaction = Transaction()
+        transaction.add(self._make_match_orders_transaction(limit))
+        return self._send_transaction(transaction, [fee_payer])
 
     def _make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
@@ -208,11 +215,23 @@ class Market:
         )
         return cancel_order_inst(params)
 
-    def _send_transaction(self, instruction: TransactionInstruction, signers: List[Account]):
+    def _make_match_orders_transaction(self, limit: int) -> TransactionInstruction:
+        params = MatchOrdersParams(
+            market=self.address(),
+            request_queue=PublicKey(self._decode.request_queue),
+            event_queue=PublicKey(self._decode.event_queue),
+            bids=PublicKey(self._decode.bids),
+            asks=PublicKey(self._decode.asks),
+            base_vault=PublicKey(self._decode.base_vault),
+            quote_vault=PublicKey(self._decode.quote_vault),
+            limit=limit,
+            program_id=self._program_id,
+        )
+        return match_order_inst(params)
+
+    def _send_transaction(self, transaction: Transaction, signers: List[Account]):
         connection = Client(self._endpoint)
-        txs = Transaction()
-        txs.add(instruction)
-        signature = connection.send_transaction(txs, *signers, skip_preflight=self._skip_preflight)
+        signature = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
             print("cannot confirm transaction yet.")
         return signature

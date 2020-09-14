@@ -1,7 +1,10 @@
 import pytest
+from solana.account import Account
 from solana.publickey import PublicKey
 
 from src.market import Market
+
+from .utils import confirm_transaction
 
 
 @pytest.mark.integration
@@ -51,6 +54,12 @@ def test_market_load_events(loaded_market: Market):
 
 
 @pytest.mark.integration
-def test_market_load_requests(loaded_market: Market):
+def test_market_load_requests(loaded_market: Market, stubbed_payer: Account):
     request_queue = loaded_market.load_request_queue()
+    # two requests in the request queue in the beginning with one bid and one ask
     assert len(request_queue) == 2
+    sig = loaded_market.match_orders(stubbed_payer, 2)
+    confirm_transaction(sig)
+    request_queue = loaded_market.load_request_queue()
+    # 5 event after the order is matched, including 2 fill events
+    assert len(request_queue) == 5
