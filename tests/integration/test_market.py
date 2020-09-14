@@ -13,7 +13,12 @@ def loaded_market(stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKe
 
 @pytest.mark.integration
 def test_loaded_market(
-    loaded_market: Market, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey, stubbed_base_mint: PublicKey, stubbed_quote_mint: PublicKey):
+    loaded_market: Market,
+    stubbed_market_pk: PublicKey,
+    stubbed_dex_program_pk: PublicKey,
+    stubbed_base_mint: PublicKey,
+    stubbed_quote_mint: PublicKey,
+):
     assert isinstance(loaded_market, Market)
     assert loaded_market.address() == stubbed_market_pk
     assert loaded_market.program_id() == stubbed_dex_program_pk
@@ -27,7 +32,8 @@ def test_market_load_bid(loaded_market: Market):
     cnt = 0
     for bid in bids:
         cnt += 1
-    assert cnt == 1
+    assert cnt == 0
+
 
 @pytest.mark.integration
 def test_market_load_asks(loaded_market: Market):
@@ -35,5 +41,16 @@ def test_market_load_asks(loaded_market: Market):
     cnt = 0
     for ask in asks:
         cnt += 1
-    assert cnt == 1
+    assert cnt == 0
 
+
+@pytest.mark.integration
+def test_market_load_events(loaded_market: Market):
+    event_queue = loaded_market.load_event_queue()
+    assert len(event_queue) == 0
+
+
+@pytest.mark.integration
+def test_market_load_requests(loaded_market: Market):
+    request_queue = loaded_market.load_request_queue()
+    assert len(request_queue) == 2

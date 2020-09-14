@@ -7,14 +7,18 @@ from ._layouts.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
 # Expect header_layout and node_layout to be construct layout
 def _decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: Optional[int]) -> Tuple[Any, Any]:
     header = header_layout.parse(buffer)
-    alloc_len = math.floor(float(len(buffer) - header_layout.sizeof() / node_layout.sizeof()))
+    alloc_len = math.floor(len(buffer) - header_layout.sizeof() / node_layout.sizeof())
     nodes = []
-    num_of_nodes = min(history, alloc_len) if history else header.count
-    for i in range(num_of_nodes):
-        node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
-        nodes.append(
-            node_layout.parse(buffer[header_layout.sizeof() + node_index * node_layout.sizeof() :])  # noqa: E203
-        )
+    if history:
+        for i in range(min(history, alloc_len)):
+            node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
+            offset = header_layout.sizeof() + node_index * node_layout.sizeof()
+            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203  # noqa: E203
+    else:
+        for i in range(header.count):
+            node_index = (header.head + i) % alloc_len
+            offset = header_layout.sizeof() + node_index * node_layout.sizeof()
+            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203  # noqa: E203
     return header, nodes
 
 

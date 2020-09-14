@@ -141,7 +141,7 @@ class Market:
         bytes_data = load_bytes_data(request_queue_addr, self._endpoint)
         return decode_request_queue(bytes_data)
 
-    def load_fills(self, limit=100):
+    def load_fills(self, limit=100) -> List[FilledOrder]:
         event_queue_addr = PublicKey(self._decode.event_queue)
         bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
@@ -151,7 +151,7 @@ class Market:
             if event.event_flags.fill and event.native_quantity_paid > 0
         ]
 
-    def parse_fill_event(self, event):
+    def parse_fill_event(self, event) -> FilledOrder:
         if event.event_flags.bid:
             side = Side.Buy
             price_before_fees = (
