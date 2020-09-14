@@ -71,3 +71,8 @@ def test_bid_account_pk(stubbed_bid_account_pk):
 @pytest.mark.integration
 def test_ask_account_pk(stubbed_ask_account_pk):
     assert isinstance(stubbed_ask_account_pk, PublicKey)
+
+
+@pytest.mark.integration
+def test_dex_program_pk(stubbed_dex_program_pk):
+    assert isinstance(stubbed_dex_program_pk, PublicKey)

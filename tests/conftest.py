@@ -31,6 +31,13 @@ def __bootstrap_account(pubkey: str, secret: str) -> Account:
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
+def stubbed_dex_program_pk(__bs_params) -> PublicKey:
+    """Bootstrapped dex program id."""
+    return PublicKey(__bs_params["dex_program_id"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
 def stubbed_payer(__bs_params) -> Account:
     """Bootstrapped payer account."""
     return __bootstrap_account(__bs_params["payer"], __bs_params["payer_secret"])
