@@ -188,8 +188,9 @@ class Market:
     def cancel_order_by_client_id(self, owner: str):
         pass
 
-    def cancel_order(self, owner: str):
-        pass
+    def cancel_order(self, owner: Account, order: Order):
+        instruction = self._make_cancel_order_transaction(owner.public_key(), order)
+        return self._send_transaction(instruction, [owner])
 
     def _make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
