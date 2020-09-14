@@ -33,9 +33,5 @@ jobs:
       - name: Install test dependencies
         run: pipenv install --skip-lock pytest
 
-      - name: Install Solana tool suite and run integration tests
-        run: |
-          curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
-          scripts/run_int_tests.sh
+      - name: Run integration tests
+        run: scripts/run_int_tests.sh
