@@ -8,6 +8,8 @@ from solana.rpc.commitment import Commitment, Max, Single
 from solana.rpc.types import RPCResponse
 from solana.transaction import Transaction, TransactionInstruction
 
+from .enums import AccountType
+
 
 class UninitializedAccount(NamedTuple):
     account: PublicKey
@@ -43,12 +45,14 @@ class FeePayer(Account):
         )  # TODO: Bump solana and only add instruction.
         return UninitializedAccount(new_account, sys_lib.create_account(create_account_params).instructions[0])
 
-    def create_dex_account(self, unpadded_len: int, new_account: Optional[PublicKey] = None) -> UninitializedAccount:
+    def create_dex_account(
+        self, account_type: AccountType, new_account: Optional[PublicKey] = None
+    ) -> UninitializedAccount:
         """Create an unitialized account for the dex program."""
         if not new_account:
             new_account = Account().public_key()
         # Add 12 bytes of padding: 5 front padding + 7 end padding
-        return self.create_program_account(self._dex, unpadded_len + 12, new_account)
+        return self.create_program_account(self._dex, account_type + 12, new_account)
 
     def send_transaction(
         self,

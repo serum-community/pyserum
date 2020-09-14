@@ -21,3 +21,18 @@ class OrderType(IntEnum):
     """"""
     PostOnly = 2
     """"""
+
+
+class AccountType(IntEnum):
+    """Account types defined by their corresponding memory sizes."""
+
+    Market = 368
+    """"""
+    RequestQ = 640
+    """"""
+    EventQ = 1 << 20
+    """"""
+    Bids = 1 << 16
+    """"""
+    Asks = 1 << 16
+    """"""
