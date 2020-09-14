@@ -2,6 +2,7 @@
 import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
+from solana.rpc.api import Client
 
 from src.market import Market
 
@@ -33,16 +34,13 @@ def test_loaded_market(
 @pytest.mark.integration
 def test_market_load_bid(loaded_market: Market):
     bids = loaded_market.load_bids()
-    assert sum(1 for bid in bids) == 0
+    assert sum(1 for _ in bids) == 0
 
 
 @pytest.mark.integration
 def test_market_load_asks(loaded_market: Market):
     asks = loaded_market.load_asks()
-    cnt = 0
-    for _ in asks:
-        cnt += 1
-    assert cnt == 0
+    assert sum(1 for _ in asks) == 0
 
 
 @pytest.mark.integration
@@ -59,9 +57,9 @@ def test_market_load_requests(loaded_market: Market):
 
 
 @pytest.mark.integration
-def test_match_order(loaded_market: Market, stubbed_payer: Account):
+def test_match_order(loaded_market: Market, stubbed_payer: Account, http_client: Client):
     sig = loaded_market.match_orders(stubbed_payer, 2)
-    confirm_transaction(sig)
+    confirm_transaction(http_client, sig)
 
     request_queue = loaded_market.load_request_queue()
     # 0 request after matching
