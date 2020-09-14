@@ -14,6 +14,7 @@ else
 fi
 
 docker-compose up -d
+command -v solana
 if ! [ -x $(command -v solana) ]; then
     echo Installing Solana tool suite
     curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
