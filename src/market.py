@@ -5,13 +5,14 @@ import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
+from solana.transaction import Transaction, TransactionInstruction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
 from .enums import Side
-from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
+from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, NewOrderParams
+from .instructions import cancel_order as cancel_order_inst
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -188,6 +189,19 @@ class Market:
     def cancel_order(self, owner: str):
         pass
 
+    def make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
+        params = CancelOrderParams(
+            market=self.address(),
+            owner=owner,
+            open_orders=order.open_order_address,
+            request_queue=self._decode.request_queue,
+            side=order.side,
+            order_id=order.order_id,
+            open_orders_slot=order.open_order_slot,
+            program_id=self._program_id,
+        )
+        return cancel_order_inst(params)
+
 
 class FilledOrder(NamedTuple):
     order_id: int
@@ -208,9 +222,10 @@ class Order(NamedTuple):
     order_id: int
     client_id: int
     open_order_address: PublicKey
+    open_order_slot: int
     fee_tier: int
     order_info: OrderInfo
-    side: str
+    side: Side
 
 
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
@@ -284,5 +299,6 @@ class OrderBook:
                     size=self._market.base_size_lots_to_number(node.quantity),
                     size_lots=node.quantity,
                 ),
-                side="buy" if self._is_bids else "sell",
+                side=Side.Buy if self._is_bids else Side.Sell,
+                open_order_slot=node.owner_slot,
             )
