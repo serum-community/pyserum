@@ -20,7 +20,6 @@ pydocstyle = "*"
 flake8 = "*"
 isort = "*"
 rope = "*"
-pytest-docker = "*"
 
 [packages]
 solana = "*"
