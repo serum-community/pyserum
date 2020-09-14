@@ -62,9 +62,17 @@ def test_match_order(loaded_market: Market, stubbed_payer: Account, http_client:
     confirm_transaction(http_client, sig)
 
     request_queue = loaded_market.load_request_queue()
-    # 0 request after matching
+    # 0 request after matching.
     assert len(request_queue) == 0
 
     event_queue = loaded_market.load_event_queue()
-    # 5 event after the order is matched, including 2 fill events
+    # 5 event after the order is matched, including 2 fill events.
     assert len(event_queue) == 5
+
+    # There should be no bid order.
+    bids = loaded_market.load_bids()
+    assert sum(1 for _ in bids) == 0
+
+    # There should be no ask order.
+    asks = loaded_market.load_asks()
+    assert sum(1 for _ in asks) == 0
