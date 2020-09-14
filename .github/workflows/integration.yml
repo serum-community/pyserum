@@ -30,20 +30,6 @@ jobs:
       - name: Install pipenv
         uses: dschep/install-pipenv-action@v1
 
-      - name: Checkout serum-dex
-        uses: actions/checkout@v2
-        with:
-          repository: serum-community/serum-dex
-          path: serum-dex
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Install libudev-dev
-        run: sudo apt-get install libudev-dev
-
       - name: Install test dependencies
         run: pipenv install --skip-lock pytest
 
