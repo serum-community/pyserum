@@ -4,7 +4,9 @@ from __future__ import annotations
 import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
+from solana.account import Account
 from solana.publickey import PublicKey
+from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
@@ -189,7 +191,7 @@ class Market:
     def cancel_order(self, owner: str):
         pass
 
-    def make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
+    def _make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
             market=self.address(),
             owner=owner,
@@ -201,6 +203,15 @@ class Market:
             program_id=self._program_id,
         )
         return cancel_order_inst(params)
+
+    def _send_transaction(self, instruction: TransactionInstruction, signers: List[Account]):
+        connection = Client(self._endpoint)
+        txs = Transaction()
+        txs.add(instruction)
+        signature = connection.send_transaction(txs, *signers, skip_preflight=self._skip_preflight)
+        if self._confirmations > 0:
+            print("cannot confirm transaction yet.")
+        return signature
 
 
 class FilledOrder(NamedTuple):

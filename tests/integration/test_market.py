@@ -7,7 +7,7 @@ from src.market import Market
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def loaded_market(stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey):
-    market = Market.load("http://localhost:8899", str(stubbed_market_pk), program_id=stubbed_dex_program_pk)
+    market = Market.load("http://localhost:8899", str(stubbed_market_pk), None, program_id=stubbed_dex_program_pk)
     assert isinstance(market, Market)
     return market
 
