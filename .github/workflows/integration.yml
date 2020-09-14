@@ -44,9 +44,6 @@ jobs:
       - name: Install libudev-dev
         run: sudo apt-get install libudev-dev
 
-      - name: Build dex
-        run: ./serum-dex/do.sh build dex
-
       - name: Install test dependencies
         run: pipenv install --skip-lock pytest
 
