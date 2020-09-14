@@ -182,6 +182,12 @@ class Market:
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
         pass
 
+    def cancel_order_by_client_id(self, owner: str):
+        pass
+
+    def cancel_order(self, owner: str):
+        pass
+
 
 class FilledOrder(NamedTuple):
     order_id: int
