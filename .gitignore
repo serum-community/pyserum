@@ -17,7 +17,12 @@ log/*
 # other temps files
 .DS_Store
 .tmp/*
-serum-dex
+
+# integration test artifacts
+crank.log
+tests/crank.log
+serum_dex.so
+crank
 
 # sphinx stuff
 _build
