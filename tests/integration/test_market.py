@@ -33,10 +33,7 @@ def test_loaded_market(
 @pytest.mark.integration
 def test_market_load_bid(loaded_market: Market):
     bids = loaded_market.load_bids()
-    cnt = 0
-    for _ in bids:
-        cnt += 1
-    assert cnt == 0
+    assert sum(1 for bid in bids) == 0
 
 
 @pytest.mark.integration
