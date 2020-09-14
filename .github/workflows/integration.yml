@@ -24,14 +24,14 @@ jobs:
 
       - name: Testing
         run: |
-          echo $(command -v solana)
+          printf $(command -v solana)
 
           if [ ! -x $(command -v solana) ]; then
-            echo "solana not found 1"
+            printf "solana not found 1"
           fi
 
           if ! [ -x $(command -v solana) ]; then
-            echo "solana not found 2"
+            printf "solana not found 2"
           fi
 
           exit 1
