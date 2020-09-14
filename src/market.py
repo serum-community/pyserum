@@ -229,12 +229,15 @@ class Market:
         )
         return match_order_inst(params)
 
-    def _send_transaction(self, transaction: Transaction, signers: List[Account]):
+    def _send_transaction(self, transaction: Transaction, signers: List[Account]) -> str:
         connection = Client(self._endpoint)
-        signature = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
+        res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
             print("cannot confirm transaction yet.")
-        return signature
+        signature = res.get("result")
+        if not signature:
+            print("transaction not sent successfully")
+        return str(signature)
 
 
 class FilledOrder(NamedTuple):

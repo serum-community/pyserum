@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -33,7 +34,7 @@ def test_loaded_market(
 def test_market_load_bid(loaded_market: Market):
     bids = loaded_market.load_bids()
     cnt = 0
-    for bid in bids:
+    for _ in bids:
         cnt += 1
     assert cnt == 0
 
@@ -42,7 +43,7 @@ def test_market_load_bid(loaded_market: Market):
 def test_market_load_asks(loaded_market: Market):
     asks = loaded_market.load_asks()
     cnt = 0
-    for ask in asks:
+    for _ in asks:
         cnt += 1
     assert cnt == 0
 
@@ -54,12 +55,21 @@ def test_market_load_events(loaded_market: Market):
 
 
 @pytest.mark.integration
-def test_market_load_requests(loaded_market: Market, stubbed_payer: Account):
+def test_market_load_requests(loaded_market: Market):
     request_queue = loaded_market.load_request_queue()
-    # two requests in the request queue in the beginning with one bid and one ask
+    # 2 requests in the request queue in the beginning with one bid and one ask
     assert len(request_queue) == 2
+
+
+@pytest.mark.integration
+def test_match_order(loaded_market: Market, stubbed_payer: Account):
     sig = loaded_market.match_orders(stubbed_payer, 2)
     confirm_transaction(sig)
+
     request_queue = loaded_market.load_request_queue()
+    # 0 request after matching
+    assert len(request_queue) == 0
+
+    event_queue = loaded_market.load_event_queue()
     # 5 event after the order is matched, including 2 fill events
-    assert len(request_queue) == 5
+    assert len(event_queue) == 5

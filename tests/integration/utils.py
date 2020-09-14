@@ -3,13 +3,14 @@ import time
 from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse
 
+DEFAULT_MAX_TIMEOUT = 30  # 30 seconds  pylint: disable=invalid-name
 
-def confirm_transaction(tx_sig: str) -> RPCResponse:
+
+def confirm_transaction(tx_sig: str, time_out: int = DEFAULT_MAX_TIMEOUT) -> RPCResponse:
     """Confirm a transaction."""
     client = Client("http://localhost:8899")
-    TIMEOUT = 30  # 30 seconds  pylint: disable=invalid-name
     elapsed_time = 0
-    while elapsed_time < TIMEOUT:
+    while elapsed_time < time_out:
         sleep_time = 3
         if not elapsed_time:
             sleep_time = 7
