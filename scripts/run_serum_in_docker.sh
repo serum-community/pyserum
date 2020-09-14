@@ -2,7 +2,7 @@
 
 set -e
 
-os_type="linux"
+os_type=""
 
 if [[ $OSTYPE == "linux-gnu"* ]]; then
     os_type="linux"
@@ -27,7 +27,7 @@ sleep 1
 solana airdrop 10000
 DEX_PROGRAM_ID="$(solana deploy --use-deprecated-loader serum_dex.so | jq .programId -r)"
 echo DEX_PROGRAM_ID: "$DEX_PROGRAM_ID"
-# curl -s -L "https://github.com/serum-community/serum-dex/releases/download/refs%2Fheads%2Fmaster/crank-$os_type" > crank
+curl -s -L "https://github.com/serum-community/serum-dex/releases/download/refs%2Fheads%2Fmaster/crank-$os_type" > crank
 chmod +x crank
 ./crank l pyserum-setup ~/.config/solana/id.json "$DEX_PROGRAM_ID"
 

@@ -67,7 +67,7 @@ class Market:
         base_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.base_mint))
         quote_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.quote_mint))
 
-        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint)
+        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint, program_id=program_id)
 
     def address(self) -> PublicKey:
         """Return market address."""
@@ -76,13 +76,16 @@ class Market:
     def public_key(self) -> PublicKey:
         return self.address()
 
+    def program_id(self) -> PublicKey:
+        return self._program_id
+
     def base_mint_address(self) -> PublicKey:
         """Returns base mint address."""
-        return PublicKey(self._decode.base_mint_address)
+        return PublicKey(self._decode.base_mint)
 
     def quote_mint_address(self) -> PublicKey:
         """Returns quote mint address."""
-        return PublicKey(self._decode.quote_mint_address)
+        return PublicKey(self._decode.quote_mint)
 
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
