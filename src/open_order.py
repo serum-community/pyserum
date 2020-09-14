@@ -52,7 +52,7 @@ def get_filtered_program_accounts(
     return accounts
 
 
-class OpenOrder:
+class OpenOrderAccount:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -82,9 +82,9 @@ class OpenOrder:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrder:
+    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrderAccount:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(data_bytes)
-        return OpenOrder(
+        return OpenOrderAccount(
             address=address,
             market=PublicKey(open_order_decoded.market),
             owner=PublicKey(open_order_decoded.owner),
@@ -103,7 +103,7 @@ class OpenOrder:
         pass
 
     @staticmethod
-    def load(endpoint: str, address: str) -> OpenOrder:
+    def load(endpoint: str, address: str) -> OpenOrderAccount:
         addr_pub_key = PublicKey(address)
         bytes_data = load_bytes_data(addr_pub_key, endpoint)
-        return OpenOrder.from_bytes(addr_pub_key, bytes_data)
+        return OpenOrderAccount.from_bytes(addr_pub_key, bytes_data)

@@ -120,24 +120,24 @@ class Market:
         bytes_data = load_bytes_data(mint_pub_key, endpoint)
         return MINT_LAYOUT.parse(bytes_data).decimals
 
-    def load_bids(self):
+    def load_bids(self) -> OrderBook:
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
         bytes_data = load_bytes_data(bids_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
-    def load_asks(self):
+    def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
         bytes_data = load_bytes_data(asks_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
-    def load_event_queue(self):
+    def load_event_queue(self):  # returns raw construct type
         event_queue_addr = PublicKey(self._decode.event_queue)
         bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         return decode_event_queue(bytes_data)
 
-    def load_request_queue(self):
+    def load_request_queue(self):  # returns raw construct type
         request_queue_addr = PublicKey(self._decode.request_queue)
         bytes_data = load_bytes_data(request_queue_addr, self._endpoint)
         return decode_request_queue(bytes_data)
