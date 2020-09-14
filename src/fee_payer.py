@@ -16,7 +16,7 @@ class UninitializedAccount(NamedTuple):
     """Transaction or transaction instruction to execute to intialize the account."""
 
 
-class FeePayer(Account):
+class Payer(Account):
     """An account to execute transactions and pay for fees on the Serum Dex."""
 
     def __init__(
@@ -40,15 +40,23 @@ class FeePayer(Account):
             lamports=mbfre_resp["result"],
             space=space,
             program_id=program_id,
-        )  # TODO: Bump solana and only add instruction.
+        )  # TODO: Bump solana and only add param.
         return UninitializedAccount(new_account, sys_lib.create_account(create_account_params).instructions[0])
 
     def create_dex_account(self, unpadded_len: int, new_account: Optional[PublicKey] = None) -> UninitializedAccount:
         """Create an unitialized account for the dex program."""
         if not new_account:
             new_account = Account().public_key()
-        # Add 12 bytes of padding: 5 front padding + 7 end padding
         return self.create_program_account(self._dex, unpadded_len + 12, new_account)
+
+    @staticmethod
+    def build_transaction(*instructions: TransactionInstruction) -> Transaction:
+        """Build transaction from the provided instructions"""
+        return Transaction().add(*instructions)
+
+    def sign_transaction(self, txn: Transaction) -> None:
+        """Sign transaction with the payer account."""
+        txn.sign(self)
 
     def send_transaction(
         self,
