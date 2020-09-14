@@ -14,8 +14,6 @@ else
 fi
 
 docker-compose up -d
-solana config set --url "http://localhost:8899"
-curl -s -L "https://github.com/serum-community/serum-dex/releases/download/refs%2Fheads%2Fmaster/serum_dex-$os_type.so" > serum_dex.so
 if ! [ -x $(command -v solana) ]; then
     echo Installing Solana tool suite
     curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.3.9/install/solana-install-init.sh | sh -s - v1.3.9
@@ -23,6 +21,8 @@ if ! [ -x $(command -v solana) ]; then
     echo Generating keypair
     solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
 fi
+solana config set --url "http://localhost:8899"
+curl -s -L "https://github.com/serum-community/serum-dex/releases/download/refs%2Fheads%2Fmaster/serum_dex-$os_type.so" > serum_dex.so
 sleep 1
 solana airdrop 10000
 DEX_PROGRAM_ID="$(solana deploy --use-deprecated-loader serum_dex.so | jq .programId -r)"
