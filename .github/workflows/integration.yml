@@ -24,7 +24,7 @@ jobs:
 
       - name: Testing
         run: |
-          command -v solana
+          echo $(command -v solana)
 
           if [ ! -x $(command -v solana) ]; then
             echo "solana not found 1"
