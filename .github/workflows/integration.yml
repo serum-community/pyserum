@@ -22,21 +22,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Testing
-        run: |
-
-          if [ ! hash solana 2>/dev/null ]; then
-            printf "solana not found 1"
-            exit 1
-          fi
-
-          if ! hash solana 2>/dev/null; then
-            printf "solana not found 2"
-            exit 2
-          fi
-
-          exit 3
-
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
