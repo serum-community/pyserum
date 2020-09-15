@@ -196,12 +196,12 @@ class Market:
     def cancel_order(self, owner: Account, order: Order) -> str:
         transaction = Transaction()
         transaction.add(self.make_cancel_order_transaction(owner.public_key(), order))
-        return self.send_transaction(transaction, owner)
+        return self._send_transaction(transaction, owner)
 
     def match_orders(self, fee_payer: Account, limit: int) -> str:
         transaction = Transaction()
         transaction.add(self.make_match_orders_transaction(limit))
-        return self.send_transaction(transaction, fee_payer)
+        return self._send_transaction(transaction, fee_payer)
 
     def make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
@@ -230,7 +230,7 @@ class Market:
         )
         return match_order_inst(params)
 
-    def send_transaction(self, transaction: Transaction, *signers: Account) -> str:
+    def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
         connection = Client(self._endpoint)
         res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
