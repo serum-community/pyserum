@@ -24,6 +24,7 @@ from .utils import load_bytes_data
 # pylint: disable=too-many-public-methods
 class Market:
     """Represents a Serum Market."""
+
     logger = logging.getLogger("serum.market")
 
     _decode: Any
