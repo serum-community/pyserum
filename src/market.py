@@ -221,7 +221,7 @@ class Market:
             raise Exception("Size lot %d is too small." % order_params.max_quantity)
         if self.price_number_to_lots(order_params.limit_price) < 0:
             raise Exception("Price lot %d is too small." % order_params.limit_price)
-        self.logger.warning("open order account is " + str(open_order_account) + "but it is not used yet.")
+        self.logger.warning("open order account is %s but it is not used yet.", str(open_order_account))
         return new_order_inst(
             NewOrderParams(
                 market=self.address(),
@@ -236,7 +236,7 @@ class Market:
                 max_quantity=order_params.max_quantity,
                 order_type=order_params.order_type,
                 client_id=order_params.client_id,
-                program_id=self._program_id,\
+                program_id=self._program_id,
             )
         )
 
@@ -294,6 +294,7 @@ class Market:
         return str(signature)
 
 
+# pylint:disable=duplicate-code
 class PlaceOrderParams(NamedTuple):
     payer: PublicKey
     """"""

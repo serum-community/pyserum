@@ -4,7 +4,8 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.market import Market
+from src.enums import OrderType, Side
+from src.market import Market, PlaceOrderParams
 
 from .utils import confirm_transaction
 
@@ -69,6 +70,35 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
     event_queue = bootstrapped_market.load_event_queue()
     # 5 event after the order is matched, including 2 fill events.
     assert len(event_queue) == 5
+
+    # There should be no bid order.
+    bids = bootstrapped_market.load_bids()
+    assert sum(1 for _ in bids) == 0
+
+    # There should be no ask order.
+    asks = bootstrapped_market.load_asks()
+    assert sum(1 for _ in asks) == 0
+
+
+@pytest.mark.integration
+def test_new_order(
+    bootstrapped_market: Market, stubbed_payer: Account, http_client: Client, stubbed_quote_wallet: Account
+):
+    initial_request_len = len(bootstrapped_market.load_request_queue())
+    order_params = PlaceOrderParams(
+        payer=stubbed_quote_wallet.public_key(),
+        owner=stubbed_payer,
+        side=Side.Buy,
+        order_type=OrderType.Limit,
+        limit_price=1234,
+        max_quantity=4321,
+    )
+    sig = bootstrapped_market.place_order(order_params)
+    confirm_transaction(http_client, sig)
+
+    request_queue = bootstrapped_market.load_request_queue()
+    # 0 request after matching.
+    assert len(request_queue) == initial_request_len + 1
 
     # There should be no bid order.
     bids = bootstrapped_market.load_bids()

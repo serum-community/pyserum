@@ -13,12 +13,12 @@ def _decode_queue(header_layout: Any, node_layout: Any, buffer: bytes, history: 
         for i in range(min(history, alloc_len)):
             node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
             offset = header_layout.sizeof() + node_index * node_layout.sizeof()
-            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203  # noqa: E203
+            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203
     else:
         for i in range(header.count):
             node_index = (header.head + i) % alloc_len
             offset = header_layout.sizeof() + node_index * node_layout.sizeof()
-            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203  # noqa: E203
+            nodes.append(node_layout.parse(buffer[offset : offset + node_layout.sizeof()]))  # noqa: E203
     return header, nodes
 
 
