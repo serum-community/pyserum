@@ -189,15 +189,15 @@ class Market:
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
         pass
 
-    def cancel_order_by_client_id(self, owner: str):
+    def cancel_order_by_client_id(self, owner: str) -> str:
         pass
 
-    def cancel_order(self, owner: Account, order: Order):
+    def cancel_order(self, owner: Account, order: Order) -> str:
         transaction = Transaction()
         transaction.add(self._make_cancel_order_transaction(owner.public_key(), order))
         return self._send_transaction(transaction, [owner])
 
-    def match_orders(self, fee_payer: Account, limit: int):
+    def match_orders(self, fee_payer: Account, limit: int) -> str:
         transaction = Transaction()
         transaction.add(self._make_match_orders_transaction(limit))
         return self._send_transaction(transaction, [fee_payer])

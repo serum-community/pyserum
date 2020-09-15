@@ -1,6 +1,6 @@
 #!/bin/bash
 
-bash scripts/run_serum_in_docker.sh
+bash scripts/bootstrap_dex.sh
 
 wait_time=20
 echo "Waiting $wait_time seconds to make sure the market has started"
