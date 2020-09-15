@@ -6,9 +6,10 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from .utils import load_bytes_data
 
 
-class OpenOrder:
+class OpenOrderAccount:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -38,9 +39,9 @@ class OpenOrder:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrder:
+    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrderAccount:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(data_bytes)
-        return OpenOrder(
+        return OpenOrderAccount(
             address=address,
             market=PublicKey(open_order_decoded.market),
             owner=PublicKey(open_order_decoded.owner),
@@ -54,5 +55,12 @@ class OpenOrder:
             client_ids=open_order_decoded.client_ids,
         )
 
-    def find_for_market_and_owner(self, connection: Client, market: PublicKey, owner: PublicKey):
+    @staticmethod
+    def find_for_market_and_owner(connection: Client, market: PublicKey, owner: PublicKey):
         pass
+
+    @staticmethod
+    def load(endpoint: str, address: str) -> OpenOrderAccount:
+        addr_pub_key = PublicKey(address)
+        bytes_data = load_bytes_data(addr_pub_key, endpoint)
+        return OpenOrderAccount.from_bytes(addr_pub_key, bytes_data)

@@ -18,7 +18,7 @@ unit-tests:
 	pipenv run pytest -v -m "not integration"
 
 int-tests:
-	sh scripts/run_int_tests.sh
+	bash scripts/run_int_tests.sh
 
 # Minimal makefile for Sphinx documentation
 #

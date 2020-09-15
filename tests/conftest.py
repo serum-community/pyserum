@@ -3,6 +3,7 @@ from typing import Dict
 import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
+from solana.rpc.api import Client
 
 __cached_params = {}
 
@@ -139,3 +140,11 @@ def stubbed_bid_account_pk(__bs_params) -> PublicKey:
 def stubbed_ask_account_pk(__bs_params) -> PublicKey:
     """Public key of the initial ask order account."""
     return PublicKey(__bs_params["ask_account"])
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
+def http_client() -> Client:
+    """Solana http client."""
+    client = Client()
+    return client

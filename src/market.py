@@ -1,30 +1,31 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
-import base64
+import logging
 import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
+from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.transaction import Transaction
+from solana.transaction import Transaction, TransactionInstruction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
 from .enums import Side
-from .instructions import DEFAULT_DEX_PROGRAM_ID, NewOrderParams
+from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
+from .instructions import cancel_order as cancel_order_inst
+from .instructions import match_orders as match_order_inst
 from .queue_ import decode_event_queue, decode_request_queue
+from .utils import load_bytes_data
 
 
-def _load_bytes_data(addr: PublicKey, endpoint: str):
-    res = Client(endpoint).get_account_info(addr)
-    data = res["result"]["value"]["data"][0]
-    return base64.decodebytes(data.encode("ascii"))
-
-
+# pylint: disable=too-many-public-methods
 class Market:
     """Represents a Serum Market."""
+
+    logger = logging.getLogger("serum.market")
 
     _decode: Any
     _baseSplTokenDecimals: int
@@ -60,7 +61,7 @@ class Market:
         endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     ) -> Market:
         """Factory method to create a Market."""
-        bytes_data = _load_bytes_data(PublicKey(market_address), endpoint)
+        bytes_data = load_bytes_data(PublicKey(market_address), endpoint)
         market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
@@ -70,19 +71,25 @@ class Market:
         base_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.base_mint))
         quote_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.quote_mint))
 
-        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint)
+        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint, program_id=program_id)
 
     def address(self) -> PublicKey:
         """Return market address."""
-        raise NotImplementedError("address is not implemented yet")
+        return PublicKey(self._decode.own_address)
+
+    def public_key(self) -> PublicKey:
+        return self.address()
+
+    def program_id(self) -> PublicKey:
+        return self._program_id
 
     def base_mint_address(self) -> PublicKey:
         """Returns base mint address."""
-        raise NotImplementedError("base_mint_address is not implemented yet")
+        return PublicKey(self._decode.base_mint)
 
     def quote_mint_address(self) -> PublicKey:
         """Returns quote mint address."""
-        raise NotImplementedError("quote_mint_address is not implemented yet")
+        return PublicKey(self._decode.quote_mint)
 
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
@@ -113,34 +120,34 @@ class Market:
     @staticmethod
     def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
-        bytes_data = _load_bytes_data(mint_pub_key, endpoint)
+        bytes_data = load_bytes_data(mint_pub_key, endpoint)
         return MINT_LAYOUT.parse(bytes_data).decimals
 
-    def load_bids(self):
+    def load_bids(self) -> OrderBook:
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        bytes_data = _load_bytes_data(bids_addr, self._endpoint)
+        bytes_data = load_bytes_data(bids_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
-    def load_asks(self):
+    def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        bytes_data = _load_bytes_data(asks_addr, self._endpoint)
+        bytes_data = load_bytes_data(asks_addr, self._endpoint)
         return OrderBook.decode(self, bytes_data)
 
-    def load_event_queue(self):
+    def load_event_queue(self):  # returns raw construct type
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         return decode_event_queue(bytes_data)
 
-    def load_request_queue(self):
+    def load_request_queue(self):  # returns raw construct type
         request_queue_addr = PublicKey(self._decode.request_queue)
-        bytes_data = _load_bytes_data(request_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(request_queue_addr, self._endpoint)
         return decode_request_queue(bytes_data)
 
-    def load_fills(self, limit=100):
+    def load_fills(self, limit=100) -> List[FilledOrder]:
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = _load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
         events = decode_event_queue(bytes_data, limit)
         return [
             self.parse_fill_event(event)
@@ -148,7 +155,7 @@ class Market:
             if event.event_flags.fill and event.native_quantity_paid > 0
         ]
 
-    def parse_fill_event(self, event):
+    def parse_fill_event(self, event) -> FilledOrder:
         if event.event_flags.bid:
             side = Side.Buy
             price_before_fees = (
@@ -185,6 +192,56 @@ class Market:
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
         pass
 
+    def cancel_order_by_client_id(self, owner: str) -> str:
+        pass
+
+    def cancel_order(self, owner: Account, order: Order) -> str:
+        transaction = Transaction()
+        transaction.add(self.make_cancel_order_instruction(owner.public_key(), order))
+        return self._send_transaction(transaction, owner)
+
+    def match_orders(self, fee_payer: Account, limit: int) -> str:
+        transaction = Transaction()
+        transaction.add(self.make_match_orders_instruction(limit))
+        return self._send_transaction(transaction, fee_payer)
+
+    def make_cancel_order_instruction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
+        params = CancelOrderParams(
+            market=self.address(),
+            owner=owner,
+            open_orders=order.open_order_address,
+            request_queue=self._decode.request_queue,
+            side=order.side,
+            order_id=order.order_id,
+            open_orders_slot=order.open_order_slot,
+            program_id=self._program_id,
+        )
+        return cancel_order_inst(params)
+
+    def make_match_orders_instruction(self, limit: int) -> TransactionInstruction:
+        params = MatchOrdersParams(
+            market=self.address(),
+            request_queue=PublicKey(self._decode.request_queue),
+            event_queue=PublicKey(self._decode.event_queue),
+            bids=PublicKey(self._decode.bids),
+            asks=PublicKey(self._decode.asks),
+            base_vault=PublicKey(self._decode.base_vault),
+            quote_vault=PublicKey(self._decode.quote_vault),
+            limit=limit,
+            program_id=self._program_id,
+        )
+        return match_order_inst(params)
+
+    def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
+        connection = Client(self._endpoint)
+        res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
+        if self._confirmations > 0:
+            self.logger.warning("Cannot confirm transaction yet.")
+        signature = res.get("result")
+        if not signature:
+            raise Exception("Transaction not sent successfully.")
+        return str(signature)
+
 
 class FilledOrder(NamedTuple):
     order_id: int
@@ -205,9 +262,10 @@ class Order(NamedTuple):
     order_id: int
     client_id: int
     open_order_address: PublicKey
+    open_order_slot: int
     fee_tier: int
     order_info: OrderInfo
-    side: str
+    side: Side
 
 
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
@@ -281,5 +339,6 @@ class OrderBook:
                     size=self._market.base_size_lots_to_number(node.quantity),
                     size_lots=node.quantity,
                 ),
-                side="buy" if self._is_bids else "sell",
+                side=Side.Buy if self._is_bids else Side.Sell,
+                open_order_slot=node.owner_slot,
             )
