@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import base64
-from typing import Any, Dict, List
+from typing import List
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.system_program import CreateAccountParams, create_account
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .utils import load_bytes_data
 
 
