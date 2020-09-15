@@ -24,6 +24,7 @@ from .utils import load_bytes_data
 # pylint: disable=too-many-public-methods
 class Market:
     """Represents a Serum Market."""
+    logger = logging.getLogger("serum.market")
 
     _decode: Any
     _baseSplTokenDecimals: int
@@ -195,15 +196,15 @@ class Market:
 
     def cancel_order(self, owner: Account, order: Order) -> str:
         transaction = Transaction()
-        transaction.add(self.make_cancel_order_transaction(owner.public_key(), order))
+        transaction.add(self.make_cancel_order_instruction(owner.public_key(), order))
         return self._send_transaction(transaction, owner)
 
     def match_orders(self, fee_payer: Account, limit: int) -> str:
         transaction = Transaction()
-        transaction.add(self.make_match_orders_transaction(limit))
+        transaction.add(self.make_match_orders_instruction(limit))
         return self._send_transaction(transaction, fee_payer)
 
-    def make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
+    def make_cancel_order_instruction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
             market=self.address(),
             owner=owner,
@@ -216,7 +217,7 @@ class Market:
         )
         return cancel_order_inst(params)
 
-    def make_match_orders_transaction(self, limit: int) -> TransactionInstruction:
+    def make_match_orders_instruction(self, limit: int) -> TransactionInstruction:
         params = MatchOrdersParams(
             market=self.address(),
             request_queue=PublicKey(self._decode.request_queue),
@@ -234,7 +235,7 @@ class Market:
         connection = Client(self._endpoint)
         res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
-            logging.warning("Cannot confirm transaction yet.")
+            self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
         if not signature:
             raise Exception("Transaction not sent successfully.")
