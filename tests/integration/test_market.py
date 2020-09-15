@@ -32,12 +32,14 @@ def test_bootstrapped_market(
 
 @pytest.mark.integration
 def test_market_load_bid(bootstrapped_market: Market):
+    # TODO: test for non-zero order case.
     bids = bootstrapped_market.load_bids()
     assert sum(1 for _ in bids) == 0
 
 
 @pytest.mark.integration
 def test_market_load_asks(bootstrapped_market: Market):
+    # TODO: test for non-zero order case.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
 
