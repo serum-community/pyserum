@@ -13,10 +13,11 @@ from solana.transaction import Transaction, TransactionInstruction
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.slab import Slab
-from .enums import Side
+from .enums import OrderType, Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
+from .instructions import new_order as new_order_inst
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -91,6 +92,22 @@ class Market:
         """Returns quote mint address."""
         return PublicKey(self._decode.quote_mint)
 
+    def base_vault_address(self) -> PublicKey:
+        """Returns base vault address."""
+        return PublicKey(self._decode.base_vault)
+
+    def quote_vault_address(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.quote_vault)
+
+    def request_queue(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.request_queue)
+
+    def event_queue(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.event_queue)
+
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
 
@@ -109,7 +126,10 @@ class Market:
         )
 
     def price_number_to_lots(self, price: float) -> int:
-        raise NotImplementedError("price_number_to_lots is not implemented")
+        return round(
+            (price * 10 ** self.__quote_spl_token_multiplier() * self._decode.base_lot_size)
+            / (10 ** self.__base_spl_token_multiplier() * self._decode.quote_lot_size)
+        )
 
     def base_size_lots_to_number(self, size: int) -> float:
         return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
@@ -183,11 +203,42 @@ class Market:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
-    def place_order(self, order_params: NewOrderParams):
-        pass
+    def place_order(self, order_params: PlaceOrderParams):
+        txs, signers = self.make_place_order_transaction(order_params)
+        return self._send_transaction(txs, *signers)
 
-    def make_place_order_transaction(self, order_params: NewOrderParams) -> Tuple[Transaction, List[PublicKey]]:
-        pass
+    def make_place_order_transaction(self, order_params: PlaceOrderParams) -> Tuple[Transaction, List[Account]]:
+        transaction = Transaction()
+        transaction.add(
+            self.make_place_order_instruction(order_params, PublicKey("3Guz5a3YSi4cw7Che3wWcbQvFPeYcJLUfkNyQm215cRF"))
+        )
+        return transaction, [order_params.owner]
+
+    def make_place_order_instruction(
+        self, order_params: PlaceOrderParams, open_order_account: PublicKey
+    ) -> TransactionInstruction:
+        if self.base_size_number_to_lots(order_params.max_quantity) < 0:
+            raise Exception("Size lot %d is too small." % order_params.max_quantity)
+        if self.price_number_to_lots(order_params.limit_price) < 0:
+            raise Exception("Price lot %d is too small." % order_params.limit_price)
+        self.logger.warning("open order account is " + str(open_order_account) + "but it is not used yet.")
+        return new_order_inst(
+            NewOrderParams(
+                market=self.address(),
+                open_orders=open_order_account,
+                payer=order_params.payer,
+                owner=order_params.owner.public_key(),
+                request_queue=self.request_queue(),
+                base_vault=self.base_vault_address(),
+                quote_vault=self.quote_vault_address(),
+                side=order_params.side,
+                limit_price=order_params.limit_price,
+                max_quantity=order_params.max_quantity,
+                order_type=order_params.order_type,
+                client_id=order_params.client_id,
+                program_id=self._program_id,\
+            )
+        )
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
         pass
@@ -241,6 +292,23 @@ class Market:
         if not signature:
             raise Exception("Transaction not sent successfully.")
         return str(signature)
+
+
+class PlaceOrderParams(NamedTuple):
+    payer: PublicKey
+    """"""
+    owner: Account
+    """"""
+    side: Side
+    """"""
+    limit_price: int
+    """"""
+    max_quantity: int
+    """"""
+    order_type: OrderType
+    """"""
+    client_id: int = 0
+    """"""
 
 
 class FilledOrder(NamedTuple):
