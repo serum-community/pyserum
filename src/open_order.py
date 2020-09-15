@@ -12,46 +12,6 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .utils import load_bytes_data
 
 
-def make_create_account_transaction(
-    owner_address: PublicKey,
-    new_account_address: PublicKey,
-    lamports: int,
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
-):
-    return create_account(
-        CreateAccountParams(
-            from_pubkey=owner_address,
-            new_account_pubkey=new_account_address,
-            lamports=lamports,
-            space=OPEN_ORDERS_LAYOUT.sizeof(),
-            program_id=program_id,
-        )
-    )
-
-
-def get_filtered_program_accounts(
-    address: str, program_id: str, filters: Dict[str, Dict[str, Any]]
-) -> List[Dict[str, Any]]:
-    resp = Client(address).get_program_accounts(
-        program_id, encoding="base64", filter_opts=filters, data_size=OPEN_ORDERS_LAYOUT.sizeof()
-    )
-    accounts = []
-    for account in resp["result"]:
-        account_details = account["account"]
-        accounts.append(
-            {
-                "public_key": PublicKey(account["pubkey"]),
-                "account_info": {
-                    "data": base64.decodebytes(account_details["data"].encode("ascii")),
-                    "executable": account_details["executable"],
-                    "owner": PublicKey(account_details["owner"]),
-                    "lamports": account_details["owner"],
-                },
-            }
-        )
-    return accounts
-
-
 class OpenOrderAccount:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-instance-attributes

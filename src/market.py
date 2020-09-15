@@ -1,6 +1,7 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any, Iterable, List, NamedTuple, Tuple
 
@@ -194,15 +195,15 @@ class Market:
 
     def cancel_order(self, owner: Account, order: Order) -> str:
         transaction = Transaction()
-        transaction.add(self._make_cancel_order_transaction(owner.public_key(), order))
-        return self._send_transaction(transaction, [owner])
+        transaction.add(self.make_cancel_order_transaction(owner.public_key(), order))
+        return self.send_transaction(transaction, owner)
 
     def match_orders(self, fee_payer: Account, limit: int) -> str:
         transaction = Transaction()
-        transaction.add(self._make_match_orders_transaction(limit))
-        return self._send_transaction(transaction, [fee_payer])
+        transaction.add(self.make_match_orders_transaction(limit))
+        return self.send_transaction(transaction, fee_payer)
 
-    def _make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
+    def make_cancel_order_transaction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
             market=self.address(),
             owner=owner,
@@ -215,7 +216,7 @@ class Market:
         )
         return cancel_order_inst(params)
 
-    def _make_match_orders_transaction(self, limit: int) -> TransactionInstruction:
+    def make_match_orders_transaction(self, limit: int) -> TransactionInstruction:
         params = MatchOrdersParams(
             market=self.address(),
             request_queue=PublicKey(self._decode.request_queue),
@@ -229,14 +230,14 @@ class Market:
         )
         return match_order_inst(params)
 
-    def _send_transaction(self, transaction: Transaction, signers: List[Account]) -> str:
+    def send_transaction(self, transaction: Transaction, *signers: Account) -> str:
         connection = Client(self._endpoint)
         res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
-            print("cannot confirm transaction yet.")
+            logging.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
         if not signature:
-            print("transaction not sent successfully")
+            raise Exception("Transaction not sent successfully.")
         return str(signature)
 
 
