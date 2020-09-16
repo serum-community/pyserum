@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List, NamedTuple, Union
+from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client, MemcmpOpt
@@ -83,9 +83,24 @@ class OpenOrderAccount:
                 offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),
             ),
-            OPEN_ORDERS_LAYOUT.sizeof(),  # data_size
         ]
-        accounts = get_filtered_program_accounts(endpoint, program_id, filters)
+
+        resp = Client(endpoint).get_program_accounts(
+            program_id, encoding="base64", memcmp_opts=filters, data_size=OPEN_ORDERS_LAYOUT.sizeof()
+        )
+        accounts = []
+        for account in resp["result"]:
+            account_details = account["account"]
+            # print(account_details)
+            accounts.append(
+                ProgramAccount(
+                    public_key=PublicKey(account["pubkey"]),
+                    data=base64.decodebytes(account_details["data"][0].encode("ascii")),
+                    is_executablable=bool(account_details["executable"]),
+                    owner=PublicKey(account_details["owner"]),
+                    lamports=int(account_details["lamports"]),
+                )
+            )
         return [OpenOrderAccount.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod
@@ -110,23 +125,3 @@ def make_create_account_instruction(
             program_id=program_id,
         )
     )
-
-
-def get_filtered_program_accounts(
-    endpoint: str, program_id: PublicKey, filters: List[Union[MemcmpOpt, int]]
-) -> List[ProgramAccount]:
-    resp = Client(endpoint).get_program_accounts(program_id, encoding="base64", filter_opts=filters)
-    accounts = []
-    for account in resp["result"]:
-        account_details = account["account"]
-        # print(account_details)
-        accounts.append(
-            ProgramAccount(
-                public_key=PublicKey(account["pubkey"]),
-                data=base64.decodebytes(account_details["data"][0].encode("ascii")),
-                is_executablable=bool(account_details["executable"]),
-                owner=PublicKey(account_details["owner"]),
-                lamports=int(account_details["lamports"]),
-            )
-        )
-    return accounts
