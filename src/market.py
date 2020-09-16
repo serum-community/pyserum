@@ -128,9 +128,11 @@ class Market:
         )
 
     def price_number_to_lots(self, price: float) -> int:
-        return round(
-            (price * 10 ** self.__quote_spl_token_multiplier() * self._decode.base_lot_size)
-            / (10 ** self.__base_spl_token_multiplier() * self._decode.quote_lot_size)
+        return int(
+            round(
+                (price * 10 ** self.__quote_spl_token_multiplier() * self._decode.base_lot_size)
+                / (10 ** self.__base_spl_token_multiplier() * self._decode.quote_lot_size)
+            )
         )
 
     def base_size_lots_to_number(self, size: int) -> float:
