@@ -112,7 +112,7 @@ def test_new_order(
     assert sum(1 for _ in asks) == 0
 
     sig = bootstrapped_market.place_order(
-        payer=stubbed_quote_wallet.public_key(),
+        payer=stubbed_base_wallet.public_key(),
         owner=stubbed_payer,
         side=Side.Sell,
         order_type=OrderType.Limit,
