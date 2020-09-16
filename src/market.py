@@ -246,7 +246,7 @@ class Market:
                 open_order_accounts[0].address if open_order_accounts else new_open_order_account.public_key(),
             )
         )
-        return self._send_transaction(transaction, owner, new_open_order_account)
+        return self._send_transaction(transaction, *signers)
 
     def make_place_order_instruction(
         self,
