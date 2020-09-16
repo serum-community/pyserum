@@ -20,7 +20,7 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrders
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
-from .open_order_account import OpenOrderAccount, make_create_account_instruction
+from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -157,8 +157,8 @@ class Market:
     def asks_address(self) -> PublicKey:
         return PublicKey(self._decode.asks)
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrderAccount]:
-        return OpenOrderAccount.find_for_market_and_owner(self._conn, self.address(), owner_address, self._program_id)
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
+        return OpenOrdersAccount.find_for_market_and_owner(self._conn, self.address(), owner_address, self._program_id)
 
     def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
         raise NotImplementedError("find_quote_token_accounts_for_owner not implemented.")
@@ -345,7 +345,7 @@ class Market:
         return match_order_inst(params)
 
     def settle_funds(
-        self, owner: Account, open_orders: OpenOrderAccount, base_wallet: PublicKey, quote_wallet: PublicKey
+        self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
     ) -> str:
         raise NotImplementedError("settle_funds not implemented.")
 

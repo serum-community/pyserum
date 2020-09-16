@@ -2,7 +2,7 @@ import base64
 
 from solana.publickey import PublicKey
 
-from src.open_order_account import OPEN_ORDERS_LAYOUT, OpenOrderAccount
+from src.open_orders_account import OPEN_ORDERS_LAYOUT, OpenOrdersAccount
 
 from .binary_file_path import OPEN_ORDER_ACCOUNT_BIN_PATH
 
@@ -28,7 +28,7 @@ def test_decode_open_order_account():
     with open(OPEN_ORDER_ACCOUNT_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        open_order_account = OpenOrderAccount.from_bytes(PublicKey(1), data)
+        open_order_account = OpenOrdersAccount.from_bytes(PublicKey(1), data)
         assert open_order_account.market == PublicKey("4r5Bw3HxmxAzPQ2ATUvgF2nFe3B6G1Z2Nq2Nwu77wWc2")
         assert open_order_account.owner == PublicKey("7hJx7QMiVfjZSSADQ18oNKzqifJPMu18djYLkh4aYh5Q")
         assert len([order for order in open_order_account.orders if order != 0]) == 3

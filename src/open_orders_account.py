@@ -21,7 +21,7 @@ class ProgramAccount(NamedTuple):
     owner: PublicKey
 
 
-class OpenOrderAccount:
+class OpenOrdersAccount:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -51,12 +51,12 @@ class OpenOrderAccount:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrderAccount:
+    def from_bytes(address: PublicKey, data_bytes: bytes) -> OpenOrdersAccount:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(data_bytes)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
 
-        return OpenOrderAccount(
+        return OpenOrdersAccount(
             address=address,
             market=PublicKey(open_order_decoded.market),
             owner=PublicKey(open_order_decoded.owner),
@@ -73,7 +73,7 @@ class OpenOrderAccount:
     @staticmethod
     def find_for_market_and_owner(
         conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey
-    ) -> List[OpenOrderAccount]:
+    ) -> List[OpenOrdersAccount]:
         filters = [
             MemcmpOpt(
                 offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
@@ -100,13 +100,13 @@ class OpenOrderAccount:
                     lamports=int(account_details["lamports"]),
                 )
             )
-        return [OpenOrderAccount.from_bytes(account.public_key, account.data) for account in accounts]
+        return [OpenOrdersAccount.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod
-    def load(conn: Client, address: str) -> OpenOrderAccount:
+    def load(conn: Client, address: str) -> OpenOrdersAccount:
         addr_pub_key = PublicKey(address)
         bytes_data = load_bytes_data(addr_pub_key, conn)
-        return OpenOrderAccount.from_bytes(addr_pub_key, bytes_data)
+        return OpenOrdersAccount.from_bytes(addr_pub_key, bytes_data)
 
 
 def make_create_account_instruction(
