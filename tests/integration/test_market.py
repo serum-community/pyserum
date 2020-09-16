@@ -102,7 +102,7 @@ def test_new_order(
 
     # There should be no bid order.
     bids = bootstrapped_market.load_bids()
-    assert sum(1 for _ in bids) == 1
+    assert sum(1 for _ in bids) == 0
 
     # There should be no ask order.
     asks = bootstrapped_market.load_asks()
