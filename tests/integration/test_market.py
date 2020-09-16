@@ -82,7 +82,11 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
 
 @pytest.mark.integration
 def test_new_order(
-    bootstrapped_market: Market, stubbed_payer: Account, http_client: Client, stubbed_quote_wallet: Account
+    bootstrapped_market: Market,
+    stubbed_payer: Account,
+    http_client: Client,
+    stubbed_quote_wallet: Account,
+    stubbed_base_wallet: Account,
 ):
     initial_request_len = len(bootstrapped_market.load_request_queue())
     sig = bootstrapped_market.place_order(

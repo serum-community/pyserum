@@ -261,7 +261,6 @@ class Market:
             raise Exception("Size lot %d is too small." % max_quantity)
         if self.price_number_to_lots(limit_price) < 0:
             raise Exception("Price lot %d is too small." % limit_price)
-        self.logger.warning("open order account is %s but it is not used yet.", str(open_order_account))
         return new_order_inst(
             NewOrderParams(
                 market=self.address(),
