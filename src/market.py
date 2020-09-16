@@ -12,15 +12,16 @@ from solana.transaction import Transaction, TransactionInstruction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
+from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ._layouts.slab import Slab
 from .enums import OrderType, Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
+from .open_order_account import OpenOrderAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
-from . open_order_account import OpenOrderAccount
 
 
 # pylint: disable=too-many-public-methods
@@ -210,10 +211,30 @@ class Market:
 
     def make_place_order_transaction(self, order_params: PlaceOrderParams) -> Tuple[Transaction, List[Account]]:
         transaction = Transaction()
+        signers: List[Account] = [order_params.owner]
+        open_order_accounts = self.find_open_orders_accounts_for_owner(order_params.owner.public_key())
+        open_order_account = None
+        if not open_order_accounts:
+            new_open_order_account = Account()
+            transaction.add(
+                make_create_account_instruction(
+                    order_params.owner.public_key(),
+                    new_open_order_account.public_key(),
+                    Client(self._endpoint).get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())[
+                        "result"
+                    ],
+                    self._program_id,
+                )
+            )
+            signers.append(new_open_order_account)
+
         transaction.add(
-            self.make_place_order_instruction(order_params, PublicKey("3Guz5a3YSi4cw7Che3wWcbQvFPeYcJLUfkNyQm215cRF"))
+            self.make_place_order_instruction(
+                order_params,
+                open_order_accounts[0].address if open_order_accounts else new_open_order_account.public_key(),
+            )
         )
-        return transaction, [order_params.owner]
+        return transaction, signers
 
     def make_place_order_instruction(
         self, order_params: PlaceOrderParams, open_order_account: PublicKey
@@ -242,7 +263,9 @@ class Market:
         )
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrderAccount]:
-        return OpenOrderAccount.find_for_market_and_owner(self.address(), owner_address, self._program_id)
+        return OpenOrderAccount.find_for_market_and_owner(
+            self._endpoint, self.address(), owner_address, self._program_id
+        )
 
     def cancel_order_by_client_id(self, owner: str) -> str:
         pass
@@ -301,13 +324,13 @@ class PlaceOrderParams(NamedTuple):
     """"""
     owner: Account
     """"""
+    order_type: OrderType
+    """"""
     side: Side
     """"""
     limit_price: int
     """"""
     max_quantity: int
-    """"""
-    order_type: OrderType
     """"""
     client_id: int = 0
     """"""
