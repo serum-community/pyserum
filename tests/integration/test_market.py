@@ -5,7 +5,7 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
 from src.enums import OrderType, Side
-from src.market import Market, PlaceOrderParams
+from src.market import Market
 
 from .utils import confirm_transaction
 
@@ -85,15 +85,14 @@ def test_new_order(
     bootstrapped_market: Market, stubbed_payer: Account, http_client: Client, stubbed_quote_wallet: Account
 ):
     initial_request_len = len(bootstrapped_market.load_request_queue())
-    order_params = PlaceOrderParams(
+    sig = bootstrapped_market.place_order(
         payer=stubbed_quote_wallet.public_key(),
         owner=stubbed_payer,
         side=Side.Buy,
         order_type=OrderType.Limit,
-        limit_price=1234,
-        max_quantity=4321,
+        limit_price=1000,
+        max_quantity=3000,
     )
-    sig = bootstrapped_market.place_order(order_params)
     confirm_transaction(http_client, sig)
 
     request_queue = bootstrapped_market.load_request_queue()
@@ -107,3 +106,25 @@ def test_new_order(
     # There should be no ask order.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
+
+    sig = bootstrapped_market.place_order(
+        payer=stubbed_quote_wallet.public_key(),
+        owner=stubbed_payer,
+        side=Side.Sell,
+        order_type=OrderType.Limit,
+        limit_price=1500,
+        max_quantity=3000,
+    )
+    confirm_transaction(http_client, sig)
+
+    # The two order shouldn't get executed since there is a price difference of 1
+    sig = bootstrapped_market.match_orders(stubbed_payer, 2)
+    confirm_transaction(http_client, sig)
+
+    # There should be 1 bid order that we sent earlier.
+    bids = bootstrapped_market.load_bids()
+    assert sum(1 for _ in bids) == 1
+
+    # There should be 1 ask order that we sent earlier.
+    asks = bootstrapped_market.load_asks()
+    assert sum(1 for _ in asks) == 1

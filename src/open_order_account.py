@@ -91,7 +91,6 @@ class OpenOrderAccount:
         accounts = []
         for account in resp["result"]:
             account_details = account["account"]
-            # print(account_details)
             accounts.append(
                 ProgramAccount(
                     public_key=PublicKey(account["pubkey"]),

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any, Iterable, List, NamedTuple, Tuple
+from typing import Any, Iterable, List, NamedTuple
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -205,19 +205,24 @@ class Market:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
-    def place_order(self, order_params: PlaceOrderParams):
-        txs, signers = self.make_place_order_transaction(order_params)
-        return self._send_transaction(txs, *signers)
-
-    def make_place_order_transaction(self, order_params: PlaceOrderParams) -> Tuple[Transaction, List[Account]]:
+    def place_order(
+        self,
+        payer: PublicKey,
+        owner: Account,
+        order_type: OrderType,
+        side: Side,
+        limit_price: int,
+        max_quantity: int,
+        client_id: int = 0,
+    ):
         transaction = Transaction()
-        signers: List[Account] = [order_params.owner]
-        open_order_accounts = self.find_open_orders_accounts_for_owner(order_params.owner.public_key())
+        signers: List[Account] = [owner]
+        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
             new_open_order_account = Account()
             transaction.add(
                 make_create_account_instruction(
-                    order_params.owner.public_key(),
+                    owner.public_key(),
                     new_open_order_account.public_key(),
                     Client(self._endpoint).get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())[
                         "result"
@@ -229,34 +234,48 @@ class Market:
 
         transaction.add(
             self.make_place_order_instruction(
-                order_params,
+                payer,
+                owner,
+                order_type,
+                side,
+                limit_price,
+                max_quantity,
+                client_id,
                 open_order_accounts[0].address if open_order_accounts else new_open_order_account.public_key(),
             )
         )
-        return transaction, signers
+        return self._send_transaction(transaction, *signers)
 
     def make_place_order_instruction(
-        self, order_params: PlaceOrderParams, open_order_account: PublicKey
+        self,
+        payer: PublicKey,
+        owner: Account,
+        order_type: OrderType,
+        side: Side,
+        limit_price: int,
+        max_quantity: int,
+        client_id: int,
+        open_order_account: PublicKey,
     ) -> TransactionInstruction:
-        if self.base_size_number_to_lots(order_params.max_quantity) < 0:
-            raise Exception("Size lot %d is too small." % order_params.max_quantity)
-        if self.price_number_to_lots(order_params.limit_price) < 0:
-            raise Exception("Price lot %d is too small." % order_params.limit_price)
+        if self.base_size_number_to_lots(max_quantity) < 0:
+            raise Exception("Size lot %d is too small." % max_quantity)
+        if self.price_number_to_lots(limit_price) < 0:
+            raise Exception("Price lot %d is too small." % limit_price)
         self.logger.warning("open order account is %s but it is not used yet.", str(open_order_account))
         return new_order_inst(
             NewOrderParams(
                 market=self.address(),
                 open_orders=open_order_account,
-                payer=order_params.payer,
-                owner=order_params.owner.public_key(),
+                payer=payer,
+                owner=owner.public_key(),
                 request_queue=self.request_queue(),
                 base_vault=self.base_vault_address(),
                 quote_vault=self.quote_vault_address(),
-                side=order_params.side,
-                limit_price=order_params.limit_price,
-                max_quantity=order_params.max_quantity,
-                order_type=order_params.order_type,
-                client_id=order_params.client_id,
+                side=side,
+                limit_price=limit_price,
+                max_quantity=max_quantity,
+                order_type=order_type,
+                client_id=client_id,
                 program_id=self._program_id,
             )
         )
@@ -315,24 +334,6 @@ class Market:
         if not signature:
             raise Exception("Transaction not sent successfully.")
         return str(signature)
-
-
-# pylint:disable=duplicate-code
-class PlaceOrderParams(NamedTuple):
-    payer: PublicKey
-    """"""
-    owner: Account
-    """"""
-    order_type: OrderType
-    """"""
-    side: Side
-    """"""
-    limit_price: int
-    """"""
-    max_quantity: int
-    """"""
-    client_id: int = 0
-    """"""
 
 
 class FilledOrder(NamedTuple):
