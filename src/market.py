@@ -218,6 +218,7 @@ class Market:
         client_id: int = 0,
     ):
         transaction = Transaction()
+        signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
             new_open_order_account = Account()
