@@ -4,6 +4,7 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
+from src.enums import OrderType, Side
 from src.market import Market
 
 from .utils import confirm_transaction
@@ -77,3 +78,57 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
     # There should be no ask order.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
+
+
+@pytest.mark.integration
+def test_new_order(
+    bootstrapped_market: Market,
+    stubbed_payer: Account,
+    http_client: Client,
+    stubbed_quote_wallet: Account,
+    stubbed_base_wallet: Account,
+):
+    initial_request_len = len(bootstrapped_market.load_request_queue())
+    sig = bootstrapped_market.place_order(
+        payer=stubbed_quote_wallet.public_key(),
+        owner=stubbed_payer,
+        side=Side.Buy,
+        order_type=OrderType.Limit,
+        limit_price=1000,
+        max_quantity=3000,
+    )
+    confirm_transaction(http_client, sig)
+
+    request_queue = bootstrapped_market.load_request_queue()
+    # 0 request after matching.
+    assert len(request_queue) == initial_request_len + 1
+
+    # There should be no bid order.
+    bids = bootstrapped_market.load_bids()
+    assert sum(1 for _ in bids) == 0
+
+    # There should be no ask order.
+    asks = bootstrapped_market.load_asks()
+    assert sum(1 for _ in asks) == 0
+
+    sig = bootstrapped_market.place_order(
+        payer=stubbed_base_wallet.public_key(),
+        owner=stubbed_payer,
+        side=Side.Sell,
+        order_type=OrderType.Limit,
+        limit_price=1500,
+        max_quantity=3000,
+    )
+    confirm_transaction(http_client, sig)
+
+    # The two order shouldn't get executed since there is a price difference of 1
+    sig = bootstrapped_market.match_orders(stubbed_payer, 2)
+    confirm_transaction(http_client, sig)
+
+    # There should be 1 bid order that we sent earlier.
+    bids = bootstrapped_market.load_bids()
+    assert sum(1 for _ in bids) == 1
+
+    # There should be 1 ask order that we sent earlier.
+    asks = bootstrapped_market.load_asks()
+    assert sum(1 for _ in asks) == 1

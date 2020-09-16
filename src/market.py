@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any, Iterable, List, NamedTuple, Tuple
+from typing import Any, Iterable, List, NamedTuple
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -12,11 +12,14 @@ from solana.transaction import Transaction, TransactionInstruction
 
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
+from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ._layouts.slab import Slab
-from .enums import Side
+from .enums import OrderType, Side
 from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
+from .instructions import new_order as new_order_inst
+from .open_order_account import OpenOrderAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -91,6 +94,22 @@ class Market:
         """Returns quote mint address."""
         return PublicKey(self._decode.quote_mint)
 
+    def base_vault_address(self) -> PublicKey:
+        """Returns base vault address."""
+        return PublicKey(self._decode.base_vault)
+
+    def quote_vault_address(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.quote_vault)
+
+    def request_queue(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.request_queue)
+
+    def event_queue(self) -> PublicKey:
+        """Returns quote vault address."""
+        return PublicKey(self._decode.event_queue)
+
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
 
@@ -109,7 +128,12 @@ class Market:
         )
 
     def price_number_to_lots(self, price: float) -> int:
-        raise NotImplementedError("price_number_to_lots is not implemented")
+        return int(
+            round(
+                (price * 10 ** self.__quote_spl_token_multiplier() * self._decode.base_lot_size)
+                / (10 ** self.__base_spl_token_multiplier() * self._decode.quote_lot_size)
+            )
+        )
 
     def base_size_lots_to_number(self, size: int) -> float:
         return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
@@ -183,14 +207,84 @@ class Market:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
-    def place_order(self, order_params: NewOrderParams):
-        pass
+    def place_order(
+        self,
+        payer: PublicKey,
+        owner: Account,
+        order_type: OrderType,
+        side: Side,
+        limit_price: int,
+        max_quantity: int,
+        client_id: int = 0,
+    ):
+        transaction = Transaction()
+        signers: List[Account] = [owner]
+        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
+        if not open_order_accounts:
+            new_open_order_account = Account()
+            transaction.add(
+                make_create_account_instruction(
+                    owner.public_key(),
+                    new_open_order_account.public_key(),
+                    Client(self._endpoint).get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())[
+                        "result"
+                    ],
+                    self._program_id,
+                )
+            )
+            signers.append(new_open_order_account)
 
-    def make_place_order_transaction(self, order_params: NewOrderParams) -> Tuple[Transaction, List[PublicKey]]:
-        pass
+        transaction.add(
+            self.make_place_order_instruction(
+                payer,
+                owner,
+                order_type,
+                side,
+                limit_price,
+                max_quantity,
+                client_id,
+                open_order_accounts[0].address if open_order_accounts else new_open_order_account.public_key(),
+            )
+        )
+        return self._send_transaction(transaction, *signers)
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
-        pass
+    def make_place_order_instruction(
+        self,
+        payer: PublicKey,
+        owner: Account,
+        order_type: OrderType,
+        side: Side,
+        limit_price: int,
+        max_quantity: int,
+        client_id: int,
+        open_order_account: PublicKey,
+    ) -> TransactionInstruction:
+        if self.base_size_number_to_lots(max_quantity) < 0:
+            raise Exception("Size lot %d is too small." % max_quantity)
+        if self.price_number_to_lots(limit_price) < 0:
+            raise Exception("Price lot %d is too small." % limit_price)
+        return new_order_inst(
+            NewOrderParams(
+                market=self.address(),
+                open_orders=open_order_account,
+                payer=payer,
+                owner=owner.public_key(),
+                request_queue=self.request_queue(),
+                base_vault=self.base_vault_address(),
+                quote_vault=self.quote_vault_address(),
+                side=side,
+                limit_price=limit_price,
+                max_quantity=max_quantity,
+                order_type=order_type,
+                client_id=client_id,
+                program_id=self._program_id,
+            )
+        )
+
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrderAccount]:
+        return OpenOrderAccount.find_for_market_and_owner(
+            self._endpoint, self.address(), owner_address, self._program_id
+        )
 
     def cancel_order_by_client_id(self, owner: str) -> str:
         pass
