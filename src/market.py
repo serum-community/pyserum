@@ -20,6 +20,7 @@ from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
+from . open_order_account import OpenOrderAccount
 
 
 # pylint: disable=too-many-public-methods
@@ -240,8 +241,8 @@ class Market:
             )
         )
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey):
-        pass
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrderAccount]:
+        return OpenOrderAccount.find_for_market_and_owner(self.address(), owner_address, self._program_id)
 
     def cancel_order_by_client_id(self, owner: str) -> str:
         pass
