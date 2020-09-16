@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import pytest
@@ -144,7 +145,15 @@ def stubbed_ask_account_pk(__bs_params) -> PublicKey:
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
+def docker_compose_file(pytestconfig):
+    return os.path.join(str(pytestconfig.rootdir), ".", "docker-compose.yml")
+
+
+@pytest.mark.integration
+@pytest.fixture(scope="session")
 def http_client() -> Client:
     """Solana http client."""
     client = Client()
+    if not client.is_connected():
+        raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
     return client

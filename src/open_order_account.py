@@ -72,7 +72,7 @@ class OpenOrderAccount:
 
     @staticmethod
     def find_for_market_and_owner(
-        endpoint: str, market: PublicKey, owner: PublicKey, program_id: PublicKey
+        conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey
     ) -> List[OpenOrderAccount]:
         filters = [
             MemcmpOpt(
@@ -85,7 +85,7 @@ class OpenOrderAccount:
             ),
         ]
 
-        resp = Client(endpoint).get_program_accounts(
+        resp = conn.get_program_accounts(
             program_id, encoding="base64", memcmp_opts=filters, data_size=OPEN_ORDERS_LAYOUT.sizeof()
         )
         accounts = []
@@ -103,9 +103,9 @@ class OpenOrderAccount:
         return [OpenOrderAccount.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod
-    def load(endpoint: str, address: str) -> OpenOrderAccount:
+    def load(conn: Client, address: str) -> OpenOrderAccount:
         addr_pub_key = PublicKey(address)
-        bytes_data = load_bytes_data(addr_pub_key, endpoint)
+        bytes_data = load_bytes_data(addr_pub_key, conn)
         return OpenOrderAccount.from_bytes(addr_pub_key, bytes_data)
 
 
