@@ -232,7 +232,6 @@ class Market:
                     self._program_id,
                 )
             )
-            signers.append(new_open_order_account)
 
         transaction.add(
             self.make_place_order_instruction(
