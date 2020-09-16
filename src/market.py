@@ -213,7 +213,6 @@ class Market:
         transaction = Transaction()
         signers: List[Account] = [order_params.owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(order_params.owner.public_key())
-        open_order_account = None
         if not open_order_accounts:
             new_open_order_account = Account()
             transaction.add(
