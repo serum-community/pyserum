@@ -63,7 +63,7 @@ class Market:
         """Factory method to create a Market."""
         bytes_data = load_bytes_data(PublicKey(market_address), conn)
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
-        market_state = create_market_state(parsed_market, program_id)
+        market_state = create_market_state(parsed_market, program_id, conn)
         return Market(market_state, options, conn)
 
     @staticmethod

@@ -95,13 +95,13 @@ def create_account_flags(con) -> AccountFlags:
     )
 
 
-def create_market_state(con, program_id: PublicKey) -> MarketState:
+def create_market_state(con, program_id: PublicKey, client: Client) -> MarketState:
     # TODO: add ownAddress check!
     if not con.account_flags.initialized or not con.account_flags.market:
         raise Exception("Invalid market")
 
-    base_mint_decimals = get_mint_decimals(con, PublicKey(con.base_mint))
-    quote_mint_decimals = get_mint_decimals(con, PublicKey(con.quote_mint))
+    base_mint_decimals = get_mint_decimals(client, PublicKey(con.base_mint))
+    quote_mint_decimals = get_mint_decimals(client, PublicKey(con.quote_mint))
 
     return MarketState(
         account_flags=create_account_flags(con.account_flags),
