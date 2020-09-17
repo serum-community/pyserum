@@ -100,4 +100,4 @@ make notebook
 
 This will start a docker container with `solana` image and deploy a serum DEX which you can use for testing.
 
-The market address, program id, and wallet addresses can be found in the `crank.log` file.
+The market address, program id, and wallet addresses can be found in the new `crank.log` file after the script runs successfully.
