@@ -32,10 +32,6 @@ def stubbed_market() -> Market:
             initialized=True,
             market=True,
             bids=False,
-            request_queue=False,
-            event_queue=False,
-            asks=False,
-            open_orders=False,
         ),
         quote_dust_threshold=100,
         base_lot_size=100,
@@ -43,26 +39,6 @@ def stubbed_market() -> Market:
         base_spl_token_decimals=6,
         quote_spl_token_decimals=6,
     )
-
-    # MARKET_ENCODE = SimpleNamespace(  # pylint: disable=invalid-name
-    #     **{
-    #         "account_flags": SimpleNamespace(
-    #             **{
-    #                 "initialized": True,
-    #                 "market": True,
-    #                 "bids": False,
-    #             }
-    #         ),
-    #         "vault_signer_nonce": 0,
-    #         "base_fees_accrued": 0,
-    #         "quote_dust_threshold": 100,
-    #         "base_lot_size": 100,
-    #         "quote_lot_size": 10,
-    #         "fee_rate_bps": 0,
-    #         "base_spl_token_decimals": 6,
-    #         "quote_spl_token_decimals": 6,
-    #     }
-    # )
     return Market(market_state, None, conn)
 
 
