@@ -6,22 +6,20 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-__cached_params = {}
-
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def __bs_params() -> Dict[str, str]:
-    if not __cached_params:
-        with open("tests/crank.log") as crank_log:
-            for line in crank_log.readlines():
-                if ":" not in line:
-                    continue
-                key, val = line.strip().replace(",", "").split(": ")
-                assert key, "key must not be None"
-                assert val, "val must not be None"
-                __cached_params[key] = val
-    return __cached_params
+    params = {}
+    with open("tests/crank.log") as crank_log:
+        for line in crank_log.readlines():
+            if ":" not in line:
+                continue
+            key, val = line.strip().replace(",", "").split(": ")
+            assert key, "key must not be None"
+            assert val, "val must not be None"
+            params[key] = val
+    return params
 
 
 def __bootstrap_account(pubkey: str, secret: str) -> Account:
