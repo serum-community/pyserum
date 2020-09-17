@@ -42,6 +42,8 @@ def stubbed_market() -> Market:
             "base_lot_size": 100,
             "quote_lot_size": 10,
             "fee_rate_bps": 0,
+            "base_spl_token_decimals": 6,
+            "quote_spl_token_decimals": 6,
         }
     )
     return Market(MARKET_ENCODE, 6, 6, None, conn)

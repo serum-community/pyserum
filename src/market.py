@@ -42,7 +42,7 @@ class Market:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        decoded: MarketState,
+        market_state: MarketState,
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
@@ -50,14 +50,9 @@ class Market:
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ) -> None:
         # TODO: add options
-        if not decoded.account_flags.initialized or not decoded.account_flags.market:
+        if not market_state.account_flags.initialized or not market_state.account_flags.market:
             raise Exception("Invalid market state")
-        self._market_state = decoded
-        self._base_spl_token_decimals = base_mint_decimals
-        self._quote_spl_token_decimals = quote_mint_decimals
-        self._skip_preflight = False
-        self._confirmations = 10
-        self._program_id = program_id
+        self._market_state = market_state
         self._conn = conn
 
     @staticmethod
@@ -70,16 +65,9 @@ class Market:
     def load(conn: Client, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID) -> Market:
         """Factory method to create a Market."""
         bytes_data = load_bytes_data(PublicKey(market_address), conn)
-        market_state = create_market_state(MARKET_LAYOUT.parse(bytes_data))
-
-        # TODO: add ownAddress check!
-        if not market_state.account_flags.initialized or not market_state.account_flags.market:
-            raise Exception("Invalid market")
-
-        base_mint_decimals = Market.get_mint_decimals(conn, market_state.base_mint)
-        quote_mint_decimals = Market.get_mint_decimals(conn, market_state.quote_mint)
-
-        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, conn, program_id=program_id)
+        parsed_market = MARKET_LAYOUT.parse(bytes_data)
+        market_state = create_market_state(parsed_market, program_id)
+        return Market(market_state, 0, 0, options, conn, program_id=program_id)
 
     def address(self) -> PublicKey:
         """Return market address."""
@@ -89,7 +77,7 @@ class Market:
         return self.address()
 
     def program_id(self) -> PublicKey:
-        return self._program_id
+        return self._market_state.program_id
 
     def base_mint_address(self) -> PublicKey:
         """Returns base mint address."""
@@ -116,10 +104,10 @@ class Market:
         return self._market_state.event_queue
 
     def __base_spl_token_multiplier(self) -> int:
-        return 10 ** self._base_spl_token_decimals
+        return 10 ** self._market_state.base_spl_token_decimals
 
     def __quote_spl_token_multiplier(self) -> int:
-        return 10 ** self._quote_spl_token_decimals
+        return 10 ** self._market_state.quote_spl_token_decimals
 
     def base_spl_size_to_number(self, size: int) -> float:
         return size / self.__base_spl_token_multiplier()
@@ -144,7 +132,9 @@ class Market:
         return float(size * self._market_state.base_lot_size) / self.__base_spl_token_multiplier()
 
     def base_size_number_to_lots(self, size: float) -> int:
-        return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._market_state.base_lot_size)
+        return int(
+            math.floor(size * 10 ** self._market_state.base_spl_token_decimals) / self._market_state.base_lot_size
+        )
 
     @staticmethod
     def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
@@ -159,7 +149,9 @@ class Market:
         return self._market_state.asks
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
-        return OpenOrdersAccount.find_for_market_and_owner(self._conn, self.address(), owner_address, self._program_id)
+        return OpenOrdersAccount.find_for_market_and_owner(
+            self._conn, self.address(), owner_address, self._market_state.program_id
+        )
 
     def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
         raise NotImplementedError("find_quote_token_accounts_for_owner not implemented.")
@@ -247,7 +239,7 @@ class Market:
                     owner.public_key(),
                     new_open_order_account.public_key(),
                     balanced_needed,
-                    self._program_id,
+                    self._market_state.program_id,
                 )
             )
             signers.append(new_open_order_account)
@@ -298,7 +290,7 @@ class Market:
                 max_quantity=max_quantity,
                 order_type=order_type,
                 client_id=client_id,
-                program_id=self._program_id,
+                program_id=self._market_state.program_id,
             )
         )
 
@@ -322,7 +314,7 @@ class Market:
             side=order.side,
             order_id=order.order_id,
             open_orders_slot=order.open_order_slot,
-            program_id=self._program_id,
+            program_id=self._market_state.program_id,
         )
         return cancel_order_inst(params)
 
@@ -336,7 +328,7 @@ class Market:
             base_vault=self._market_state.base_vault,
             quote_vault=self._market_state.quote_vault,
             limit=limit,
-            program_id=self._program_id,
+            program_id=self._market_state.program_id,
         )
         return match_order_inst(params)
 
@@ -346,7 +338,7 @@ class Market:
         raise NotImplementedError("settle_funds not implemented.")
 
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
-        res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
+        res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._market_state.skip_preflight)
         if self._confirmations > 0:
             self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
