@@ -5,6 +5,8 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
+from src.client import market_client
+
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
@@ -21,8 +23,8 @@ def __bs_params() -> Dict[str, str]:
     return params
 
 
-def __bootstrap_account(pubkey: str, secret: str) -> Account:
-    secret = [int(b) for b in secret[1:-1].split(" ")]
+def __bootstrap_account(pubkey: str, secretkey: str) -> Account:
+    secret = [int(b) for b in secretkey[1:-1].split(" ")]
     account = Account(secret)
     assert str(account.public_key()) == pubkey, "account must map to provided public key"
     return account
@@ -144,7 +146,7 @@ def stubbed_ask_account_pk(__bs_params) -> PublicKey:
 @pytest.fixture(scope="session")
 def http_client() -> Client:
     """Solana http client."""
-    client = Client()
+    client = market_client("http://localhost:8899")
     if not client.is_connected():
         raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
     return client
