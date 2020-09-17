@@ -20,7 +20,7 @@ class MarketState(NamedTuple):
     base_mint: PublicKey
     quote_mint: PublicKey
     base_vault: PublicKey
-    base_deposit_total: int
+    base_deposits_total: int
     base_fees_accrued: int
     quote_vault: PublicKey
     quote_deposits_total: int
@@ -55,7 +55,7 @@ def create_market_state(con) -> MarketState:
         base_mint=PublicKey(con.base_mint),
         quote_mint=PublicKey(con.quote_mint),
         base_vault=PublicKey(con.base_vault),
-        base_deposit_total=con.base_deposit_total,
+        base_deposits_total=con.base_deposits_total,
         base_fees_accrued=con.base_fees_accrued,
         quote_vault=PublicKey(con.quote_vault),
         quote_deposits_total=con.quote_deposits_total,
