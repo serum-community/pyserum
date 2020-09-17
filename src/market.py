@@ -20,6 +20,7 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrders
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
+from .market_state import MarketState, create_market_state
 from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
@@ -41,7 +42,7 @@ class Market:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        decoded: Any,  # Construct structure of the market.
+        decoded: MarketState,
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
@@ -51,7 +52,7 @@ class Market:
         # TODO: add options
         if not decoded.account_flags.initialized or not decoded.account_flags.market:
             raise Exception("Invalid market state")
-        self._decode = decoded
+        self._market_state = decoded
         self._base_spl_token_decimals = base_mint_decimals
         self._quote_spl_token_decimals = quote_mint_decimals
         self._skip_preflight = False
@@ -69,20 +70,20 @@ class Market:
     def load(conn: Client, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID) -> Market:
         """Factory method to create a Market."""
         bytes_data = load_bytes_data(PublicKey(market_address), conn)
-        market_state = MARKET_LAYOUT.parse(bytes_data)
+        market_state = create_market_state(MARKET_LAYOUT.parse(bytes_data))
 
         # TODO: add ownAddress check!
         if not market_state.account_flags.initialized or not market_state.account_flags.market:
             raise Exception("Invalid market")
 
-        base_mint_decimals = Market.get_mint_decimals(conn, PublicKey(market_state.base_mint))
-        quote_mint_decimals = Market.get_mint_decimals(conn, PublicKey(market_state.quote_mint))
+        base_mint_decimals = Market.get_mint_decimals(conn, market_state.base_mint)
+        quote_mint_decimals = Market.get_mint_decimals(conn, market_state.quote_mint)
 
         return Market(market_state, base_mint_decimals, quote_mint_decimals, options, conn, program_id=program_id)
 
     def address(self) -> PublicKey:
         """Return market address."""
-        return PublicKey(self._decode.own_address)
+        return self._market_state.own_address
 
     def public_key(self) -> PublicKey:
         return self.address()
@@ -92,27 +93,27 @@ class Market:
 
     def base_mint_address(self) -> PublicKey:
         """Returns base mint address."""
-        return PublicKey(self._decode.base_mint)
+        return self._market_state.base_mint
 
     def quote_mint_address(self) -> PublicKey:
         """Returns quote mint address."""
-        return PublicKey(self._decode.quote_mint)
+        return self._market_state.quote_mint
 
     def base_vault_address(self) -> PublicKey:
         """Returns base vault address."""
-        return PublicKey(self._decode.base_vault)
+        return self._market_state.base_vault
 
     def quote_vault_address(self) -> PublicKey:
         """Returns quote vault address."""
-        return PublicKey(self._decode.quote_vault)
+        return self._market_state.quote_vault
 
     def request_queue(self) -> PublicKey:
         """Returns quote vault address."""
-        return PublicKey(self._decode.request_queue)
+        return self._market_state.request_queue
 
     def event_queue(self) -> PublicKey:
         """Returns event queue address."""
-        return PublicKey(self._decode.event_queue)
+        return self._market_state.event_queue
 
     def __base_spl_token_multiplier(self) -> int:
         return 10 ** self._base_spl_token_decimals
@@ -127,23 +128,23 @@ class Market:
         return size / self.__quote_spl_token_multiplier()
 
     def price_lots_to_number(self, price: int) -> float:
-        return float(price * self._decode.quote_lot_size * self.__base_spl_token_multiplier()) / (
-            self._decode.base_lot_size * self.__quote_spl_token_multiplier()
+        return float(price * self._market_state.quote_lot_size * self.__base_spl_token_multiplier()) / (
+            self._market_state.base_lot_size * self.__quote_spl_token_multiplier()
         )
 
     def price_number_to_lots(self, price: float) -> int:
         return int(
             round(
-                (price * 10 ** self.__quote_spl_token_multiplier() * self._decode.base_lot_size)
-                / (10 ** self.__base_spl_token_multiplier() * self._decode.quote_lot_size)
+                (price * 10 ** self.__quote_spl_token_multiplier() * self._market_state.base_lot_size)
+                / (10 ** self.__base_spl_token_multiplier() * self._market_state.quote_lot_size)
             )
         )
 
     def base_size_lots_to_number(self, size: int) -> float:
-        return float(size * self._decode.base_lot_size) / self.__base_spl_token_multiplier()
+        return float(size * self._market_state.base_lot_size) / self.__base_spl_token_multiplier()
 
     def base_size_number_to_lots(self, size: float) -> int:
-        return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._decode.base_lot_size)
+        return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._market_state.base_lot_size)
 
     @staticmethod
     def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
@@ -152,10 +153,10 @@ class Market:
         return MINT_LAYOUT.parse(bytes_data).decimals
 
     def bids_address(self) -> PublicKey:
-        return PublicKey(self._decode.bids)
+        return self._market_state.bids
 
     def asks_address(self) -> PublicKey:
-        return PublicKey(self._decode.asks)
+        return self._market_state.asks
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(self._conn, self.address(), owner_address, self._program_id)
@@ -165,14 +166,12 @@ class Market:
 
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
-        bids_addr = PublicKey(self._decode.bids)
-        bytes_data = load_bytes_data(bids_addr, self._conn)
+        bytes_data = load_bytes_data(self._market_state.bids, self._conn)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
-        asks_addr = PublicKey(self._decode.asks)
-        bytes_data = load_bytes_data(asks_addr, self._conn)
+        bytes_data = load_bytes_data(self._market_state.asks, self._conn)
         return OrderBook.decode(self, bytes_data)
 
     def load_orders_for_owner(self) -> List[Order]:
@@ -182,18 +181,15 @@ class Market:
         raise NotImplementedError("load_base_token_for_owner not implemented.")
 
     def load_event_queue(self):  # returns raw construct type
-        event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = load_bytes_data(event_queue_addr, self._conn)
+        bytes_data = load_bytes_data(self._market_state.event_queue, self._conn)
         return decode_event_queue(bytes_data)
 
     def load_request_queue(self):  # returns raw construct type
-        request_queue_addr = PublicKey(self._decode.request_queue)
-        bytes_data = load_bytes_data(request_queue_addr, self._conn)
+        bytes_data = load_bytes_data(self._market_state.request_queue, self._conn)
         return decode_request_queue(bytes_data)
 
     def load_fills(self, limit=100) -> List[FilledOrder]:
-        event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = load_bytes_data(event_queue_addr, self._conn)
+        bytes_data = load_bytes_data(self._market_state.event_queue, self._conn)
         events = decode_event_queue(bytes_data, limit)
         return [
             self.parse_fill_event(event)
@@ -322,7 +318,7 @@ class Market:
             market=self.address(),
             owner=owner,
             open_orders=order.open_order_address,
-            request_queue=self._decode.request_queue,
+            request_queue=self._market_state.request_queue,
             side=order.side,
             order_id=order.order_id,
             open_orders_slot=order.open_order_slot,
@@ -333,12 +329,12 @@ class Market:
     def make_match_orders_instruction(self, limit: int) -> TransactionInstruction:
         params = MatchOrdersParams(
             market=self.address(),
-            request_queue=PublicKey(self._decode.request_queue),
-            event_queue=PublicKey(self._decode.event_queue),
-            bids=PublicKey(self._decode.bids),
-            asks=PublicKey(self._decode.asks),
-            base_vault=PublicKey(self._decode.base_vault),
-            quote_vault=PublicKey(self._decode.quote_vault),
+            request_queue=self._market_state.request_queue,
+            event_queue=self._market_state.event_queue,
+            bids=self._market_state.bids,
+            asks=self._market_state.asks,
+            base_vault=self._market_state.base_vault,
+            quote_vault=self._market_state.quote_vault,
             limit=limit,
             program_id=self._program_id,
         )
