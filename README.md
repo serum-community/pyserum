@@ -1,6 +1,6 @@
 # PySerum
 
-Python client library for interacting with the Project Serum DEX.
+Python client library for interacting with the [Project Serum](https://projectserum.com/) DEX.
 
 ## Get Started
 
@@ -29,6 +29,8 @@ for bid in bids:
 ```
 
 ### Market Addresses in Main Net
+
+The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
 
 | Currency Pair |                   Address                    |
 | :-----------: | :------------------------------------------: |
@@ -89,3 +91,13 @@ make int-tests
 ```sh
 make notebook
 ```
+
+### Start Serum in Docker image
+
+```bash
+./scripts/bootstrap_dex.sh
+```
+
+This will start a docker container with `solana` image and deploy a serum DEX which you can use for testing.
+
+The market address, program id, and wallet addresses can be found in the new `crank.log` file after the script runs successfully.
