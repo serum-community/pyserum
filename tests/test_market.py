@@ -4,7 +4,7 @@ import pytest
 from solana.rpc.api import Client
 
 from src.market import MARKET_LAYOUT, Market, Order, OrderBook, OrderInfo
-from src.market_state import AccountFlags, MarketState
+from src.state.market_state import AccountFlags, MarketState
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 

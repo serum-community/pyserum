@@ -10,6 +10,8 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
 
+from src.state.market_state import MarketState, create_market_state
+
 from ._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
@@ -19,7 +21,6 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrders
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
-from .market_state import MarketState, create_market_state
 from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
