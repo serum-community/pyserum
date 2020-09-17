@@ -269,7 +269,7 @@ class Market:
 
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
         res = self.conn.send_transaction(transaction, *signers, skip_preflight=self.state.skip_preflight)
-        if self._confirmations > 0:
+        if self.state.confirmations > 0:
             self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
         if not signature:
