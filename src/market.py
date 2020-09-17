@@ -5,6 +5,7 @@ import logging
 import math
 from typing import Any, Iterable, List, NamedTuple
 
+from construct import Struct as cStruct  # type: ignore
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -19,7 +20,7 @@ from .instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrders
 from .instructions import cancel_order as cancel_order_inst
 from .instructions import match_orders as match_order_inst
 from .instructions import new_order as new_order_inst
-from .open_order_account import OpenOrderAccount, make_create_account_instruction
+from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .queue_ import decode_event_queue, decode_request_queue
 from .utils import load_bytes_data
 
@@ -40,11 +41,11 @@ class Market:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        decoded: Any,
+        decoded: Any,  # Construct structure of the market.
         base_mint_decimals: int,
         quote_mint_decimals: int,
         options: Any,  # pylint: disable=unused-argument
-        endpoint: str,
+        conn: Client,
         program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
     ) -> None:
         # TODO: add options
@@ -56,25 +57,28 @@ class Market:
         self._skip_preflight = False
         self._confirmations = 10
         self._program_id = program_id
-        self._endpoint = endpoint
+        self._conn = conn
+
+    @staticmethod
+    def LAYOUT() -> cStruct:  # pylint: disable=invalid-name
+        """Construct layout of the market state."""
+        return MARKET_LAYOUT
 
     @staticmethod
     # pylint: disable=unused-argument
-    def load(
-        endpoint: str, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
-    ) -> Market:
+    def load(conn: Client, market_address: str, options: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID) -> Market:
         """Factory method to create a Market."""
-        bytes_data = load_bytes_data(PublicKey(market_address), endpoint)
+        bytes_data = load_bytes_data(PublicKey(market_address), conn)
         market_state = MARKET_LAYOUT.parse(bytes_data)
 
         # TODO: add ownAddress check!
         if not market_state.account_flags.initialized or not market_state.account_flags.market:
             raise Exception("Invalid market")
 
-        base_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.base_mint))
-        quote_mint_decimals = Market.get_mint_decimals(endpoint, PublicKey(market_state.quote_mint))
+        base_mint_decimals = Market.get_mint_decimals(conn, PublicKey(market_state.base_mint))
+        quote_mint_decimals = Market.get_mint_decimals(conn, PublicKey(market_state.quote_mint))
 
-        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, endpoint, program_id=program_id)
+        return Market(market_state, base_mint_decimals, quote_mint_decimals, options, conn, program_id=program_id)
 
     def address(self) -> PublicKey:
         """Return market address."""
@@ -107,7 +111,7 @@ class Market:
         return PublicKey(self._decode.request_queue)
 
     def event_queue(self) -> PublicKey:
-        """Returns quote vault address."""
+        """Returns event queue address."""
         return PublicKey(self._decode.event_queue)
 
     def __base_spl_token_multiplier(self) -> int:
@@ -142,36 +146,54 @@ class Market:
         return int(math.floor(size * 10 ** self._base_spl_token_decimals) / self._decode.base_lot_size)
 
     @staticmethod
-    def get_mint_decimals(endpoint: str, mint_pub_key: PublicKey) -> int:
+    def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
         """Get the mint decimals from given public key."""
-        bytes_data = load_bytes_data(mint_pub_key, endpoint)
+        bytes_data = load_bytes_data(mint_pub_key, conn)
         return MINT_LAYOUT.parse(bytes_data).decimals
+
+    def bids_address(self) -> PublicKey:
+        return PublicKey(self._decode.bids)
+
+    def asks_address(self) -> PublicKey:
+        return PublicKey(self._decode.asks)
+
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
+        return OpenOrdersAccount.find_for_market_and_owner(self._conn, self.address(), owner_address, self._program_id)
+
+    def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
+        raise NotImplementedError("find_quote_token_accounts_for_owner not implemented.")
 
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
         bids_addr = PublicKey(self._decode.bids)
-        bytes_data = load_bytes_data(bids_addr, self._endpoint)
+        bytes_data = load_bytes_data(bids_addr, self._conn)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
         asks_addr = PublicKey(self._decode.asks)
-        bytes_data = load_bytes_data(asks_addr, self._endpoint)
+        bytes_data = load_bytes_data(asks_addr, self._conn)
         return OrderBook.decode(self, bytes_data)
+
+    def load_orders_for_owner(self) -> List[Order]:
+        raise NotImplementedError("load_orders_for_owner not implemented.")
+
+    def load_base_token_for_owner(self):
+        raise NotImplementedError("load_base_token_for_owner not implemented.")
 
     def load_event_queue(self):  # returns raw construct type
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._conn)
         return decode_event_queue(bytes_data)
 
     def load_request_queue(self):  # returns raw construct type
         request_queue_addr = PublicKey(self._decode.request_queue)
-        bytes_data = load_bytes_data(request_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(request_queue_addr, self._conn)
         return decode_request_queue(bytes_data)
 
     def load_fills(self, limit=100) -> List[FilledOrder]:
         event_queue_addr = PublicKey(self._decode.event_queue)
-        bytes_data = load_bytes_data(event_queue_addr, self._endpoint)
+        bytes_data = load_bytes_data(event_queue_addr, self._conn)
         events = decode_event_queue(bytes_data, limit)
         return [
             self.parse_fill_event(event)
@@ -216,23 +238,26 @@ class Market:
         limit_price: int,
         max_quantity: int,
         client_id: int = 0,
-    ):
+    ):  # TODO: Add open_orders_address_key param
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
             new_open_order_account = Account()
+            mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
+            balanced_needed = mbfre_resp["result"]
             transaction.add(
                 make_create_account_instruction(
                     owner.public_key(),
                     new_open_order_account.public_key(),
-                    Client(self._endpoint).get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())[
-                        "result"
-                    ],
+                    balanced_needed,
                     self._program_id,
                 )
             )
             signers.append(new_open_order_account)
+
+        # TODO: Handle open_orders_address_key
+        # TODO: Handle wrapped sol account
 
         transaction.add(
             self.make_place_order_instruction(
@@ -281,23 +306,16 @@ class Market:
             )
         )
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrderAccount]:
-        return OpenOrderAccount.find_for_market_and_owner(
-            self._endpoint, self.address(), owner_address, self._program_id
-        )
-
     def cancel_order_by_client_id(self, owner: str) -> str:
-        pass
+        raise NotImplementedError("cancel_order_by_client_id not implemented.")
 
     def cancel_order(self, owner: Account, order: Order) -> str:
-        transaction = Transaction()
-        transaction.add(self.make_cancel_order_instruction(owner.public_key(), order))
-        return self._send_transaction(transaction, owner)
+        txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
+        return self._send_transaction(txn, owner)
 
     def match_orders(self, fee_payer: Account, limit: int) -> str:
-        transaction = Transaction()
-        transaction.add(self.make_match_orders_instruction(limit))
-        return self._send_transaction(transaction, fee_payer)
+        txn = Transaction().add(self.make_match_orders_instruction(limit))
+        return self._send_transaction(txn, fee_payer)
 
     def make_cancel_order_instruction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
         params = CancelOrderParams(
@@ -326,9 +344,13 @@ class Market:
         )
         return match_order_inst(params)
 
+    def settle_funds(
+        self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
+    ) -> str:
+        raise NotImplementedError("settle_funds not implemented.")
+
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
-        connection = Client(self._endpoint)
-        res = connection.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
+        res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
             self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
