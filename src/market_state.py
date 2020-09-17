@@ -1,3 +1,4 @@
+import math
 from typing import NamedTuple
 
 from solana.publickey import PublicKey
@@ -8,40 +9,72 @@ from .utils import load_bytes_data
 
 
 class AccountFlags(NamedTuple):
-    initialized: bool
-    market: bool
-    open_orders: bool
-    request_queue: bool
-    event_queue: bool
-    bids: bool
-    asks: bool
+    initialized: bool = False
+    market: bool = False
+    open_orders: bool = False
+    request_queue: bool = False
+    event_queue: bool = False
+    bids: bool = False
+    asks: bool = False
 
 
 class MarketState(NamedTuple):
-    account_flags: AccountFlags
-    own_address: PublicKey
-    vault_signer_nonce: int
-    base_mint: PublicKey
-    quote_mint: PublicKey
-    base_vault: PublicKey
-    base_deposits_total: int
-    base_fees_accrued: int
-    quote_vault: PublicKey
-    quote_deposits_total: int
-    quote_fees_accrued: int
-    quote_dust_threshold: int
-    request_queue: PublicKey
-    event_queue: PublicKey
-    bids: PublicKey
-    asks: PublicKey
-    base_lot_size: int
-    quote_lot_size: int
-    fee_rate_bps: int
-    base_spl_token_decimals: int
-    quote_spl_token_decimals: int
-    program_id: PublicKey
-    skip_preflight: bool
-    confirmations: int
+    account_flags: AccountFlags = AccountFlags()
+    own_address: PublicKey = PublicKey(0)
+    vault_signer_nonce: int = 0
+    base_mint: PublicKey = PublicKey(0)
+    quote_mint: PublicKey = PublicKey(0)
+    base_vault: PublicKey = PublicKey(0)
+    base_deposits_total: int = 0
+    base_fees_accrued: int = 0
+    quote_vault: PublicKey = PublicKey(0)
+    quote_deposits_total: int = 0
+    quote_fees_accrued: int = 0
+    quote_dust_threshold: int = 0
+    request_queue: PublicKey = PublicKey(0)
+    event_queue: PublicKey = PublicKey(0)
+    bids: PublicKey = PublicKey(0)
+    asks: PublicKey = PublicKey(0)
+    base_lot_size: int = 1
+    quote_lot_size: int = 1
+    fee_rate_bps: int = 0
+    base_spl_token_decimals: int = 0
+    quote_spl_token_decimals: int = 0
+    program_id: PublicKey = PublicKey(0)
+    skip_preflight: bool = False
+    confirmations: int = 0
+
+    def base_spl_token_multiplier(self) -> int:
+        print(self.base_spl_token_decimals)
+        return 10 ** self.base_spl_token_decimals
+
+    def quote_spl_token_multiplier(self) -> int:
+        return 10 ** self.quote_spl_token_decimals
+
+    def base_spl_size_to_number(self, size: int) -> float:
+        return size / self.base_spl_token_multiplier()
+
+    def quote_spl_size_to_number(self, size: int) -> float:
+        return size / self.quote_spl_token_multiplier()
+
+    def price_lots_to_number(self, price: int) -> float:
+        return float(price * self.quote_lot_size * self.base_spl_token_multiplier()) / (
+            self.base_lot_size * self.quote_spl_token_multiplier()
+        )
+
+    def price_number_to_lots(self, price: float) -> int:
+        return int(
+            round(
+                (price * 10 ** self.quote_spl_token_multiplier() * self.base_lot_size)
+                / (10 ** self.base_spl_token_multiplier() * self.quote_lot_size)
+            )
+        )
+
+    def base_size_lots_to_number(self, size: int) -> float:
+        return float(size * self.base_lot_size) / self.base_spl_token_multiplier()
+
+    def base_size_number_to_lots(self, size: float) -> int:
+        return int(math.floor(size * 10 ** self.base_spl_token_decimals) / self.base_lot_size)
 
 
 def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
@@ -96,36 +129,3 @@ def create_market_state(con, program_id: PublicKey) -> MarketState:
         skip_preflight=False,
         confirmations=10,
     )
-
-    def __base_spl_token_multiplier(self) -> int:
-        return 10 ** self._market_state.base_spl_token_decimals
-
-    def __quote_spl_token_multiplier(self) -> int:
-        return 10 ** self._market_state.quote_spl_token_decimals
-
-    def base_spl_size_to_number(self, size: int) -> float:
-        return size / self.__base_spl_token_multiplier()
-
-    def quote_spl_size_to_number(self, size: int) -> float:
-        return size / self.__quote_spl_token_multiplier()
-
-    def price_lots_to_number(self, price: int) -> float:
-        return float(price * self._market_state.quote_lot_size * self.__base_spl_token_multiplier()) / (
-            self._market_state.base_lot_size * self.__quote_spl_token_multiplier()
-        )
-
-    def price_number_to_lots(self, price: float) -> int:
-        return int(
-            round(
-                (price * 10 ** self.__quote_spl_token_multiplier() * self._market_state.base_lot_size)
-                / (10 ** self.__base_spl_token_multiplier() * self._market_state.quote_lot_size)
-            )
-        )
-
-    def base_size_lots_to_number(self, size: int) -> float:
-        return float(size * self._market_state.base_lot_size) / self.__base_spl_token_multiplier()
-
-    def base_size_number_to_lots(self, size: float) -> int:
-        return int(
-            math.floor(size * 10 ** self._market_state.base_spl_token_decimals) / self._market_state.base_lot_size
-        )
