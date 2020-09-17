@@ -143,12 +143,6 @@ def stubbed_ask_account_pk(__bs_params) -> PublicKey:
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def docker_compose_file(pytestconfig):
-    return os.path.join(str(pytestconfig.rootdir), ".", "docker-compose.yml")
-
-
-@pytest.mark.integration
-@pytest.fixture(scope="session")
 def http_client() -> Client:
     """Solana http client."""
     client = Client()
