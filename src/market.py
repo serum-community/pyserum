@@ -214,7 +214,7 @@ class Market:
                 owner=owner.public_key(),
                 request_queue=self.state.request_queue,
                 base_vault=self.state.base_vault,
-                quote_vault=self.state.base_vault,
+                quote_vault=self.state.quote_vault,
                 side=side,
                 limit_price=limit_price,
                 max_quantity=max_quantity,

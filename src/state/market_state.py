@@ -45,7 +45,6 @@ class MarketState(NamedTuple):
     confirmations: int = 0
 
     def base_spl_token_multiplier(self) -> int:
-        print(self.base_spl_token_decimals)
         return 10 ** self.base_spl_token_decimals
 
     def quote_spl_token_multiplier(self) -> int:
