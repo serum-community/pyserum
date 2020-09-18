@@ -11,7 +11,7 @@ from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
 
 from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
-from .._layouts.market import MARKET_LAYOUT, MINT_LAYOUT
+from .._layouts.market import MARKET_LAYOUT
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
 from ..enums import OrderType, Side
@@ -22,7 +22,7 @@ from ..instructions import new_order as new_order_inst
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
-from .market_state import MarketState, create_market_state
+from .state import MarketState, create_market_state
 
 
 # pylint: disable=too-many-public-methods
@@ -64,18 +64,6 @@ class Market:
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
         market_state = create_market_state(parsed_market, program_id, conn)
         return Market(market_state, options, conn)
-
-    @staticmethod
-    def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
-        """Get the mint decimals from given public key."""
-        bytes_data = load_bytes_data(mint_pub_key, conn)
-        return MINT_LAYOUT.parse(bytes_data).decimals
-
-    def bids_address(self) -> PublicKey:
-        return self.state.bids
-
-    def asks_address(self) -> PublicKey:
-        return self.state.asks
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(

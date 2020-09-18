@@ -1,5 +1,5 @@
 import math
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -82,7 +82,8 @@ def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
     return MINT_LAYOUT.parse(bytes_data).decimals
 
 
-def create_account_flags(con) -> AccountFlags:
+# Argument is construct parsed account flags.
+def create_account_flags(con: Any) -> AccountFlags:
     return AccountFlags(
         initialized=con.initialized,
         market=con.market,
@@ -94,7 +95,8 @@ def create_account_flags(con) -> AccountFlags:
     )
 
 
-def create_market_state(con, program_id: PublicKey, client: Client) -> MarketState:
+# The first argument is construct parsed account flags.
+def create_market_state(con: Any, program_id: PublicKey, client: Client) -> MarketState:
     # TODO: add ownAddress check!
     if not con.account_flags.initialized or not con.account_flags.market:
         raise Exception("Invalid market")
