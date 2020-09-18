@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from typing import Any, NamedTuple
 
@@ -16,6 +18,19 @@ class AccountFlags(NamedTuple):
     event_queue: bool = False
     bids: bool = False
     asks: bool = False
+
+    @staticmethod
+    # Argument is construct parsed account flags.
+    def create(con: Any) -> AccountFlags:
+        return AccountFlags(
+            initialized=con.initialized,
+            market=con.market,
+            open_orders=con.open_orders,
+            request_queue=con.request_queue,
+            event_queue=con.event_queue,
+            bids=con.bids,
+            asks=con.asks,
+        )
 
 
 class MarketState(NamedTuple):
@@ -75,58 +90,45 @@ class MarketState(NamedTuple):
     def base_size_number_to_lots(self, size: float) -> int:
         return int(math.floor(size * 10 ** self.base_spl_token_decimals) / self.base_lot_size)
 
+    # The first argument is construct parsed account flags.
+    @staticmethod
+    def create(con: Any, program_id: PublicKey, client: Client) -> MarketState:
+        # TODO: add ownAddress check!
+        if not con.account_flags.initialized or not con.account_flags.market:
+            raise Exception("Invalid market")
+
+        base_mint_decimals = get_mint_decimals(client, PublicKey(con.base_mint))
+        quote_mint_decimals = get_mint_decimals(client, PublicKey(con.quote_mint))
+
+        return MarketState(
+            account_flags=AccountFlags.create(con.account_flags),
+            own_address=PublicKey(con.own_address),
+            vault_signer_nonce=con.vault_signer_nonce,
+            base_mint=PublicKey(con.base_mint),
+            quote_mint=PublicKey(con.quote_mint),
+            base_vault=PublicKey(con.base_vault),
+            base_deposits_total=con.base_deposits_total,
+            base_fees_accrued=con.base_fees_accrued,
+            quote_vault=PublicKey(con.quote_vault),
+            quote_deposits_total=con.quote_deposits_total,
+            quote_fees_accrued=con.quote_fees_accrued,
+            quote_dust_threshold=con.quote_dust_threshold,
+            request_queue=PublicKey(con.request_queue),
+            event_queue=PublicKey(con.event_queue),
+            bids=PublicKey(con.bids),
+            asks=PublicKey(con.asks),
+            base_lot_size=con.base_lot_size,
+            quote_lot_size=con.quote_lot_size,
+            fee_rate_bps=con.fee_rate_bps,
+            base_spl_token_decimals=base_mint_decimals,
+            quote_spl_token_decimals=quote_mint_decimals,
+            program_id=program_id,
+            skip_preflight=False,
+            confirmations=10,
+        )
+
 
 def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
     """Get the mint decimals from given public key."""
     bytes_data = load_bytes_data(mint_pub_key, conn)
     return MINT_LAYOUT.parse(bytes_data).decimals
-
-
-# Argument is construct parsed account flags.
-def create_account_flags(con: Any) -> AccountFlags:
-    return AccountFlags(
-        initialized=con.initialized,
-        market=con.market,
-        open_orders=con.open_orders,
-        request_queue=con.request_queue,
-        event_queue=con.event_queue,
-        bids=con.bids,
-        asks=con.asks,
-    )
-
-
-# The first argument is construct parsed account flags.
-def create_market_state(con: Any, program_id: PublicKey, client: Client) -> MarketState:
-    # TODO: add ownAddress check!
-    if not con.account_flags.initialized or not con.account_flags.market:
-        raise Exception("Invalid market")
-
-    base_mint_decimals = get_mint_decimals(client, PublicKey(con.base_mint))
-    quote_mint_decimals = get_mint_decimals(client, PublicKey(con.quote_mint))
-
-    return MarketState(
-        account_flags=create_account_flags(con.account_flags),
-        own_address=PublicKey(con.own_address),
-        vault_signer_nonce=con.vault_signer_nonce,
-        base_mint=PublicKey(con.base_mint),
-        quote_mint=PublicKey(con.quote_mint),
-        base_vault=PublicKey(con.base_vault),
-        base_deposits_total=con.base_deposits_total,
-        base_fees_accrued=con.base_fees_accrued,
-        quote_vault=PublicKey(con.quote_vault),
-        quote_deposits_total=con.quote_deposits_total,
-        quote_fees_accrued=con.quote_fees_accrued,
-        quote_dust_threshold=con.quote_dust_threshold,
-        request_queue=PublicKey(con.request_queue),
-        event_queue=PublicKey(con.event_queue),
-        bids=PublicKey(con.bids),
-        asks=PublicKey(con.asks),
-        base_lot_size=con.base_lot_size,
-        quote_lot_size=con.quote_lot_size,
-        fee_rate_bps=con.fee_rate_bps,
-        base_spl_token_decimals=base_mint_decimals,
-        quote_spl_token_decimals=quote_mint_decimals,
-        program_id=program_id,
-        skip_preflight=False,
-        confirmations=10,
-    )
