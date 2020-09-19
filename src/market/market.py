@@ -72,12 +72,12 @@ class Market:
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
         bytes_data = load_bytes_data(self.state.bids(), self._conn)
-        return OrderBook.decode(self, bytes_data)
+        return OrderBook.decode(self.state, bytes_data)
 
     def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
-        return OrderBook.decode(self, bytes_data)
+        return OrderBook.decode(self.state, bytes_data)
 
     def load_orders_for_owner(self) -> List[types.Order]:
         raise NotImplementedError("load_orders_for_owner not implemented")
@@ -277,25 +277,25 @@ def get_price_from_key(key: int) -> int:
 class OrderBook:
     """Represents an order book."""
 
-    _market: Market
+    _market: MarketState
     _is_bids: bool
     _slab: Slab
 
-    def __init__(self, market: Market, account_flags: types.AccountFlags, slab: Slab) -> None:
+    def __init__(self, market_state: MarketState, account_flags: types.AccountFlags, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
-        self._market = market
+        self._market = market_state
         self._is_bids = account_flags.bids
         self._slab = slab
 
     @staticmethod
-    def decode(market: Market, buffer: bytes) -> OrderBook:
+    def decode(market_state: MarketState, buffer: bytes) -> OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
         account_flags = types.AccountFlags.from_bytes(buffer[5:13])
         slab = Slab.decode(buffer[13:])
-        return OrderBook(market, account_flags, slab)
+        return OrderBook(market_state, account_flags, slab)
 
     def get_l2(self, depth: int) -> List[types.OrderInfo]:
         """Get the Level 2 market information."""
@@ -312,8 +312,8 @@ class OrderBook:
                 levels.append([price, node.quantity])
         return [
             types.OrderInfo(
-                price=self._market.state.price_lots_to_number(price_lots),
-                size=self._market.state.base_size_lots_to_number(size_lots),
+                price=self._market.price_lots_to_number(price_lots),
+                size=self._market.base_size_lots_to_number(size_lots),
                 price_lots=price_lots,
                 size_lots=size_lots,
             )
@@ -335,9 +335,9 @@ class OrderBook:
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
                 order_info=types.OrderInfo(
-                    price=self._market.state.price_lots_to_number(price),
+                    price=self._market.price_lots_to_number(price),
                     price_lots=price,
-                    size=self._market.state.base_size_lots_to_number(node.quantity),
+                    size=self._market.base_size_lots_to_number(node.quantity),
                     size_lots=node.quantity,
                 ),
                 side=Side.Buy if self._is_bids else Side.Sell,

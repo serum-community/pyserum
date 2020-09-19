@@ -65,7 +65,7 @@ def test_order_book_iterator(stubbed_market):  # pylint: disable=redefined-outer
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.decode(stubbed_market.state, data)
         total_orders = sum([1 for _ in order_book.orders()])
         assert total_orders == 15
 
@@ -74,7 +74,7 @@ def test_order_book_get_l2(stubbed_market):  # pylint: disable=redefined-outer-n
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.decode(stubbed_market.state, data)
         for i in range(1, 16):
             assert i == len(order_book.get_l2(i))
         assert [OrderInfo(11744.6, 4.0632, 117446, 40632)] == order_book.get_l2(1)
@@ -84,7 +84,7 @@ def test_order_book_iterable(stubbed_market):  # pylint: disable=redefined-outer
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.decode(stubbed_market.state, data)
         cnt = 0
         for order in order_book:
             cnt += 1
