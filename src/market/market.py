@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, List
+from typing import Iterable, List, Sequence
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -72,12 +72,12 @@ class Market:
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
         bytes_data = load_bytes_data(self.state.bids(), self._conn)
-        return OrderBook.decode(self.state, bytes_data)
+        return OrderBook.from_bytes(self.state, bytes_data)
 
     def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
-        return OrderBook.decode(self.state, bytes_data)
+        return OrderBook.from_bytes(self.state, bytes_data)
 
     def load_orders_for_owner(self) -> List[types.Order]:
         raise NotImplementedError("load_orders_for_owner not implemented")
@@ -289,7 +289,7 @@ class OrderBook:
         self._slab = slab
 
     @staticmethod
-    def decode(market_state: MarketState, buffer: bytes) -> OrderBook:
+    def from_bytes(market_state: MarketState, buffer: Sequence[int]) -> OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
