@@ -59,7 +59,7 @@ jobs:
       - name: Generate coverage report
         run: |
           pipenv install --dev --skip-lock pytest pytest-cov
-          pipenv run pytest --cov=./ --cov-report=xml
+          scripts/run_coverage.sh
       - name: Upload coverage to Codecovv
         # You may pin to the exact commit or the version.
         # uses: codecov/codecov-action@6004246f47ab62d32be025ce173b241cd84ac58e
