@@ -10,18 +10,16 @@ from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
 from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 
+import src.instructions as instructions
+import src.market.types as types
+
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
 from ..enums import OrderType, Side
-from ..instructions import DEFAULT_DEX_PROGRAM_ID, CancelOrderParams, MatchOrdersParams, NewOrderParams
-from ..instructions import cancel_order as cancel_order_inst
-from ..instructions import match_orders as match_order_inst
-from ..instructions import new_order as new_order_inst
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
 from .state import MarketState
-from .types import AccountFlags, FilledOrder, MarketOpts, Order, OrderInfo
 
 
 # pylint: disable=too-many-public-methods
@@ -34,7 +32,7 @@ class Market:
         self,
         conn: Client,
         market_state: MarketState,
-        opts: MarketOpts = MarketOpts(),
+        opts: types.MarketOpts = types.MarketOpts(),
     ) -> None:
         self._skip_preflight = opts.skip_preflight
         self._confirmations = opts.confirmations
@@ -47,8 +45,8 @@ class Market:
     def load(
         conn: Client,
         market_address: PublicKey,
-        program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
-        opts: MarketOpts = MarketOpts(),
+        program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
+        opts: types.MarketOpts = types.MarketOpts(),
     ) -> Market:
         """Factory method to create a Market."""
         market_state = MarketState.load(conn, market_address, program_id)
@@ -81,7 +79,7 @@ class Market:
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.decode(self, bytes_data)
 
-    def load_orders_for_owner(self) -> List[Order]:
+    def load_orders_for_owner(self) -> List[types.Order]:
         raise NotImplementedError("load_orders_for_owner not implemented")
 
     def load_base_token_for_owner(self):
@@ -95,7 +93,7 @@ class Market:
         bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
-    def load_fills(self, limit=100) -> List[FilledOrder]:
+    def load_fills(self, limit=100) -> List[types.FilledOrder]:
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         events = decode_event_queue(bytes_data, limit)
         return [
@@ -104,7 +102,7 @@ class Market:
             if event.event_flags.fill and event.native_quantity_paid > 0
         ]
 
-    def parse_fill_event(self, event) -> FilledOrder:
+    def parse_fill_event(self, event) -> types.FilledOrder:
         if event.event_flags.bid:
             side = Side.Buy
             price_before_fees = (
@@ -124,7 +122,7 @@ class Market:
             self.state.quote_spl_token_multiplier() * event.native_quantity_paid
         )
         size = event.native_quantity_paid / self.state.base_spl_token_multiplier()
-        return FilledOrder(
+        return types.FilledOrder(
             order_id=int.from_bytes(event.order_id, "little"),
             side=side,
             price=price,
@@ -162,12 +160,13 @@ class Market:
 
         # TODO: Handle open_orders_address_key
         # TODO: Handle fee_discount_pubkey
-        # TODO: Handle wrapped sol account
-        if payer != owner.public_key():
+
+        if payer == owner.public_key():
             raise ValueError("Invalid payer account")
         if (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
             side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
         ):
+            # TODO: Handle wrapped sol account
             raise NotImplementedError("WRAPPED_SOL_MINT is currently unsupported")
 
         transaction.add(
@@ -199,8 +198,8 @@ class Market:
             raise Exception("Size lot %d is too small" % max_quantity)
         if self.state.price_number_to_lots(limit_price) < 0:
             raise Exception("Price lot %d is too small" % limit_price)
-        return new_order_inst(
-            NewOrderParams(
+        return instructions.new_order(
+            instructions.NewOrderParams(
                 market=self.state.public_key(),
                 open_orders=open_order_account,
                 payer=payer,
@@ -220,7 +219,7 @@ class Market:
     def cancel_order_by_client_id(self, owner: str) -> str:
         raise NotImplementedError("cancel_order_by_client_id not implemented")
 
-    def cancel_order(self, owner: Account, order: Order) -> str:
+    def cancel_order(self, owner: Account, order: types.Order) -> str:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
         return self._send_transaction(txn, owner)
 
@@ -228,8 +227,8 @@ class Market:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
         return self._send_transaction(txn, fee_payer)
 
-    def make_cancel_order_instruction(self, owner: PublicKey, order: Order) -> TransactionInstruction:
-        params = CancelOrderParams(
+    def make_cancel_order_instruction(self, owner: PublicKey, order: types.Order) -> TransactionInstruction:
+        params = instructions.CancelOrderParams(
             market=self.state.public_key(),
             owner=owner,
             open_orders=order.open_order_address,
@@ -239,10 +238,10 @@ class Market:
             open_orders_slot=order.open_order_slot,
             program_id=self.state.program_id(),
         )
-        return cancel_order_inst(params)
+        return instructions.cancel_order(params)
 
     def make_match_orders_instruction(self, limit: int) -> TransactionInstruction:
-        params = MatchOrdersParams(
+        params = instructions.MatchOrdersParams(
             market=self.state.public_key(),
             request_queue=self.state.request_queue(),
             event_queue=self.state.event_queue(),
@@ -253,7 +252,7 @@ class Market:
             limit=limit,
             program_id=self.state.program_id(),
         )
-        return match_order_inst(params)
+        return instructions.match_orders(params)
 
     def settle_funds(
         self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
@@ -282,7 +281,7 @@ class OrderBook:
     _is_bids: bool
     _slab: Slab
 
-    def __init__(self, market: Market, account_flags: AccountFlags, slab: Slab) -> None:
+    def __init__(self, market: Market, account_flags: types.AccountFlags, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
         self._market = market
@@ -294,11 +293,11 @@ class OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
-        account_flags = AccountFlags.from_bytes(buffer[5:13])
+        account_flags = types.AccountFlags.from_bytes(buffer[5:13])
         slab = Slab.decode(buffer[13:])
         return OrderBook(market, account_flags, slab)
 
-    def get_l2(self, depth: int) -> List[OrderInfo]:
+    def get_l2(self, depth: int) -> List[types.OrderInfo]:
         """Get the Level 2 market information."""
         descending = self._is_bids
         # The first elment of the inner list is price, the second is quantity.
@@ -312,7 +311,7 @@ class OrderBook:
             else:
                 levels.append([price, node.quantity])
         return [
-            OrderInfo(
+            types.OrderInfo(
                 price=self._market.state.price_lots_to_number(price_lots),
                 size=self._market.state.base_size_lots_to_number(size_lots),
                 price_lots=price_lots,
@@ -321,21 +320,21 @@ class OrderBook:
             for price_lots, size_lots in levels
         ]
 
-    def __iter__(self) -> Iterable[Order]:
+    def __iter__(self) -> Iterable[types.Order]:
         return self.orders()
 
-    def orders(self) -> Iterable[Order]:
+    def orders(self) -> Iterable[types.Order]:
         for node in self._slab.items():
             key = node.key
             price = get_price_from_key(key)
             open_orders_address = node.owner
 
-            yield Order(
+            yield types.Order(
                 order_id=key,
                 client_id=node.client_order_id,
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
-                order_info=OrderInfo(
+                order_info=types.OrderInfo(
                     price=self._market.state.price_lots_to_number(price),
                     price_lots=price,
                     size=self._market.state.base_size_lots_to_number(node.quantity),
