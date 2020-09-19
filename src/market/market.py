@@ -62,7 +62,7 @@ class Market:
         """Factory method to create a Market."""
         bytes_data = load_bytes_data(PublicKey(market_address), conn)
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
-        market_state = MarketState.create(parsed_market, program_id, conn)
+        market_state = MarketState.load(parsed_market, program_id, conn)
         return Market(market_state, options, conn)
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:

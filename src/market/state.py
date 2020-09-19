@@ -21,7 +21,7 @@ class AccountFlags(NamedTuple):
 
     @staticmethod
     # Argument is construct parsed account flags.
-    def create(con: Any) -> AccountFlags:
+    def init(con: Any) -> AccountFlags:
         return AccountFlags(
             initialized=con.initialized,
             market=con.market,
@@ -92,7 +92,7 @@ class MarketState(NamedTuple):
 
     # The first argument is construct parsed account flags.
     @staticmethod
-    def create(con: Any, program_id: PublicKey, client: Client) -> MarketState:
+    def load(con: Any, program_id: PublicKey, client: Client) -> MarketState:
         # TODO: add ownAddress check!
         if not con.account_flags.initialized or not con.account_flags.market:
             raise Exception("Invalid market")
@@ -101,7 +101,7 @@ class MarketState(NamedTuple):
         quote_mint_decimals = get_mint_decimals(client, PublicKey(con.quote_mint))
 
         return MarketState(
-            account_flags=AccountFlags.create(con.account_flags),
+            account_flags=AccountFlags.init(con.account_flags),
             own_address=PublicKey(con.own_address),
             vault_signer_nonce=con.vault_signer_nonce,
             base_mint=PublicKey(con.base_mint),
