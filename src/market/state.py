@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from construct import Container, Struct  # type: ignore
 from solana.publickey import PublicKey
