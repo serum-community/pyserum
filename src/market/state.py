@@ -90,16 +90,16 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return self._decoded.vault_signer_nonce
 
     def base_mint(self) -> PublicKey:
-        return self._decoded.base_mint
+        return PublicKey(self._decoded.base_mint)
 
     def quote_mint(self) -> PublicKey:
-        return self._decoded.quote_mint
+        return PublicKey(self._decoded.quote_mint)
 
     def base_vault(self) -> PublicKey:
-        return self._decoded.base_vault
+        return PublicKey(self._decoded.base_vault)
 
     def quote_vault(self) -> PublicKey:
-        return self._decoded.quote_vault
+        return PublicKey(self._decoded.quote_vault)
 
     def base_deposits_total(self) -> int:
         return self._decoded.base_deposits_total
