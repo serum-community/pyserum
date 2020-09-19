@@ -23,7 +23,7 @@ class AccountFlags(NamedTuple):
 
     @staticmethod
     # Argument is construct parsed account flags.
-    def init(con: Any) -> AccountFlags:
+    def init(con: Container) -> AccountFlags:
         return AccountFlags(
             initialized=con.initialized,
             market=con.market,
