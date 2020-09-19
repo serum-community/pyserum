@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Iterable, List, NamedTuple, Optional
+from typing import Iterable, List, NamedTuple, Optional, Sequence
 
 from construct import Switch  # type: ignore
 from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding
@@ -150,7 +150,7 @@ class Slab:
         self._nodes = nodes
 
     @staticmethod
-    def decode(buffer: bytes) -> Slab:
+    def from_bytes(buffer: Sequence[int]) -> Slab:
         slab_layout = SLAB_LAYOUT.parse(buffer)
         header = slab_layout.header
         nodes = slab_layout.nodes

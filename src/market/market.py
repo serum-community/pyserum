@@ -294,7 +294,7 @@ class OrderBook:
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
         account_flags = types.AccountFlags.from_bytes(buffer[5:13])
-        slab = Slab.decode(buffer[13:])
+        slab = Slab.from_bytes(buffer[13:])
         return OrderBook(market_state, account_flags, slab)
 
     def get_l2(self, depth: int) -> List[types.OrderInfo]:
