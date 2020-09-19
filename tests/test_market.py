@@ -1,10 +1,9 @@
 import base64
-from types import SimpleNamespace
 
 import pytest
 from solana.rpc.api import Client
 
-from src.market import MARKET_LAYOUT, Market, Order, OrderBook
+from src.market import MARKET_LAYOUT, AccountFlags, Market, MarketState, Order, OrderBook, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 
@@ -27,24 +26,19 @@ def stubbed_data() -> bytes:
 @pytest.fixture(scope="module")
 def stubbed_market() -> Market:
     conn = Client("http://stubbed_endpoint:123/")
-    MARKET_ENCODE = SimpleNamespace(  # pylint: disable=invalid-name
-        **{
-            "account_flags": SimpleNamespace(
-                **{
-                    "initialized": True,
-                    "market": True,
-                    "bids": False,
-                }
-            ),
-            "vault_signer_nonce": 0,
-            "base_fees_accrued": 0,
-            "quote_dust_threshold": 100,
-            "base_lot_size": 100,
-            "quote_lot_size": 10,
-            "fee_rate_bps": 0,
-        }
+    market_state = MarketState(
+        account_flags=AccountFlags(
+            initialized=True,
+            market=True,
+            bids=False,
+        ),
+        quote_dust_threshold=100,
+        base_lot_size=100,
+        quote_lot_size=10,
+        base_spl_token_decimals=6,
+        quote_spl_token_decimals=6,
     )
-    return Market(MARKET_ENCODE, 6, 6, None, conn)
+    return Market(market_state, None, conn)
 
 
 def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
@@ -75,7 +69,7 @@ def test_order_book_get_l2(stubbed_market):  # pylint: disable=redefined-outer-n
         order_book = OrderBook.decode(stubbed_market, data)
         for i in range(1, 16):
             assert i == len(order_book.get_l2(i))
-        assert [(11744.6, 4.0632, 117446, 40632)] == order_book.get_l2(1)
+        assert [OrderInfo(11744.6, 4.0632, 117446, 40632)] == order_book.get_l2(1)
 
 
 def test_order_book_iterable(stubbed_market):  # pylint: disable=redefined-outer-name

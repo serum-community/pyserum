@@ -25,10 +25,10 @@ def test_bootstrapped_market(
     stubbed_quote_mint: PublicKey,
 ):
     assert isinstance(bootstrapped_market, Market)
-    assert bootstrapped_market.address() == stubbed_market_pk
-    assert bootstrapped_market.program_id() == stubbed_dex_program_pk
-    assert bootstrapped_market.base_mint_address() == stubbed_base_mint.public_key()
-    assert bootstrapped_market.quote_mint_address() == stubbed_quote_mint.public_key()
+    assert bootstrapped_market.state.own_address == stubbed_market_pk
+    assert bootstrapped_market.state.program_id == stubbed_dex_program_pk
+    assert bootstrapped_market.state.base_mint == stubbed_base_mint.public_key()
+    assert bootstrapped_market.state.quote_mint == stubbed_quote_mint.public_key()
 
 
 @pytest.mark.integration
