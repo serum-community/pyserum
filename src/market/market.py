@@ -8,6 +8,7 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
+from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
@@ -53,13 +54,22 @@ class Market:
         market_state = MarketState.load(conn, market_address, program_id)
         return Market(conn, market_state, opts)
 
+    def support_srm_fee_discounts(self) -> bool:
+        raise NotImplementedError("support_srm_fee_discounts not implemented")
+
+    def find_fee_discount_keys(self, owner: PublicKey, cache_duration: int):
+        raise NotImplementedError("find_fee_discount_keys not implemented")
+
+    def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int):
+        raise NotImplementedError("find_best_fee_discount_key not implemented")
+
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
 
     def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
-        raise NotImplementedError("find_quote_token_accounts_for_owner not implemented.")
+        raise NotImplementedError("find_quote_token_accounts_for_owner not implemented")
 
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
@@ -72,10 +82,10 @@ class Market:
         return OrderBook.decode(self, bytes_data)
 
     def load_orders_for_owner(self) -> List[Order]:
-        raise NotImplementedError("load_orders_for_owner not implemented.")
+        raise NotImplementedError("load_orders_for_owner not implemented")
 
     def load_base_token_for_owner(self):
-        raise NotImplementedError("load_base_token_for_owner not implemented.")
+        raise NotImplementedError("load_base_token_for_owner not implemented")
 
     def load_event_queue(self):  # returns raw construct type
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
@@ -131,26 +141,34 @@ class Market:
         limit_price: int,
         max_quantity: int,
         client_id: int = 0,
-    ):  # TODO: Add open_orders_address_key param
+    ):  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
-            new_open_order_account = Account()
+            new_open_orders_account = Account()
             mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
             balanced_needed = mbfre_resp["result"]
             transaction.add(
                 make_create_account_instruction(
                     owner.public_key(),
-                    new_open_order_account.public_key(),
+                    new_open_orders_account.public_key(),
                     balanced_needed,
                     self.state.program_id(),
                 )
             )
-            signers.append(new_open_order_account)
+            signers.append(new_open_orders_account)
+            # TODO: Cache new_open_orders_account
 
         # TODO: Handle open_orders_address_key
+        # TODO: Handle fee_discount_pubkey
         # TODO: Handle wrapped sol account
+        if payer != owner.public_key():
+            raise ValueError("Invalid payer account")
+        if (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
+            side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
+        ):
+            raise NotImplementedError("WRAPPED_SOL_MINT is currently unsupported")
 
         transaction.add(
             self.make_place_order_instruction(
@@ -161,7 +179,7 @@ class Market:
                 limit_price,
                 max_quantity,
                 client_id,
-                open_order_accounts[0].address if open_order_accounts else new_open_order_account.public_key(),
+                open_order_accounts[0].address if open_order_accounts else new_open_orders_account.public_key(),
             )
         )
         return self._send_transaction(transaction, *signers)
@@ -178,9 +196,9 @@ class Market:
         open_order_account: PublicKey,
     ) -> TransactionInstruction:
         if self.state.base_size_number_to_lots(max_quantity) < 0:
-            raise Exception("Size lot %d is too small." % max_quantity)
+            raise Exception("Size lot %d is too small" % max_quantity)
         if self.state.price_number_to_lots(limit_price) < 0:
-            raise Exception("Price lot %d is too small." % limit_price)
+            raise Exception("Price lot %d is too small" % limit_price)
         return new_order_inst(
             NewOrderParams(
                 market=self.state.public_key(),
@@ -200,7 +218,7 @@ class Market:
         )
 
     def cancel_order_by_client_id(self, owner: str) -> str:
-        raise NotImplementedError("cancel_order_by_client_id not implemented.")
+        raise NotImplementedError("cancel_order_by_client_id not implemented")
 
     def cancel_order(self, owner: Account, order: Order) -> str:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
@@ -240,7 +258,7 @@ class Market:
     def settle_funds(
         self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
     ) -> str:
-        raise NotImplementedError("settle_funds not implemented.")
+        raise NotImplementedError("settle_funds not implemented")
 
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
         res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
@@ -248,7 +266,7 @@ class Market:
             self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
         if not signature:
-            raise Exception("Transaction not sent successfully.")
+            raise Exception("Transaction not sent successfully")
         return str(signature)
 
 
