@@ -10,12 +10,19 @@ from ..enums import Side
 
 class AccountFlags(NamedTuple):
     initialized: bool = False
+    """"""
     market: bool = False
+    """"""
     open_orders: bool = False
+    """"""
     request_queue: bool = False
+    """"""
     event_queue: bool = False
+    """"""
     bids: bool = False
+    """"""
     asks: bool = False
+    """"""
 
     @staticmethod
     def from_bytes(date_bytes: bytes) -> AccountFlags:
@@ -31,26 +38,49 @@ class AccountFlags(NamedTuple):
         )
 
 
+class MarketOpts(NamedTuple):
+    skip_preflight: bool = False
+    """"""
+    confirmations: int = 10
+    """"""
+
+
 class FilledOrder(NamedTuple):
     order_id: int
+    """"""
     side: Side
+    """"""
     price: float
+    """"""
     size: float
+    """"""
     fee_cost: int
+    """"""
 
 
 class OrderInfo(NamedTuple):
     price: float
+    """"""
     size: float
+    """"""
     price_lots: int
+    """"""
     size_lots: int
+    """"""
 
 
 class Order(NamedTuple):
     order_id: int
+    """"""
     client_id: int
+    """"""
     open_order_address: PublicKey
+    """"""
     open_order_slot: int
+    """"""
     fee_tier: int
+    """"""
     order_info: OrderInfo
+    """"""
     side: Side
+    """"""

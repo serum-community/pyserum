@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterable, List
+from typing import Iterable, List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -20,7 +20,7 @@ from ..open_orders_account import OpenOrdersAccount, make_create_account_instruc
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
 from .state import MarketState
-from .types import AccountFlags, FilledOrder, Order, OrderInfo
+from .types import AccountFlags, FilledOrder, MarketOpts, Order, OrderInfo
 
 
 # pylint: disable=too-many-public-methods
@@ -29,18 +29,14 @@ class Market:
 
     logger = logging.getLogger("pyserum.market.Market")
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         conn: Client,
         market_state: MarketState,
-        opts: Any,  # pylint: disable=unused-argument
-        confirmations: int = 10,
-        skip_preflight: bool = False,
+        opts: MarketOpts = MarketOpts(),
     ) -> None:
-        # TODO: add options
-        self._skip_preflight = skip_preflight
-        self._confirmations = confirmations
+        self._skip_preflight = opts.skip_preflight
+        self._confirmations = opts.confirmations
         self._conn = conn
 
         self.state = market_state
@@ -48,7 +44,10 @@ class Market:
     @staticmethod
     # pylint: disable=unused-argument
     def load(
-        conn: Client, market_address: PublicKey, opts: Any, program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+        conn: Client,
+        market_address: PublicKey,
+        program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
+        opts: MarketOpts = MarketOpts(),
     ) -> Market:
         """Factory method to create a Market."""
         market_state = MarketState.load(conn, market_address, program_id)
@@ -123,7 +122,7 @@ class Market:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
-    def place_order(
+    def place_order(  # pylint: disable=too-many-arguments
         self,
         payer: PublicKey,
         owner: Account,
@@ -167,7 +166,7 @@ class Market:
         )
         return self._send_transaction(transaction, *signers)
 
-    def make_place_order_instruction(
+    def make_place_order_instruction(  # pylint: disable=too-many-arguments
         self,
         payer: PublicKey,
         owner: Account,

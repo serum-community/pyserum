@@ -13,7 +13,7 @@ from .utils import confirm_transaction
 @pytest.mark.integration
 @pytest.fixture(scope="module")
 def bootstrapped_market(http_client: Client, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey) -> Market:
-    return Market.load(http_client, stubbed_market_pk, None, stubbed_dex_program_pk)
+    return Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk)
 
 
 @pytest.mark.integration

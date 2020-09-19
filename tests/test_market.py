@@ -2,9 +2,9 @@ import base64
 
 import pytest
 from construct import Container
-from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
+from src.instructions import DEFAULT_DEX_PROGRAM_ID
 from src.market import Market, OrderBook, State
 from src.market.types import AccountFlags, Order, OrderInfo
 
@@ -42,11 +42,11 @@ def stubbed_market() -> Market:
                 quote_lot_size=10,
             )
         ),
-        program_id=PublicKey(123),
+        program_id=DEFAULT_DEX_PROGRAM_ID,
         base_mint_decimals=6,
         quote_mint_decimals=6,
     )
-    return Market(conn, market_state, None)
+    return Market(conn, market_state)
 
 
 def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
