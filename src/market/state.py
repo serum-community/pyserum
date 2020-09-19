@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from typing import NamedTuple
 
 from construct import Container, Struct  # type: ignore
 from solana.publickey import PublicKey
@@ -10,29 +9,7 @@ from solana.rpc.api import Client
 from src.utils import get_mint_decimals, load_bytes_data
 
 from .._layouts.market import MARKET_LAYOUT
-
-
-class AccountFlags(NamedTuple):
-    initialized: bool = False
-    market: bool = False
-    open_orders: bool = False
-    request_queue: bool = False
-    event_queue: bool = False
-    bids: bool = False
-    asks: bool = False
-
-    @staticmethod
-    # Argument is construct parsed account flags.
-    def init(con: Container) -> AccountFlags:
-        return AccountFlags(
-            initialized=con.initialized,
-            market=con.market,
-            open_orders=con.open_orders,
-            request_queue=con.request_queue,
-            event_queue=con.event_queue,
-            bids=con.bids,
-            asks=con.asks,
-        )
+from .types import AccountFlags
 
 
 class MarketState:  # pylint: disable=too-many-public-methods

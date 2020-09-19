@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterable, List, NamedTuple
+from typing import Any, Iterable, List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -21,6 +21,7 @@ from ..open_orders_account import OpenOrdersAccount, make_create_account_instruc
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
 from .state import MarketState
+from .types import FilledOrder, Order, OrderInfo
 
 
 # pylint: disable=too-many-public-methods
@@ -258,31 +259,6 @@ class Market:
         if not signature:
             raise Exception("Transaction not sent successfully.")
         return str(signature)
-
-
-class FilledOrder(NamedTuple):
-    order_id: int
-    side: Side
-    price: float
-    size: float
-    fee_cost: int
-
-
-class OrderInfo(NamedTuple):
-    price: float
-    size: float
-    price_lots: int
-    size_lots: int
-
-
-class Order(NamedTuple):
-    order_id: int
-    client_id: int
-    open_order_address: PublicKey
-    open_order_slot: int
-    fee_tier: int
-    order_info: OrderInfo
-    side: Side
 
 
 # The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)

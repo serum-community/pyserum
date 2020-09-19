@@ -5,7 +5,8 @@ from construct import Container
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.market import AccountFlags, Market, MarketState, Order, OrderBook, OrderInfo
+from src.market import Market, State, OrderBook
+from src.market.types import AccountFlags, Order, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 
@@ -28,7 +29,7 @@ def stubbed_data() -> bytes:
 @pytest.fixture(scope="module")
 def stubbed_market() -> Market:
     conn = Client("http://stubbed_endpoint:123/")
-    market_state = MarketState(
+    market_state = State(
         Container(
             dict(
                 account_flags=AccountFlags(
@@ -49,7 +50,7 @@ def stubbed_market() -> Market:
 
 
 def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
-    parsed_market = MarketState.LAYOUT().parse(stubbed_data)
+    parsed_market = State.LAYOUT().parse(stubbed_data)
     assert parsed_market.account_flags.initialized
     assert parsed_market.account_flags.market
     assert not parsed_market.account_flags.open_orders
