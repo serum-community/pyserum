@@ -5,7 +5,7 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.client import market_client
+from src.connection import conn
 
 
 @pytest.mark.integration
@@ -146,7 +146,7 @@ def stubbed_ask_account_pk(__bs_params) -> PublicKey:
 @pytest.fixture(scope="session")
 def http_client() -> Client:
     """Solana http client."""
-    client = market_client("http://localhost:8899")
-    if not client.is_connected():
+    cc = conn("http://localhost:8899")  # pylint: disable=invalid-name
+    if not cc.is_connected():
         raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
-    return client
+    return cc
