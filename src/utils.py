@@ -3,6 +3,8 @@ import base64
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
+from src._layouts.market import MINT_LAYOUT
+
 
 def load_bytes_data(addr: PublicKey, conn: Client):
     res = conn.get_account_info(addr)
@@ -10,3 +12,9 @@ def load_bytes_data(addr: PublicKey, conn: Client):
         raise Exception("Cannot load byte data.")
     data = res["result"]["value"]["data"][0]
     return base64.decodebytes(data.encode("ascii"))
+
+
+def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
+    """Get the mint decimals for a token mint"""
+    bytes_data = load_bytes_data(mint_pub_key, conn)
+    return MINT_LAYOUT.parse(bytes_data).decimals

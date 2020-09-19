@@ -1,9 +1,11 @@
 import base64
 
 import pytest
+from construct import Container
+from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.market import MARKET_LAYOUT, AccountFlags, Market, MarketState, Order, OrderBook, OrderInfo
+from src.market import AccountFlags, Market, MarketState, Order, OrderBook, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 
@@ -27,22 +29,27 @@ def stubbed_data() -> bytes:
 def stubbed_market() -> Market:
     conn = Client("http://stubbed_endpoint:123/")
     market_state = MarketState(
-        account_flags=AccountFlags(
-            initialized=True,
-            market=True,
-            bids=False,
+        Container(
+            dict(
+                account_flags=AccountFlags(
+                    initialized=True,
+                    market=True,
+                    bids=False,
+                ),
+                quote_dust_threshold=100,
+                base_lot_size=100,
+                quote_lot_size=10,
+            )
         ),
-        quote_dust_threshold=100,
-        base_lot_size=100,
-        quote_lot_size=10,
-        base_spl_token_decimals=6,
-        quote_spl_token_decimals=6,
+        program_id=PublicKey(123),
+        base_mint_decimals=6,
+        quote_mint_decimals=6,
     )
-    return Market(market_state, None, conn)
+    return Market(conn, market_state, None)
 
 
 def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
-    parsed_market = MARKET_LAYOUT.parse(stubbed_data)
+    parsed_market = MarketState.LAYOUT().parse(stubbed_data)
     assert parsed_market.account_flags.initialized
     assert parsed_market.account_flags.market
     assert not parsed_market.account_flags.open_orders
