@@ -9,7 +9,6 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.transaction import Transaction, TransactionInstruction
 
-from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
 from ..enums import OrderType, Side
@@ -21,21 +20,14 @@ from ..open_orders_account import OpenOrdersAccount, make_create_account_instruc
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
 from .state import MarketState
-from .types import FilledOrder, Order, OrderInfo
+from .types import AccountFlags, FilledOrder, Order, OrderInfo
 
 
 # pylint: disable=too-many-public-methods
 class Market:
     """Represents a Serum Market."""
 
-    logger = logging.getLogger("serum.market")
-
-    _decode: Any
-    _baseSplTokenDecimals: int
-    _quoteSplTokenDecimals: int
-    _skipPreflight: bool
-    _confirmations: int
-    _porgram_id: PublicKey
+    logger = logging.getLogger("pyserum.market.Market")
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -49,7 +41,7 @@ class Market:
         # TODO: add options
         self._skip_preflight = skip_preflight
         self._confirmations = confirmations
-        self._conn = conn  # TODO: Make private
+        self._conn = conn
 
         self.state = market_state
 
@@ -273,7 +265,7 @@ class OrderBook:
     _is_bids: bool
     _slab: Slab
 
-    def __init__(self, market: Market, account_flags: Any, slab: Slab) -> None:
+    def __init__(self, market: Market, account_flags: AccountFlags, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
         self._market = market
@@ -285,7 +277,7 @@ class OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
-        account_flags = ACCOUNT_FLAGS_LAYOUT.parse(buffer[5:13])
+        account_flags = AccountFlags.from_bytes(buffer[5:13])
         slab = Slab.decode(buffer[13:])
         return OrderBook(market, account_flags, slab)
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from construct import Container
 from solana.publickey import PublicKey
 
+from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ..enums import Side
 
 
@@ -18,7 +18,8 @@ class AccountFlags(NamedTuple):
     asks: bool = False
 
     @staticmethod
-    def init(con: Container) -> AccountFlags:
+    def from_bytes(date_bytes: bytes) -> AccountFlags:
+        con = ACCOUNT_FLAGS_LAYOUT.parse(date_bytes)
         return AccountFlags(
             initialized=con.initialized,
             market=con.market,

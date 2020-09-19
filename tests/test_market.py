@@ -5,7 +5,7 @@ from construct import Container
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.market import Market, State, OrderBook
+from src.market import Market, OrderBook, State
 from src.market.types import AccountFlags, Order, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH

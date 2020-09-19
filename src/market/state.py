@@ -46,7 +46,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return PublicKey(self._decoded.own_address)
 
     def account_flags(self) -> AccountFlags:
-        return AccountFlags.init(self._decoded.account_flags)
+        return AccountFlags(**self._decoded.account_flags)
 
     def asks(self) -> PublicKey:
         return PublicKey(self._decoded.asks)
