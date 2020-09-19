@@ -59,6 +59,7 @@ jobs:
 
       - name: Install pipenv
         uses: dschep/install-pipenv-action
+ 
       - name: Generate coverage report
         run: |
           pipenv install --dev --skip-lock pytest pytest-cov
