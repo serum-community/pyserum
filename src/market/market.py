@@ -48,7 +48,7 @@ class Market:
         # TODO: add options
         self._skip_preflight = skip_preflight
         self._confirmations = confirmations
-        self.conn = conn  # TODO: Make private
+        self._conn = conn  # TODO: Make private
 
         self.state = market_state
 
@@ -63,7 +63,7 @@ class Market:
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(
-            self.conn, self.state.public_key(), owner_address, self.state.program_id()
+            self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
 
     def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
@@ -71,12 +71,12 @@ class Market:
 
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
-        bytes_data = load_bytes_data(self.state.bids(), self.conn)
+        bytes_data = load_bytes_data(self.state.bids(), self._conn)
         return OrderBook.decode(self, bytes_data)
 
     def load_asks(self) -> OrderBook:
         """Load the Ask order book."""
-        bytes_data = load_bytes_data(self.state.asks(), self.conn)
+        bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.decode(self, bytes_data)
 
     def load_orders_for_owner(self) -> List[Order]:
@@ -86,15 +86,15 @@ class Market:
         raise NotImplementedError("load_base_token_for_owner not implemented.")
 
     def load_event_queue(self):  # returns raw construct type
-        bytes_data = load_bytes_data(self.state.event_queue(), self.conn)
+        bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         return decode_event_queue(bytes_data)
 
     def load_request_queue(self):  # returns raw construct type
-        bytes_data = load_bytes_data(self.state.request_queue(), self.conn)
+        bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
     def load_fills(self, limit=100) -> List[FilledOrder]:
-        bytes_data = load_bytes_data(self.state.event_queue(), self.conn)
+        bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         events = decode_event_queue(bytes_data, limit)
         return [
             self.parse_fill_event(event)
@@ -145,7 +145,7 @@ class Market:
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
             new_open_order_account = Account()
-            mbfre_resp = self.conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
+            mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
             balanced_needed = mbfre_resp["result"]
             transaction.add(
                 make_create_account_instruction(
@@ -251,7 +251,7 @@ class Market:
         raise NotImplementedError("settle_funds not implemented.")
 
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
-        res = self.conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
+        res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
         if self._confirmations > 0:
             self.logger.warning("Cannot confirm transaction yet.")
         signature = res.get("result")
