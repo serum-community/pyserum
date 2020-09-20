@@ -11,7 +11,7 @@ from solana.transaction import Transaction, TransactionInstruction
 from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 
 import src.instructions as instructions
-import src.market.types as types
+import src.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
@@ -32,7 +32,7 @@ class Market:
         self,
         conn: Client,
         market_state: MarketState,
-        opts: types.MarketOpts = types.MarketOpts(),
+        opts: t.MarketOpts = t.MarketOpts(),
     ) -> None:
         self._skip_preflight = opts.skip_preflight
         self._confirmations = opts.confirmations
@@ -46,7 +46,7 @@ class Market:
         conn: Client,
         market_address: PublicKey,
         program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
-        opts: types.MarketOpts = types.MarketOpts(),
+        opts: t.MarketOpts = t.MarketOpts(),
     ) -> Market:
         """Factory method to create a Market."""
         market_state = MarketState.load(conn, market_address, program_id)
@@ -79,7 +79,7 @@ class Market:
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.from_bytes(self.state, bytes_data)
 
-    def load_orders_for_owner(self) -> List[types.Order]:
+    def load_orders_for_owner(self) -> List[t.Order]:
         raise NotImplementedError("load_orders_for_owner not implemented")
 
     def load_base_token_for_owner(self):
@@ -93,7 +93,7 @@ class Market:
         bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
-    def load_fills(self, limit=100) -> List[types.FilledOrder]:
+    def load_fills(self, limit=100) -> List[t.FilledOrder]:
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         events = decode_event_queue(bytes_data, limit)
         return [
@@ -102,7 +102,7 @@ class Market:
             if event.event_flags.fill and event.native_quantity_paid > 0
         ]
 
-    def parse_fill_event(self, event) -> types.FilledOrder:
+    def parse_fill_event(self, event) -> t.FilledOrder:
         if event.event_flags.bid:
             side = Side.Buy
             price_before_fees = (
@@ -122,7 +122,7 @@ class Market:
             self.state.quote_spl_token_multiplier() * event.native_quantity_paid
         )
         size = event.native_quantity_paid / self.state.base_spl_token_multiplier()
-        return types.FilledOrder(
+        return t.FilledOrder(
             order_id=int.from_bytes(event.order_id, "little"),
             side=side,
             price=price,
@@ -219,7 +219,7 @@ class Market:
     def cancel_order_by_client_id(self, owner: str) -> str:
         raise NotImplementedError("cancel_order_by_client_id not implemented")
 
-    def cancel_order(self, owner: Account, order: types.Order) -> str:
+    def cancel_order(self, owner: Account, order: t.Order) -> str:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
         return self._send_transaction(txn, owner)
 
@@ -227,7 +227,7 @@ class Market:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
         return self._send_transaction(txn, fee_payer)
 
-    def make_cancel_order_instruction(self, owner: PublicKey, order: types.Order) -> TransactionInstruction:
+    def make_cancel_order_instruction(self, owner: PublicKey, order: t.Order) -> TransactionInstruction:
         params = instructions.CancelOrderParams(
             market=self.state.public_key(),
             owner=owner,
@@ -281,7 +281,7 @@ class OrderBook:
     _is_bids: bool
     _slab: Slab
 
-    def __init__(self, market_state: MarketState, account_flags: types.AccountFlags, slab: Slab) -> None:
+    def __init__(self, market_state: MarketState, account_flags: t.AccountFlags, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
         self._market = market_state
@@ -293,11 +293,11 @@ class OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.
-        account_flags = types.AccountFlags.from_bytes(buffer[5:13])
+        account_flags = t.AccountFlags.from_bytes(buffer[5:13])
         slab = Slab.from_bytes(buffer[13:])
         return OrderBook(market_state, account_flags, slab)
 
-    def get_l2(self, depth: int) -> List[types.OrderInfo]:
+    def get_l2(self, depth: int) -> List[t.OrderInfo]:
         """Get the Level 2 market information."""
         descending = self._is_bids
         # The first elment of the inner list is price, the second is quantity.
@@ -311,7 +311,7 @@ class OrderBook:
             else:
                 levels.append([price, node.quantity])
         return [
-            types.OrderInfo(
+            t.OrderInfo(
                 price=self._market.price_lots_to_number(price_lots),
                 size=self._market.base_size_lots_to_number(size_lots),
                 price_lots=price_lots,
@@ -320,21 +320,21 @@ class OrderBook:
             for price_lots, size_lots in levels
         ]
 
-    def __iter__(self) -> Iterable[types.Order]:
+    def __iter__(self) -> Iterable[t.Order]:
         return self.orders()
 
-    def orders(self) -> Iterable[types.Order]:
+    def orders(self) -> Iterable[t.Order]:
         for node in self._slab.items():
             key = node.key
             price = get_price_from_key(key)
             open_orders_address = node.owner
 
-            yield types.Order(
+            yield t.Order(
                 order_id=key,
                 client_id=node.client_order_id,
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
-                order_info=types.OrderInfo(
+                order_info=t.OrderInfo(
                     price=self._market.price_lots_to_number(price),
                     price_lots=price,
                     size=self._market.base_size_lots_to_number(node.quantity),
