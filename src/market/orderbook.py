@@ -76,7 +76,7 @@ class OrderBook:
                 client_id=node.client_order_id,
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
-                order_info=t.OrderInfo(
+                info=t.OrderInfo(
                     price=self._market_state.price_lots_to_number(price),
                     price_lots=price,
                     size=self._market_state.base_size_lots_to_number(node.quantity),

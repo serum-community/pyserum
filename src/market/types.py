@@ -81,7 +81,7 @@ class Order(NamedTuple):
     """"""
     fee_tier: int
     """"""
-    order_info: OrderInfo
+    info: OrderInfo
     """"""
     side: Side
     """"""
