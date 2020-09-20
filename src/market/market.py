@@ -172,11 +172,11 @@ class Market:
             raise ValueError("Invalid payer account")
 
         should_wrap_sol = False
+        wrapped_sol_account = Account()
         if (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
             side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
         ):
             should_wrap_sol = True
-            wrapped_sol_account = Account()
             transaction.add(
                 create_account(
                     CreateAccountParams(
