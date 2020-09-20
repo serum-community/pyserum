@@ -57,7 +57,7 @@ def test_parse_slab():
 
 
 def test_slab_get():
-    slab = Slab.decode(DATA)
+    slab = Slab.from_bytes(DATA)
     assert slab.get(123456789012345678901234567890).owner_slot == 1
     assert slab.get(100000000000000000000000000000).owner_slot == 2
     assert slab.get(200000000000000000000000000000).owner_slot == 3
@@ -74,12 +74,12 @@ def test_slab_get():
 
 
 def test_length_of_slab_iterator():
-    slab = Slab.decode(DATA)
+    slab = Slab.from_bytes(DATA)
     assert sum(1 for _ in slab.items()) == 4
 
 
 def test_iterate_in_ascending_order():
-    slab = Slab.decode(DATA)
+    slab = Slab.from_bytes(DATA)
     prev = None
     for node in slab.items():
         curr_key = node.key
@@ -89,7 +89,7 @@ def test_iterate_in_ascending_order():
 
 
 def test_iterate_in_descending_order():
-    slab = Slab.decode(DATA)
+    slab = Slab.from_bytes(DATA)
     prev = None
     for node in slab.items(descending=True):
         curr_key = node.key

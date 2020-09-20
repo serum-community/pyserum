@@ -1,9 +1,12 @@
 import base64
 
 import pytest
+from construct import Container
 from solana.rpc.api import Client
 
-from src.market import MARKET_LAYOUT, AccountFlags, Market, MarketState, Order, OrderBook, OrderInfo
+from src.instructions import DEFAULT_DEX_PROGRAM_ID
+from src.market import Market, OrderBook, State
+from src.market.types import AccountFlags, Order, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 
@@ -26,23 +29,28 @@ def stubbed_data() -> bytes:
 @pytest.fixture(scope="module")
 def stubbed_market() -> Market:
     conn = Client("http://stubbed_endpoint:123/")
-    market_state = MarketState(
-        account_flags=AccountFlags(
-            initialized=True,
-            market=True,
-            bids=False,
+    market_state = State(
+        Container(
+            dict(
+                account_flags=AccountFlags(
+                    initialized=True,
+                    market=True,
+                    bids=False,
+                ),
+                quote_dust_threshold=100,
+                base_lot_size=100,
+                quote_lot_size=10,
+            )
         ),
-        quote_dust_threshold=100,
-        base_lot_size=100,
-        quote_lot_size=10,
-        base_spl_token_decimals=6,
-        quote_spl_token_decimals=6,
+        program_id=DEFAULT_DEX_PROGRAM_ID,
+        base_mint_decimals=6,
+        quote_mint_decimals=6,
     )
-    return Market(market_state, None, conn)
+    return Market(conn, market_state)
 
 
 def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
-    parsed_market = MARKET_LAYOUT.parse(stubbed_data)
+    parsed_market = State.LAYOUT().parse(stubbed_data)
     assert parsed_market.account_flags.initialized
     assert parsed_market.account_flags.market
     assert not parsed_market.account_flags.open_orders
@@ -57,7 +65,7 @@ def test_order_book_iterator(stubbed_market):  # pylint: disable=redefined-outer
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.from_bytes(stubbed_market.state, data)
         total_orders = sum([1 for _ in order_book.orders()])
         assert total_orders == 15
 
@@ -66,7 +74,7 @@ def test_order_book_get_l2(stubbed_market):  # pylint: disable=redefined-outer-n
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.from_bytes(stubbed_market.state, data)
         for i in range(1, 16):
             assert i == len(order_book.get_l2(i))
         assert [OrderInfo(11744.6, 4.0632, 117446, 40632)] == order_book.get_l2(1)
@@ -76,7 +84,7 @@ def test_order_book_iterable(stubbed_market):  # pylint: disable=redefined-outer
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        order_book = OrderBook.decode(stubbed_market, data)
+        order_book = OrderBook.from_bytes(stubbed_market.state, data)
         cnt = 0
         for order in order_book:
             cnt += 1

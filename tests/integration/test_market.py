@@ -13,7 +13,7 @@ from .utils import confirm_transaction
 @pytest.mark.integration
 @pytest.fixture(scope="module")
 def bootstrapped_market(http_client: Client, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey) -> Market:
-    return Market.load(http_client, str(stubbed_market_pk), None, stubbed_dex_program_pk)
+    return Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk)
 
 
 @pytest.mark.integration
@@ -25,10 +25,10 @@ def test_bootstrapped_market(
     stubbed_quote_mint: PublicKey,
 ):
     assert isinstance(bootstrapped_market, Market)
-    assert bootstrapped_market.state.own_address == stubbed_market_pk
-    assert bootstrapped_market.state.program_id == stubbed_dex_program_pk
-    assert bootstrapped_market.state.base_mint == stubbed_base_mint.public_key()
-    assert bootstrapped_market.state.quote_mint == stubbed_quote_mint.public_key()
+    assert bootstrapped_market.state.public_key() == stubbed_market_pk
+    assert bootstrapped_market.state.program_id() == stubbed_dex_program_pk
+    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key()
+    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key()
 
 
 @pytest.mark.integration
