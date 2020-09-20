@@ -31,7 +31,7 @@ REQUEST_LAYOUT = cStruct(
     "open_order_slot" / Int8ul,
     "fee_tier" / Int8ul,
     Padding(5),
-    "max_base_size_or_cancelId" / Int64ul,
+    "max_base_size_or_cancel_id" / Int64ul,
     "native_quote_quantity_locked" / Int64ul,
     "order_id" / Bytes(16),
     "open_orders" / Bytes(32),
