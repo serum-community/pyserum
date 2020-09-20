@@ -16,8 +16,8 @@ import src.market.types as t
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
-from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
+from ._internal.queue_ import decode_event_queue, decode_request_queue
 from .orderbook import OrderBook
 from .state import MarketState
 
