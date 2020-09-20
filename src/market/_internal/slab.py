@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List, NamedTuple, Optional, Sequence
 
+from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
 from ..._layouts.slab import SLAB_LAYOUT, NodeType
@@ -44,55 +45,55 @@ class SlabInnerNode(SlabNode):
     children: List[int]
 
 
-def convert_construct_node_to_class(construct_nodes) -> List[SlabNode]:
-    res: List[SlabNode] = []
-    for construct_node in construct_nodes:
-        node_type = construct_node.tag
-        node = construct_node.node
-        if node_type == NodeType.UNINTIALIZED:
-            res.append(SlabNode(is_initialized=False, next=-1))
-        elif node_type == NodeType.LEAF_NODE:
-            res.append(
-                SlabLeafNode(
-                    owner_slot=node.owner_slot,
-                    fee_tier=node.fee_tier,
-                    key=int.from_bytes(node.key, "little"),
-                    owner=PublicKey(node.owner),
-                    quantity=node.quantity,
-                    client_order_id=node.client_order_id,
-                    is_initialized=True,
-                    next=NONE_NEXT,
-                )
-            )
-        elif node_type == NodeType.INNER_NODE:
-            res.append(
-                SlabInnerNode(
-                    prefix_len=node.prefix_len,
-                    key=int.from_bytes(node.key, "little"),
-                    children=node.children,
-                    is_initialized=True,
-                    next=NONE_NEXT,
-                )
-            )
-        elif node_type == NodeType.FREE_NODE:
-            res.append(SlabNode(is_initialized=True, next=node.next))
-        elif node_type == NodeType.LAST_FREE_NODE:
-            res.append(SlabNode(is_initialized=True, next=NONE_NEXT))
-        else:
-            raise RuntimeError("Unrecognized node type" + node.tag)
-    return res
-
-
 class Slab:
     def __init__(self, header: SlabHeader, nodes: List[SlabNode]):
-        self._header = header
-        self._nodes = nodes
+        self._header: SlabHeader = header
+        self._nodes: List[SlabNode] = nodes
+
+    @staticmethod
+    def __build(nodes: Container) -> List[SlabNode]:
+        res: List[SlabNode] = []
+        for construct_node in nodes:
+            node_type = construct_node.tag
+            node = construct_node.node
+            if node_type == NodeType.UNINTIALIZED:
+                res.append(SlabNode(is_initialized=False, next=-1))
+            elif node_type == NodeType.LEAF_NODE:
+                res.append(
+                    SlabLeafNode(
+                        owner_slot=node.owner_slot,
+                        fee_tier=node.fee_tier,
+                        key=int.from_bytes(node.key, "little"),
+                        owner=PublicKey(node.owner),
+                        quantity=node.quantity,
+                        client_order_id=node.client_order_id,
+                        is_initialized=True,
+                        next=NONE_NEXT,
+                    )
+                )
+            elif node_type == NodeType.INNER_NODE:
+                res.append(
+                    SlabInnerNode(
+                        prefix_len=node.prefix_len,
+                        key=int.from_bytes(node.key, "little"),
+                        children=node.children,
+                        is_initialized=True,
+                        next=NONE_NEXT,
+                    )
+                )
+            elif node_type == NodeType.FREE_NODE:
+                res.append(SlabNode(is_initialized=True, next=node.next))
+            elif node_type == NodeType.LAST_FREE_NODE:
+                res.append(SlabNode(is_initialized=True, next=NONE_NEXT))
+            else:
+                raise RuntimeError("Unrecognized node type" + node.tag)
+        return res
 
     @staticmethod
     def from_bytes(buffer: Sequence[int]) -> Slab:
-        slab_layout = SLAB_LAYOUT.parse(buffer)
-        header = slab_layout.header
-        nodes = slab_layout.nodes
+        parsed_slab = SLAB_LAYOUT.parse(buffer)
+        header = parsed_slab.header
+        nodes = parsed_slab.nodes
         return Slab(
             SlabHeader(
                 bump_index=header.bump_index,
@@ -101,7 +102,7 @@ class Slab:
                 root=header.root,
                 leaf_count=header.leaf_count,
             ),
-            convert_construct_node_to_class(nodes),
+            Slab.__build(nodes),
         )
 
     def get(self, search_key: int) -> Optional[SlabLeafNode]:
