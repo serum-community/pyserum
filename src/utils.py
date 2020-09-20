@@ -2,6 +2,7 @@ import base64
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 
 from src._layouts.market import MINT_LAYOUT
 
@@ -16,5 +17,8 @@ def load_bytes_data(addr: PublicKey, conn: Client):
 
 def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
     """Get the mint decimals for a token mint"""
+    if mint_pub_key == WRAPPED_SOL_MINT:
+        return 9
+
     bytes_data = load_bytes_data(mint_pub_key, conn)
     return MINT_LAYOUT.parse(bytes_data).decimals

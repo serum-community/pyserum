@@ -11,12 +11,8 @@ from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
 from spl.token.constants import TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
-from spl.token.instructions import (  # type: ignore
-    CloseAccountParams,
-    InitializeAccountParams,
-    close_account,
-    initialize_account,
-)  # type: ignore
+from spl.token.instructions import CloseAccountParams  # type: ignore
+from spl.token.instructions import InitializeAccountParams, close_account, initialize_account  # type: ignore
 
 import src.instructions as instructions
 import src.market.types as t
