@@ -7,8 +7,16 @@ from typing import Iterable, List, Sequence
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.system_program import CreateAccountParams, create_account
+from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
-from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
+from spl.token.constants import TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
+from spl.token.instructions import (  # type: ignore
+    CloseAccountParams,
+    InitializeAccountParams,
+    close_account,
+    initialize_account,
+)  # type: ignore
 
 import src.instructions as instructions
 import src.market.types as t
@@ -20,6 +28,8 @@ from ..open_orders_account import OpenOrdersAccount, make_create_account_instruc
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
 from .state import MarketState
+
+LAMPORTS_PER_SOL = 1000000000
 
 
 # pylint: disable=too-many-public-methods
@@ -130,6 +140,7 @@ class Market:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
+    # pylint: disable=too-many-locals
     def place_order(  # pylint: disable=too-many-arguments
         self,
         payer: PublicKey,
@@ -163,15 +174,40 @@ class Market:
 
         if payer == owner.public_key():
             raise ValueError("Invalid payer account")
+
+        should_wrap_sol = False
         if (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
             side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
         ):
-            # TODO: Handle wrapped sol account
-            raise NotImplementedError("WRAPPED_SOL_MINT is currently unsupported")
+            should_wrap_sol = True
+            wrapped_sol_account = Account()
+            transaction.add(
+                create_account(
+                    CreateAccountParams(
+                        from_pubkey=owner.public_key(),
+                        new_account_pubkey=wrapped_sol_account.public_key(),
+                        lamports=Market.get_lamport_need_for_sol_wrapping(
+                            limit_price, max_quantity, side, open_order_accounts
+                        ),
+                        space=165,
+                        program_id=TOKEN_PROGRAM_ID,
+                    )
+                )
+            )
+            transaction.add(
+                initialize_account(
+                    InitializeAccountParams(
+                        account=wrapped_sol_account.public_key(),
+                        mint=WRAPPED_SOL_MINT,
+                        owner=owner.public_key(),
+                        program_id=SYSVAR_RENT_PUBKEY,
+                    )
+                )
+            )
 
         transaction.add(
             self.make_place_order_instruction(
-                payer,
+                payer if should_wrap_sol else wrapped_sol_account.public_key(),
                 owner,
                 order_type,
                 side,
@@ -181,7 +217,35 @@ class Market:
                 open_order_accounts[0].address if open_order_accounts else new_open_orders_account.public_key(),
             )
         )
+
+        if should_wrap_sol:
+            transaction.add(
+                close_account(
+                    CloseAccountParams(
+                        account=wrapped_sol_account.public_key(),
+                        owner=owner.public_key(),
+                        dest=owner.public_key(),
+                    )
+                )
+            )
+
         return self._send_transaction(transaction, *signers)
+
+    @staticmethod
+    def get_lamport_need_for_sol_wrapping(
+        price: int, size: int, side: Side, open_orders_accounts: List[OpenOrdersAccount]
+    ) -> int:
+        lamports = 0
+        if side == Side.Buy:
+            lamports = round(price * size * 1.01 * LAMPORTS_PER_SOL)
+            if open_orders_accounts:
+                lamports -= open_orders_accounts[0].quote_token_free
+        else:
+            lamports = round(size * LAMPORTS_PER_SOL)
+            if open_orders_accounts:
+                lamports -= open_orders_accounts[0].base_token_free
+
+        return max(lamports, 0) + 10000000
 
     def make_place_order_instruction(  # pylint: disable=too-many-arguments
         self,
