@@ -4,8 +4,8 @@ from typing import Iterable, List, Sequence, Union
 
 import src.market.types as t
 
-from .._layouts.slab import Slab, SlabInnerNode, SlabLeafNode
 from ..enums import Side
+from ._internal.slab import Slab, SlabInnerNode, SlabLeafNode
 from .state import MarketState
 
 
