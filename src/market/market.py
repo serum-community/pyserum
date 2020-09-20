@@ -277,14 +277,14 @@ def get_price_from_key(key: int) -> int:
 class OrderBook:
     """Represents an order book."""
 
-    _market: MarketState
+    _market_state: MarketState
     _is_bids: bool
     _slab: Slab
 
     def __init__(self, market_state: MarketState, account_flags: t.AccountFlags, slab: Slab) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
             raise Exception("Invalid order book, either not initialized or neither of bids or asks")
-        self._market = market_state
+        self._market_state = market_state
         self._is_bids = account_flags.bids
         self._slab = slab
 
@@ -312,8 +312,8 @@ class OrderBook:
                 levels.append([price, node.quantity])
         return [
             t.OrderInfo(
-                price=self._market.price_lots_to_number(price_lots),
-                size=self._market.base_size_lots_to_number(size_lots),
+                price=self._market_state.price_lots_to_number(price_lots),
+                size=self._market_state.base_size_lots_to_number(size_lots),
                 price_lots=price_lots,
                 size_lots=size_lots,
             )
@@ -335,9 +335,9 @@ class OrderBook:
                 open_order_address=open_orders_address,
                 fee_tier=node.fee_tier,
                 order_info=t.OrderInfo(
-                    price=self._market.price_lots_to_number(price),
+                    price=self._market_state.price_lots_to_number(price),
                     price_lots=price,
-                    size=self._market.base_size_lots_to_number(node.quantity),
+                    size=self._market_state.base_size_lots_to_number(node.quantity),
                     size_lots=node.quantity,
                 ),
                 side=Side.Buy if self._is_bids else Side.Sell,
