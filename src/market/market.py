@@ -85,11 +85,11 @@ class Market:
     def load_base_token_for_owner(self):
         raise NotImplementedError("load_base_token_for_owner not implemented")
 
-    def load_event_queue(self) -> List[t.Event]:  # returns raw construct type
+    def load_event_queue(self) -> List[t.Event]:
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         return decode_event_queue(bytes_data)
 
-    def load_request_queue(self) -> List[t.Request]:  # returns raw construct type
+    def load_request_queue(self) -> List[t.Request]:
         bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
