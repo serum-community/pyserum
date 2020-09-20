@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import NamedTuple, Sequence
 
+from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
 from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
@@ -83,4 +84,44 @@ class Order(NamedTuple):
     order_info: OrderInfo
     """"""
     side: Side
+    """"""
+
+
+class Request(NamedTuple):
+    request_flags: Container  # TODO: Remove container type
+    """"""
+    open_order_slot: int
+    """"""
+    fee_tier: int
+    """"""
+    max_base_size_or_cancel_id: int
+    """"""
+    native_quote_quantity_locked: int
+    """"""
+    order_id: int
+    """"""
+    open_orders: PublicKey
+    """"""
+    client_order_id: int
+    """"""
+
+
+class Event(NamedTuple):
+    event_flags: Container  # TODO: Remove container type
+    """"""
+    open_order_slot: int
+    """"""
+    fee_tier: int
+    """"""
+    native_quantity_released: int
+    """"""
+    native_quantity_paid: int
+    """"""
+    native_fee_or_rebate: int
+    """"""
+    order_id: int
+    """"""
+    public_key: PublicKey
+    """"""
+    client_order_id: int
     """"""

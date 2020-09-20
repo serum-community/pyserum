@@ -17,7 +17,7 @@ from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..utils import load_bytes_data
-from ._internal.queue_ import decode_event_queue, decode_request_queue
+from ._internal.queue import decode_event_queue, decode_request_queue
 from .orderbook import OrderBook
 from .state import MarketState
 
@@ -85,11 +85,11 @@ class Market:
     def load_base_token_for_owner(self):
         raise NotImplementedError("load_base_token_for_owner not implemented")
 
-    def load_event_queue(self):  # returns raw construct type
+    def load_event_queue(self) -> List[t.Event]:  # returns raw construct type
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         return decode_event_queue(bytes_data)
 
-    def load_request_queue(self):  # returns raw construct type
+    def load_request_queue(self) -> List[t.Request]:  # returns raw construct type
         bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
