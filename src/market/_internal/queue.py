@@ -34,7 +34,7 @@ def __from_bytes(
 
 
 def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
-    layout = EVENT_LAYOUT if queue_type.Event else REQUEST_LAYOUT
+    layout = EVENT_LAYOUT if queue_type == queue_type.Event else REQUEST_LAYOUT
     parsed_item = layout.parse(buffer)
     parsed_item.pop("_io")
     return Event(**parsed_item) if queue_type == QueueType.Event else Request(**parsed_item)
