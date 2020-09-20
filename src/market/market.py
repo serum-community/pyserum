@@ -203,7 +203,7 @@ class Market:
 
         transaction.add(
             self.make_place_order_instruction(
-                payer if should_wrap_sol else wrapped_sol_account.public_key(),
+                wrapped_sol_account.public_key() if should_wrap_sol else payer,
                 owner,
                 order_type,
                 side,
