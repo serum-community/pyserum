@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, List, Sequence
+from typing import List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -14,11 +14,11 @@ import src.instructions as instructions
 import src.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from .._layouts.slab import Slab
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
+from .orderbook import OrderBook
 from .state import MarketState
 
 
