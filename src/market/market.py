@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, List, Sequence
+from typing import List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -14,11 +14,11 @@ import src.instructions as instructions
 import src.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from .._layouts.slab import Slab
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
-from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
+from ._internal.queue import decode_event_queue, decode_request_queue
+from .orderbook import OrderBook
 from .state import MarketState
 
 
@@ -85,11 +85,11 @@ class Market:
     def load_base_token_for_owner(self):
         raise NotImplementedError("load_base_token_for_owner not implemented")
 
-    def load_event_queue(self):  # returns raw construct type
+    def load_event_queue(self) -> List[t.Event]:
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         return decode_event_queue(bytes_data)
 
-    def load_request_queue(self):  # returns raw construct type
+    def load_request_queue(self) -> List[t.Request]:
         bytes_data = load_bytes_data(self.state.request_queue(), self._conn)
         return decode_request_queue(bytes_data)
 
@@ -267,79 +267,3 @@ class Market:
         if not signature:
             raise Exception("Transaction not sent successfully")
         return str(signature)
-
-
-# The key is constructed as the (price << 64) + (seq_no if ask_order else !seq_no)
-def get_price_from_key(key: int) -> int:
-    return key >> 64
-
-
-class OrderBook:
-    """Represents an order book."""
-
-    _market_state: MarketState
-    _is_bids: bool
-    _slab: Slab
-
-    def __init__(self, market_state: MarketState, account_flags: t.AccountFlags, slab: Slab) -> None:
-        if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
-            raise Exception("Invalid order book, either not initialized or neither of bids or asks")
-        self._market_state = market_state
-        self._is_bids = account_flags.bids
-        self._slab = slab
-
-    @staticmethod
-    def from_bytes(market_state: MarketState, buffer: Sequence[int]) -> OrderBook:
-        """Decode the given buffer into an order book."""
-        # This is a bit hacky at the moment. The first 5 bytes are padding, the
-        # total length is 8 bytes which is 5 + 8 = 13 bytes.
-        account_flags = t.AccountFlags.from_bytes(buffer[5:13])
-        slab = Slab.from_bytes(buffer[13:])
-        return OrderBook(market_state, account_flags, slab)
-
-    def get_l2(self, depth: int) -> List[t.OrderInfo]:
-        """Get the Level 2 market information."""
-        descending = self._is_bids
-        # The first elment of the inner list is price, the second is quantity.
-        levels: List[List[int]] = []
-        for node in self._slab.items(descending):
-            price = get_price_from_key(node.key)
-            if len(levels) > 0 and levels[len(levels) - 1][0] == price:
-                levels[len(levels) - 1][1] += node.quantity
-            elif len(levels) == depth:
-                break
-            else:
-                levels.append([price, node.quantity])
-        return [
-            t.OrderInfo(
-                price=self._market_state.price_lots_to_number(price_lots),
-                size=self._market_state.base_size_lots_to_number(size_lots),
-                price_lots=price_lots,
-                size_lots=size_lots,
-            )
-            for price_lots, size_lots in levels
-        ]
-
-    def __iter__(self) -> Iterable[t.Order]:
-        return self.orders()
-
-    def orders(self) -> Iterable[t.Order]:
-        for node in self._slab.items():
-            key = node.key
-            price = get_price_from_key(key)
-            open_orders_address = node.owner
-
-            yield t.Order(
-                order_id=key,
-                client_id=node.client_order_id,
-                open_order_address=open_orders_address,
-                fee_tier=node.fee_tier,
-                order_info=t.OrderInfo(
-                    price=self._market_state.price_lots_to_number(price),
-                    price_lots=price,
-                    size=self._market_state.base_size_lots_to_number(node.quantity),
-                    size_lots=node.quantity,
-                ),
-                side=Side.Buy if self._is_bids else Side.Sell,
-                open_order_slot=node.owner_slot,
-            )
