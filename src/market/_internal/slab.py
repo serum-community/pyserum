@@ -22,13 +22,13 @@ NONE_NEXT = -1
 
 
 # UninitializedNode, FreeNode and LastFreeNode all maps to this class.
-@dataclass
+@dataclass(frozen=True)
 class SlabNode:
     is_initialized: bool
     next: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class SlabLeafNode(SlabNode):
     owner_slot: int
     fee_tier: int
@@ -38,7 +38,7 @@ class SlabLeafNode(SlabNode):
     client_order_id: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class SlabInnerNode(SlabNode):
     prefix_len: int
     key: int
