@@ -12,7 +12,7 @@ from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
 from spl.token.constants import TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 from spl.token.instructions import CloseAccountParams  # type: ignore
-from spl.token.instructions import InitializeAccountParams, close_account, initialize_account  # type: ignore
+from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
 import src.instructions as instructions
 import src.market.types as t
@@ -20,6 +20,7 @@ import src.market.types as t
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .._layouts.slab import Slab
 from ..enums import OrderType, Side
+from ..instructions import CancelOrderByClientIDParams, cancel_order_by_client_id
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..queue_ import decode_event_queue, decode_request_queue
 from ..utils import load_bytes_data
@@ -276,8 +277,24 @@ class Market:
             )
         )
 
-    def cancel_order_by_client_id(self, owner: str) -> str:
-        raise NotImplementedError("cancel_order_by_client_id not implemented")
+    def cancel_order_by_client_id(self, owner: Account, open_orders_account: PublicKey, client_id: int) -> str:
+        txs = Transaction()
+        txs.add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
+        return self._send_transaction(txs, owner)
+
+    def make_cancel_order_by_client_id_instruction(
+        self, owner: Account, open_orders_account: PublicKey, client_id: int
+    ) -> TransactionInstruction:
+        return cancel_order_by_client_id(
+            CancelOrderByClientIDParams(
+                market=self.state.public_key(),
+                owner=owner.public_key(),
+                open_orders=open_orders_account,
+                request_queue=self.state.request_queue(),
+                client_id=client_id,
+                program_id=self.state.program_id(),
+            )
+        )
 
     def cancel_order(self, owner: Account, order: t.Order) -> str:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
