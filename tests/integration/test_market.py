@@ -1,5 +1,7 @@
 # pylint: disable=redefined-outer-name
+import time
 import pytest
+
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -140,6 +142,10 @@ def test_new_order(
     sig = bootstrapped_market.match_orders(stubbed_payer, 1)
     confirm_transaction(http_client, sig)
 
+    # wait a bit to make sure the cancellation has been done, I think there is
+    # a slight delay between match order confirm until the order has been removed from the order book.
+    time.sleep(5)
+
     # All bid order should have been cancelled.
     bids = bootstrapped_market.load_bids()
     assert sum(1 for _ in bids) == 0
@@ -151,6 +157,7 @@ def test_new_order(
     sig = bootstrapped_market.match_orders(stubbed_payer, 1)
     confirm_transaction(http_client, sig)
 
+    time.sleep(5)
     # All ask order should have been cancelled.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
