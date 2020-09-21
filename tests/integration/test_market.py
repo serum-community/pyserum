@@ -132,21 +132,3 @@ def test_new_order(
     # There should be 1 ask order that we sent earlier.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 1
-
-    # Cancel the previous two orders that we placed earlier.
-    open_orders_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
-
-    for open_orders_account in open_orders_accounts:
-        sig = bootstrapped_market.cancel_order_by_client_id(stubbed_payer, open_orders_account.address, 0)
-        confirm_transaction(http_client, sig)
-
-    sig = bootstrapped_market.match_orders(stubbed_payer, 2)
-    confirm_transaction(http_client, sig)
-
-    # There should be 0 bid order since the previous one should get cancelled.
-    bids = bootstrapped_market.load_bids()
-    assert sum(1 for _ in bids) == 1
-
-    # There should be 0 ask order since the previous one should get cancelled.
-    asks = bootstrapped_market.load_asks()
-    assert sum(1 for _ in asks) == 1
