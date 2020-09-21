@@ -151,6 +151,6 @@ def test_new_order(
     sig = bootstrapped_market.match_orders(stubbed_payer, 1)
     confirm_transaction(http_client, sig)
 
-    # All bid order should have been cancelled.
+    # All ask order should have been cancelled.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
