@@ -83,7 +83,7 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
 
 
 @pytest.mark.integration
-def test_new_order(
+def test_order_placement_cancellation_cycle(
     bootstrapped_market: Market,
     stubbed_payer: Account,
     http_client: Client,
