@@ -20,7 +20,7 @@ REQUEST_FLAGS_LAYOUT = BitsSwapped(  # Swap to little endian
         "new_order" / Flag,
         "cancel_order" / Flag,
         "bid" / Flag,
-        "postOnly" / Flag,
+        "post_only" / Flag,
         "ioc" / Flag,
         Const(0, BitsInteger(3)),  # Padding
     )
