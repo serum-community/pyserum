@@ -37,7 +37,6 @@ def __from_bytes(
 def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
     layout = EVENT_LAYOUT if queue_type == QueueType.Event else REQUEST_LAYOUT
     parsed_item = layout.parse(buffer)
-    parsed_item.pop("_io")  # Hack: Drop BytesIO object to fit kwargs into Event/Request object.
     if queue_type == QueueType.Event:  # pylint: disable=no-else-return
         parsed_event_flags = parsed_item.event_flags
         event_flags = EventFlags(
