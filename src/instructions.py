@@ -405,7 +405,7 @@ def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
                 instruction_type=InstructionType.CancelOrder,
                 args=dict(
                     side=params.side,
-                    order_id=params.order_id,
+                    order_id=params.order_id.to_bytes(32, byteorder='little'),
                     open_orders=bytes(params.open_orders),
                     open_orders_slot=params.open_orders_slot,
                 ),
