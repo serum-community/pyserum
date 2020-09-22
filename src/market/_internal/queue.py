@@ -2,12 +2,11 @@ import math
 from enum import IntEnum
 from typing import List, Optional, Sequence, Tuple, Union, cast
 
+from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
-from construct import Container  # type: ignore
-
 from ..._layouts.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
-from ..types import Event, Request
+from ..types import Event, EventFlags, Request, ReuqestFlags
 
 
 class QueueType(IntEnum):
@@ -40,8 +39,16 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
     parsed_item = layout.parse(buffer)
     parsed_item.pop("_io")  # Hack: Drop BytesIO object to fit kwargs into Event/Request object.
     if queue_type == QueueType.Event:  # pylint: disable=no-else-return
+        parsed_event_flags = parsed_item.event_flags
+        event_flags = EventFlags(
+            fill=parsed_event_flags.fill,
+            out=parsed_event_flags.out,
+            bid=parsed_event_flags.bid,
+            maker=parsed_event_flags.maker,
+        )
+
         return Event(
-            event_flags=parsed_item.event_flags,
+            event_flags=event_flags,
             open_order_slot=parsed_item.open_order_slot,
             fee_tier=parsed_item.fee_tier,
             native_quantity_released=parsed_item.native_quantity_released,
@@ -52,8 +59,17 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
             client_order_id=parsed_item.client_order_id,
         )
     else:
+        parsed_request_flags = parsed_item.event_flags
+        request_flags = ReuqestFlags(
+            new_order=parsed_request_flags.new_order,
+            cancel_order=parsed_request_flags.cancel_order,
+            bid=parsed_request_flags.bid,
+            post_only=parsed_request_flags.post_only,
+            ioc=parsed_request_flags.ioc,
+        )
+
         return Request(
-            request_flags=parsed_item.request_flags,
+            request_flags=request_flags,
             open_order_slot=parsed_item.open_order_slot,
             fee_tier=parsed_item.fee_tier,
             max_base_size_or_cancel_id=parsed_item.max_base_size_or_cancel_id,

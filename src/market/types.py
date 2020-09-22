@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import NamedTuple, Sequence
 
-from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
 from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
@@ -87,8 +86,16 @@ class Order(NamedTuple):
     """"""
 
 
+class ReuqestFlags(NamedTuple):
+    new_order: bool
+    cancel_order: bool
+    bid: bool
+    post_only: bool
+    ioc: bool
+
+
 class Request(NamedTuple):
-    request_flags: Container  # TODO: Remove container type
+    request_flags: ReuqestFlags
     """"""
     open_order_slot: int
     """"""
@@ -106,8 +113,15 @@ class Request(NamedTuple):
     """"""
 
 
+class EventFlags(NamedTuple):
+    fill: bool
+    out: bool
+    bid: bool
+    maker: bool
+
+
 class Event(NamedTuple):
-    event_flags: Container  # TODO: Remove container type
+    event_flags: EventFlags
     """"""
     open_order_slot: int
     """"""
