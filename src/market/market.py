@@ -19,7 +19,6 @@ import src.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
-from ..instructions import CancelOrderByClientIDParams, cancel_order_by_client_id
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
@@ -285,8 +284,8 @@ class Market:
     def make_cancel_order_by_client_id_instruction(
         self, owner: Account, open_orders_account: PublicKey, client_id: int
     ) -> TransactionInstruction:
-        return cancel_order_by_client_id(
-            CancelOrderByClientIDParams(
+        return instructions.cancel_order_by_client_id(
+            instructions.CancelOrderByClientIDParams(
                 market=self.state.public_key(),
                 owner=owner.public_key(),
                 open_orders=open_orders_account,

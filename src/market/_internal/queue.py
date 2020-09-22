@@ -59,7 +59,7 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
             client_order_id=parsed_item.client_order_id,
         )
     else:
-        parsed_request_flags = parsed_item.event_flags
+        parsed_request_flags = parsed_item.request_flags
         request_flags = ReuqestFlags(
             new_order=parsed_request_flags.new_order,
             cancel_order=parsed_request_flags.cancel_order,
