@@ -10,7 +10,7 @@ from solana.rpc.api import Client
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
-from spl.token.constants import TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT, ACCOUNT_LEN  # type: ignore # TODO: Remove ignore.
+from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 from spl.token.instructions import CloseAccountParams  # type: ignore
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
@@ -170,12 +170,12 @@ class Market:
         if payer == owner.public_key():
             raise ValueError("Invalid payer account")
 
-        should_wrap_sol = False
-        wrapped_sol_account = Account()
-        if (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
+        # TODO: add integration test for SOL wrapping.
+        should_wrap_sol = (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
             side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
-        ):
-            should_wrap_sol = True
+        )
+        wrapped_sol_account = Account()
+        if should_wrap_sol:
             transaction.add(
                 create_account(
                     CreateAccountParams(
