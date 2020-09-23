@@ -223,7 +223,7 @@ class Market:
                     )
                 )
             )
-
+        # TODO: extract `make_place_order_transaction`.
         return self._send_transaction(transaction, *signers)
 
     @staticmethod
