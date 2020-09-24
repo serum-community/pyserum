@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+
 import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -81,7 +82,7 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
 
 
 @pytest.mark.integration
-def test_new_order(
+def test_order_placement_cancellation_cycle(
     bootstrapped_market: Market,
     stubbed_payer: Account,
     http_client: Client,
@@ -132,3 +133,25 @@ def test_new_order(
     # There should be 1 ask order that we sent earlier.
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 1
+
+    for bid in bids:
+        sig = bootstrapped_market.cancel_order(stubbed_payer, bid)
+        confirm_transaction(http_client, sig)
+
+    sig = bootstrapped_market.match_orders(stubbed_payer, 1)
+    confirm_transaction(http_client, sig)
+
+    # All bid order should have been cancelled.
+    bids = bootstrapped_market.load_bids()
+    assert sum(1 for _ in bids) == 0
+
+    for ask in asks:
+        sig = bootstrapped_market.cancel_order(stubbed_payer, ask)
+        confirm_transaction(http_client, sig)
+
+    sig = bootstrapped_market.match_orders(stubbed_payer, 1)
+    confirm_transaction(http_client, sig)
+
+    # All ask order should have been cancelled.
+    asks = bootstrapped_market.load_asks()
+    assert sum(1 for _ in asks) == 0
