@@ -78,8 +78,6 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
             client_order_id=parsed_item.client_order_id,
         )
 
-    return Event(**parsed_item) if queue_type == QueueType.Event else Request(**parsed_item)
-
 
 def decode_request_queue(buffer: bytes, history: Optional[int] = None) -> List[Request]:
     header, nodes = __from_bytes(buffer, QueueType.Request, history)
