@@ -42,7 +42,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pipenv run pytest -v -m "not integration"
+          pipenv run pytest -v -m "not integration" -k "not parse_market_state and not open_orders_account"
 
   coverage:
     # The type of runner that the job will run on

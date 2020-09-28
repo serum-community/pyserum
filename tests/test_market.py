@@ -49,6 +49,19 @@ def stubbed_market() -> Market:
     return Market(conn, market_state)
 
 
+# TODO: This tests is not ran due to the v1 layout to v2 layout upgrade, we
+# should update the binary and make it work again
+def test_parse_market_state(stubbed_data):  # pylint: disable=redefined-outer-name
+    parsed_market = State.LAYOUT().parse(stubbed_data)
+    assert parsed_market.account_flags.initialized
+    assert parsed_market.account_flags.market
+    assert not parsed_market.account_flags.open_orders
+    assert parsed_market.vault_signer_nonce == 0
+    assert parsed_market.base_fees_accrued == 0
+    assert parsed_market.quote_dust_threshold == 100
+    assert parsed_market.fee_rate_bps == 0
+
+
 def test_order_book_iterator(stubbed_market):  # pylint: disable=redefined-outer-name
     """Test order book parsing."""
     with open(ASK_ORDER_BIN_PATH, "r") as input_file:
