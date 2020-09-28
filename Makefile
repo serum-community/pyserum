@@ -15,7 +15,7 @@ notebook:
 	cd notebooks && PYTHONPATH=../ jupyter notebook
 
 unit-tests:
-	pipenv run pytest -v -m "not integration" -k "not parse_market_state and not open_orders_account"
+	pipenv run pytest -v -m "not integration"
 
 int-tests:
 	bash scripts/run_int_tests.sh
