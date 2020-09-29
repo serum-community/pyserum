@@ -8,7 +8,7 @@ from solana.rpc.api import Client, MemcmpOpt
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
-from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from ._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2 as OPEN_ORDERS_LAYOUT
 from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .utils import load_bytes_data
 
@@ -84,9 +84,12 @@ class OpenOrdersAccount:
                 bytes=str(owner),
             ),
         ]
-
         resp = conn.get_program_accounts(
-            program_id, encoding="base64", memcmp_opts=filters, data_size=OPEN_ORDERS_LAYOUT.sizeof()
+            program_id,
+            commitment='recent',
+            encoding='base64',
+            memcmp_opts=filters,
+            data_size=OPEN_ORDERS_LAYOUT.sizeof()
         )
         accounts = []
         for account in resp["result"]:
@@ -100,6 +103,7 @@ class OpenOrdersAccount:
                     lamports=int(account_details["lamports"]),
                 )
             )
+
         return [OpenOrdersAccount.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import requests
+import json
 from typing import List
 
 from solana.account import Account
@@ -85,8 +87,18 @@ class Market:
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.from_bytes(self.state, bytes_data)
 
-    def load_orders_for_owner(self) -> List[t.Order]:
-        raise NotImplementedError("load_orders_for_owner not implemented")
+    def load_orders_for_owner(self, owner_address: PublicKey) -> List[t.Order]:
+        bids = self.load_bids()
+        asks = self.load_asks()
+        open_orders_accounts = self.find_open_orders_accounts_for_owner(owner_address)
+        if not open_orders_accounts:
+            return []
+
+        open_orders_addresses = set([str(o.address) for o in open_orders_accounts])
+        orders = []
+        for series in [bids, asks]:
+            orders += [o for o in series if str(o.open_order_address) in open_orders_addresses]
+        return orders
 
     def load_base_token_for_owner(self):
         raise NotImplementedError("load_base_token_for_owner not implemented")
@@ -342,3 +354,32 @@ class Market:
         if not signature:
             raise Exception("Transaction not sent successfully")
         return str(signature)
+
+    @staticmethod
+    def get_live_markets():
+        url = 'https://raw.githubusercontent.com/project-serum/serum-js/master/src/tokens_and_markets.ts'
+        resp = requests.get(url)
+        page = resp.text
+
+        # Turn this JS into json
+        data = page.split('MARKETS:')[1].split('}> = ')[1].split(';')[0]
+        data = data.replace(' new PublicKey(', '').replace(')', '')
+        for c in ['name', 'address', 'programId', 'deprecated']:
+            data = data.replace(c, "'{}'".format(c))
+        data = data.replace("'", '"')
+        data = data.replace(" ", "")
+        data = data.replace('\n', '')
+        data = data.replace(',}', '}')
+        data = data.replace(',]', ']')
+        data = json.loads(data)
+
+        markets = []
+        for r in data:
+            if r['deprecated']:
+                continue
+            markets.append(t.MarketInfo(
+                name=r['name'],
+                address=r['address'],
+                program_id=r['programId']))
+
+        return markets

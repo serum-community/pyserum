@@ -139,3 +139,12 @@ class Event(NamedTuple):
     """"""
     client_order_id: int
     """"""
+
+
+class MarketInfo(NamedTuple):
+    name: str
+    """"""
+    address: PublicKey
+    """"""
+    program_id: PublicKey
+    """"""

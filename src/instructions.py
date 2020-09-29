@@ -10,7 +10,8 @@ from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
 
-DEFAULT_DEX_PROGRAM_ID = PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
+# V2
+DEFAULT_DEX_PROGRAM_ID = PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
 
 
 class InitializeMarketParams(NamedTuple):
