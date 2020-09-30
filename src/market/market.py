@@ -329,8 +329,13 @@ class Market:
         )
         return instructions.match_orders(params)
 
-    def settle_funds(
-        self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
+    def settle_funds(  # pylint: disable=too-many-arguments
+        self,
+        owner: Account,
+        open_orders: OpenOrdersAccount,
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,
+        referrer_quote_wallet: PublicKey,
     ) -> str:
         raise NotImplementedError("settle_funds not implemented")
 
