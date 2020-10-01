@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import List
 import json
+import itertools
 import logging
 import requests
 
@@ -95,9 +96,7 @@ class Market:
             return []
 
         open_orders_addresses = {str(o.address) for o in open_orders_accounts}
-        orders = []
-        for series in [bids, asks]:
-            orders += [o for o in series if str(o.open_order_address) in open_orders_addresses]
+        orders = [o for o in itertools.chain(bids, asks) if str(o.open_order_address) in open_orders_addresses]
         return orders
 
     def load_base_token_for_owner(self):
