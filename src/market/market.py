@@ -357,29 +357,26 @@ class Market:
 
     @staticmethod
     def get_live_markets():
-        url = 'https://raw.githubusercontent.com/project-serum/serum-js/master/src/tokens_and_markets.ts'
+        url = "https://raw.githubusercontent.com/project-serum/serum-js/master/src/tokens_and_markets.ts"
         resp = requests.get(url)
         page = resp.text
 
         # Turn this JS into json
-        data = page.split('MARKETS:')[1].split('}> = ')[1].split(';')[0]
-        data = data.replace(' new PublicKey(', '').replace(')', '')
-        for c in ['name', 'address', 'programId', 'deprecated']:
-            data = data.replace(c, "'{}'".format(c))
+        data = page.split("MARKETS:")[1].split("}> = ")[1].split(";")[0]
+        data = data.replace(" new PublicKey(", "").replace(")", "")
+        for c in ["name", "address", "programId", "deprecated"]:
+            data = data.replace(c, '"{}"'.format(c))
         data = data.replace("'", '"')
         data = data.replace(" ", "")
-        data = data.replace('\n', '')
-        data = data.replace(',}', '}')
-        data = data.replace(',]', ']')
+        data = data.replace("\n", "")
+        data = data.replace(",}", "}")
+        data = data.replace(",]", "]")
         data = json.loads(data)
 
         markets = []
         for r in data:
-            if r['deprecated']:
+            if r["deprecated"]:
                 continue
-            markets.append(t.MarketInfo(
-                name=r['name'],
-                address=r['address'],
-                program_id=r['programId']))
+            markets.append(t.MarketInfo(name=r["name"], address=r["address"], program_id=r["programId"]))
 
         return markets

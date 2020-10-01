@@ -86,10 +86,10 @@ class OpenOrdersAccount:
         ]
         resp = conn.get_program_accounts(
             program_id,
-            commitment='recent',
-            encoding='base64',
+            commitment="recent",
+            encoding="base64",
             memcmp_opts=filters,
-            data_size=OPEN_ORDERS_LAYOUT.sizeof()
+            data_size=OPEN_ORDERS_LAYOUT.sizeof(),
         )
         accounts = []
         for account in resp["result"]:
