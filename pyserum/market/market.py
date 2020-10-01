@@ -95,8 +95,9 @@ class Market:
         if not open_orders_accounts:
             return []
 
+        all_orders = itertools.chain(bids.orders(), asks.orders())
         open_orders_addresses = {str(o.address) for o in open_orders_accounts}
-        orders = [o for o in itertools.chain(bids, asks) if str(o.open_order_address) in open_orders_addresses]
+        orders = [o for o in all_orders if str(o.open_order_address) in open_orders_addresses]
         return orders
 
     def load_base_token_for_owner(self):
