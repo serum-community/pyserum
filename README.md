@@ -9,7 +9,7 @@ Python client library for interacting with the [Project Serum](https://projectse
 ## Get Started
 
 ```python
-from src.market import Market
+from pyserum.market import Market
 
 endpoint = "https://api.mainnet-beta.solana.com/"
 market_address = "CAgAeMD7quTdnr6RPa7JySQpjf3irAmefYNdTb6anemq" # Address for BTC/USDC
@@ -34,7 +34,7 @@ for bid in bids:
 
 ### Market Addresses in Main Net
 
-The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
+The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/pyserum/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
 
 | Currency Pair |                   Address                    |
 | :-----------: | :------------------------------------------: |
