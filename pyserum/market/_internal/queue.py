@@ -25,17 +25,17 @@ def __from_bytes(
         for i in range(min(history, alloc_len)):
             node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
             offset = QUEUE_HEADER_LAYOUT.sizeof() + node_index * layout_size
-            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size]))  # noqa: E203
+            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size], queue_type))  # noqa: E203
     else:
         for i in range(header.count):
             node_index = (header.head + i) % alloc_len
             offset = QUEUE_HEADER_LAYOUT.sizeof() + node_index * layout_size
-            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size]))  # noqa: E203
+            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size], queue_type))  # noqa: E203
     return header, nodes
 
 
-def __parse_queue_item(buffer: Sequence[int]) -> Union[Event, Request]:
-    if len(buffer) == EVENT_LAYOUT.sizeof():  # pylint: disable=no-else-return
+def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
+    if queue_type == QueueType.Event:  # pylint: disable=no-else-return
         parsed_item = EVENT_LAYOUT.parse(buffer)
         parsed_event_flags = parsed_item.event_flags
         event_flags = EventFlags(
