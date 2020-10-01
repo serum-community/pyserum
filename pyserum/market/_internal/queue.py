@@ -84,5 +84,5 @@ def decode_request_queue(buffer: bytes, history: Optional[int] = None) -> List[R
 def decode_event_queue(buffer: bytes, history: Optional[int] = None) -> List[Event]:
     header, nodes = __from_bytes(buffer, QueueType.Event, history)
     if not header.account_flags.initialized or not header.account_flags.event_queue:
-        raise Exception("Invalid events queue, either not initialized or not a request queue.")
+        raise Exception("Invalid events queue, either not initialized or not a event queue.")
     return cast(List[Event], nodes)
