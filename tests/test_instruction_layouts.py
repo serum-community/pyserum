@@ -1,8 +1,8 @@
 """Tests for instruction layouts."""
 from solana.publickey import PublicKey
 
-from src._layouts.instructions import _VERSION, INSTRUCTIONS_LAYOUT, InstructionType
-from src.enums import OrderType, Side
+from pyserum._layouts.instructions import _VERSION, INSTRUCTIONS_LAYOUT, InstructionType
+from pyserum.enums import OrderType, Side
 
 
 def assert_parsed_layout(instruction_type, args, raw_bytes):

@@ -4,9 +4,9 @@ import pytest
 from construct import Container
 from solana.rpc.api import Client
 
-from src.instructions import DEFAULT_DEX_PROGRAM_ID
-from src.market import Market, OrderBook, State
-from src.market.types import AccountFlags, Order, OrderInfo
+from pyserum.instructions import DEFAULT_DEX_PROGRAM_ID
+from pyserum.market import Market, OrderBook, State
+from pyserum.market.types import AccountFlags, Order, OrderInfo
 
 from .binary_file_path import ASK_ORDER_BIN_PATH
 
