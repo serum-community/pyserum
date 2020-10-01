@@ -1,10 +1,10 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
+from typing import List
+import json
 import logging
 import requests
-import json
-from typing import List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -94,7 +94,7 @@ class Market:
         if not open_orders_accounts:
             return []
 
-        open_orders_addresses = set([str(o.address) for o in open_orders_accounts])
+        open_orders_addresses = {str(o.address) for o in open_orders_accounts}
         orders = []
         for series in [bids, asks]:
             orders += [o for o in series if str(o.open_order_address) in open_orders_addresses]
@@ -369,8 +369,8 @@ class Market:
         # Turn this JS into json
         data = page.split("MARKETS:")[1].split("}> = ")[1].split(";")[0]
         data = data.replace(" new PublicKey(", "").replace(")", "")
-        for c in ["name", "address", "programId", "deprecated"]:
-            data = data.replace(c, '"{}"'.format(c))
+        for col in ["name", "address", "programId", "deprecated"]:
+            data = data.replace(col, '"{}"'.format(col))
         data = data.replace("'", '"')
         data = data.replace(" ", "")
         data = data.replace("\n", "")
@@ -379,9 +379,9 @@ class Market:
         data = json.loads(data)
 
         markets = []
-        for r in data:
-            if r["deprecated"]:
+        for raw in data:
+            if raw["deprecated"]:
                 continue
-            markets.append(t.MarketInfo(name=r["name"], address=r["address"], program_id=r["programId"]))
+            markets.append(t.MarketInfo(name=raw["name"], address=raw["address"], program_id=raw["programId"]))
 
         return markets
