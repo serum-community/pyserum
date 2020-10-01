@@ -21,11 +21,16 @@ def __from_bytes(
     layout_size = EVENT_LAYOUT.sizeof() if queue_type == QueueType.Event else REQUEST_LAYOUT.sizeof()
     alloc_len = math.floor((len(buffer) - QUEUE_HEADER_LAYOUT.sizeof()) / layout_size)
     nodes: List[Union[Event, Request]] = []
-    num_items = min(history, alloc_len) if history else header.count
-    for i in range(num_items):
-        node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
-        offset = QUEUE_HEADER_LAYOUT.sizeof() + node_index * layout_size
-        nodes.append(__parse_queue_item(buffer[offset : offset + layout_size]))  # noqa: E203
+    if history:
+        for i in range(min(history, alloc_len)):
+            node_index = (header.head + header.count + alloc_len - 1 - i) % alloc_len
+            offset = QUEUE_HEADER_LAYOUT.sizeof() + node_index * layout_size
+            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size]))  # noqa: E203
+    else:
+        for i in range(header.count):
+            node_index = (header.head + i) % alloc_len
+            offset = QUEUE_HEADER_LAYOUT.sizeof() + node_index * layout_size
+            nodes.append(__parse_queue_item(buffer[offset : offset + layout_size]))  # noqa: E203
     return header, nodes
 
 
