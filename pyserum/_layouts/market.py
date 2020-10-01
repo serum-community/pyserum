@@ -24,6 +24,7 @@ MARKET_LAYOUT = cStruct(
     "base_lot_size" / Int64ul,
     "quote_lot_size" / Int64ul,
     "fee_rate_bps" / Int64ul,
+    "referrer_rebate_accrued" / Int64ul,
     Padding(7),
 )
 

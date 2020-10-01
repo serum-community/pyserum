@@ -1,6 +1,6 @@
 import base64
 
-from src.market._internal.queue import decode_event_queue
+from pyserum.market._internal.queue import decode_event_queue
 
 from .binary_file_path import EVENT_QUEUE_BIN_PATH
 

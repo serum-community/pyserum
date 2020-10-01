@@ -7,7 +7,7 @@ from construct import Container, Struct  # type: ignore
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.utils import get_mint_decimals, load_bytes_data
+from pyserum.utils import get_mint_decimals, load_bytes_data
 
 from .._layouts.market import MARKET_LAYOUT_V2 as MARKET_LAYOUT
 from .types import AccountFlags

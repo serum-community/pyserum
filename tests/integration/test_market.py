@@ -5,8 +5,8 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.enums import OrderType, Side
-from src.market import Market
+from pyserum.enums import OrderType, Side
+from pyserum.market import Market
 
 from .utils import confirm_transaction
 

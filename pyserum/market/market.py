@@ -16,8 +16,8 @@ from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT 
 from spl.token.instructions import CloseAccountParams  # type: ignore
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
-import src.instructions as instructions
-import src.market.types as t
+import pyserum.instructions as instructions
+import pyserum.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
@@ -341,8 +341,13 @@ class Market:
         )
         return instructions.match_orders(params)
 
-    def settle_funds(
-        self, owner: Account, open_orders: OpenOrdersAccount, base_wallet: PublicKey, quote_wallet: PublicKey
+    def settle_funds(  # pylint: disable=too-many-arguments
+        self,
+        owner: Account,
+        open_orders: OpenOrdersAccount,
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,
+        referrer_quote_wallet: PublicKey,
     ) -> str:
         raise NotImplementedError("settle_funds not implemented")
 

@@ -16,6 +16,7 @@ OPEN_ORDERS_LAYOUT = cStruct(
     "is_bid_bits" / Bytes(16),
     "orders" / Bytes(16)[128],
     "client_ids" / Int64ul[128],
+    "referrer_rebate_accrued" / Int64ul,
     Padding(7),
 )
 
