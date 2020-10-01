@@ -34,7 +34,7 @@ for bid in bids:
 
 ### Market Addresses in Main Net
 
-The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/pyserum/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
+The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
 
 | Currency Pair |                   Address                    |
 | :-----------: | :------------------------------------------: |
