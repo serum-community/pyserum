@@ -5,6 +5,7 @@ from typing import List, NamedTuple, Sequence
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client, MemcmpOpt
+from solana.rpc.commitment import Recent
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
@@ -86,7 +87,7 @@ class OpenOrdersAccount:
         ]
         resp = conn.get_program_accounts(
             program_id,
-            commitment="recent",
+            commitment=Recent,
             encoding="base64",
             memcmp_opts=filters,
             data_size=OPEN_ORDERS_LAYOUT.sizeof(),
