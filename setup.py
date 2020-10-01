@@ -15,7 +15,7 @@ setup(
     python_requires=">=3.7, <4",
     license="MIT",
     package_data={"pyserum": ["py.typed"]},
-    packages=find_packages(exclude=("tests", "test.*")),
+    packages=find_packages(exclude=("tests", "tests.*")),
     url="https://github.com/serum-community/pyserum",
     zip_safe=False,  # required per mypy
     classifiers=[

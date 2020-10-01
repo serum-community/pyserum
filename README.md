@@ -6,6 +6,11 @@ Status](https://github.com/serum-community/pyserum/workflows/CI/badge.svg)](http
 
 Python client library for interacting with the [Project Serum](https://projectserum.com/) DEX.
 
+## Install
+```sh
+pip install pyserum
+```
+
 ## Get Started
 
 ```python
