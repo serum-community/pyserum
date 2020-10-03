@@ -334,10 +334,38 @@ class Market:
         owner: Account,
         open_orders: OpenOrdersAccount,
         base_wallet: PublicKey,
-        quote_wallet: PublicKey,
-        referrer_quote_wallet: PublicKey,
+        quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
     ) -> str:
-        raise NotImplementedError("settle_funds not implemented")
+        if open_orders.owner != owner.public_key():
+            raise Exception("Invalid open orders account")
+        vault_signer = PublicKey.create_program_address(
+            [bytes(self.state.public_key()), self.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+            self.state.program_id(),
+        )
+        transaction = Transaction()
+        transaction.add(self.make_settle_funds_instruction(open_orders, base_wallet, quote_wallet, vault_signer))
+        return self._send_transaction(transaction)
+
+    def make_settle_funds_instruction(
+        self,
+        open_orders_account: OpenOrdersAccount,
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,
+        vault_signer: PublicKey,
+    ):
+        return instructions.settle_funds(
+            instructions.SettleFundsParams(
+                market=self.state.public_key(),
+                open_orders=open_orders_account.address,
+                owner=open_orders_account.owner,
+                base_vault=self.state.base_vault(),
+                quote_vault=self.state.quote_vault(),
+                base_wallet=base_wallet,
+                quote_wallet=quote_wallet,
+                vault_signer=vault_signer,
+                program_id=self.state.program_id(),
+            )
+        )
 
     def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
         res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
