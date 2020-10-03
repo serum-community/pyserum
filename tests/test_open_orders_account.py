@@ -3,7 +3,7 @@ import base64
 import pytest
 from solana.publickey import PublicKey
 
-from src.open_orders_account import OPEN_ORDERS_LAYOUT, OpenOrdersAccount
+from pyserum.open_orders_account import OPEN_ORDERS_LAYOUT, OpenOrdersAccount
 
 from .binary_file_path import OPEN_ORDER_ACCOUNT_BIN_PATH
 

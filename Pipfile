@@ -21,6 +21,8 @@ flake8 = "*"
 isort = "*"
 rope = "*"
 pytest-cov = "*"
+twine = "*"
+setuptools = "*"
 
 [packages]
 solana = "*"

@@ -5,7 +5,7 @@ from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
-from src.connection import conn
+from pyserum.connection import conn
 
 
 @pytest.mark.integration

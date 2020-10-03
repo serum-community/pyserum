@@ -2,17 +2,27 @@ clean:
 	rm -rf dist build _build __pycache__ *.egg-info
 
 format:
-	pipenv run isort setup.py src tests
-	pipenv run black --line-length=120 setup.py src tests
+	pipenv run isort setup.py pyserum tests
+	pipenv run black --line-length=120 setup.py pyserum tests
 
 lint:
-	pipenv run flake8 setup.py src tests
-	pipenv run mypy src
-	pipenv run pylint --rcfile=.pylintrc setup.py src tests
+	pipenv run flake8 setup.py pyserum tests
+	pipenv run mypy pyserum
+	pipenv run pylint --rcfile=.pylintrc setup.py pyserum tests
 
 .PHONY: notebook
 notebook:
 	cd notebooks && PYTHONPATH=../ jupyter notebook
+
+publish:
+	make clean
+	python setup.py sdist bdist_wheel
+	pipenv run twine upload -u serum-community dist/*
+
+test-publish:
+	make clean
+	python setup.py sdist bdist_wheel
+	pipenv run twine upload -r testpypi -u serum-community dist/*
 
 unit-tests:
 	pipenv run pytest -v -m "not integration"

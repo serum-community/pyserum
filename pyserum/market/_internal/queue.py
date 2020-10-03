@@ -35,9 +35,8 @@ def __from_bytes(
 
 
 def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
-    layout = EVENT_LAYOUT if queue_type == QueueType.Event else REQUEST_LAYOUT
-    parsed_item = layout.parse(buffer)
     if queue_type == QueueType.Event:  # pylint: disable=no-else-return
+        parsed_item = EVENT_LAYOUT.parse(buffer)
         parsed_event_flags = parsed_item.event_flags
         event_flags = EventFlags(
             fill=parsed_event_flags.fill,
@@ -58,6 +57,7 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
             client_order_id=parsed_item.client_order_id,
         )
     else:
+        parsed_item = REQUEST_LAYOUT.parse(buffer)
         parsed_request_flags = parsed_item.request_flags
         request_flags = ReuqestFlags(
             new_order=parsed_request_flags.new_order,
@@ -89,5 +89,5 @@ def decode_request_queue(buffer: bytes, history: Optional[int] = None) -> List[R
 def decode_event_queue(buffer: bytes, history: Optional[int] = None) -> List[Event]:
     header, nodes = __from_bytes(buffer, QueueType.Event, history)
     if not header.account_flags.initialized or not header.account_flags.event_queue:
-        raise Exception("Invalid events queue, either not initialized or not a request queue.")
+        raise Exception("Invalid events queue, either not initialized or not a event queue.")
     return cast(List[Event], nodes)

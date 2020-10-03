@@ -14,8 +14,8 @@ from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT 
 from spl.token.instructions import CloseAccountParams  # type: ignore
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
-import src.instructions as instructions
-import src.market.types as t
+import pyserum.instructions as instructions
+import pyserum.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
