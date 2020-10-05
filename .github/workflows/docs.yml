@@ -7,8 +7,6 @@ name: Docs
 on:
   push:
     branches: [alpha]
-  pull_request:
-    branches: [alpha]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
