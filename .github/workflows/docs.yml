@@ -31,7 +31,7 @@ jobs:
 
       - name: Add .nojekyll
         run: |
-          touch ./_built/html/.nojekyll
+          touch ./_build/html/.nojekyll
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
