@@ -7,7 +7,7 @@ from typing import List
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.types import TxOpts
+from solana.rpc.types import RPCResponse, TxOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
@@ -142,7 +142,7 @@ class Market:
         max_quantity: int,
         client_id: int = 0,
         opts: TxOpts = TxOpts(),
-    ):  # TODO: Add open_orders_address_key param and fee_discount_pubkey
+    ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
@@ -274,7 +274,7 @@ class Market:
 
     def cancel_order_by_client_id(
         self, owner: Account, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
-    ) -> str:
+    ) -> RPCResponse:
         txs = Transaction().add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
         return self._conn.send_transaction(txs, owner, opts=opts)
 
@@ -292,11 +292,11 @@ class Market:
             )
         )
 
-    def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> str:
+    def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
         return self._conn.send_transaction(txn, owner, opts=opts)
 
-    def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> str:
+    def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
         return self._conn.send_transaction(txn, fee_payer, opts=opts)
 
