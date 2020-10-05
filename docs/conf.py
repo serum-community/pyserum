@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
+    "sphinxemoji.sphinxemoji",
 ]
 
 

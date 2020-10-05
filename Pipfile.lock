@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "73565b39bdbdb44faf97010142abc3931c31d4323db05368332b4324b57513bc"
+            "sha256": "c20f0309eb0cf7a558d854c37fe70df794bc96f1b1c2d860e1e9cb2836af5fc5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1066,6 +1066,13 @@
             ],
             "markers": "python_version >= '3.5'",
             "version": "==1.1.4"
+        },
+        "sphinxemoji": {
+            "hashes": [
+                "sha256:2a86a423391e0070d6535e44c6453484cd0e92f06fc41164de97eb430955b6a5"
+            ],
+            "index": "pypi",
+            "version": "==0.1.7"
         },
         "terminado": {
             "hashes": [
