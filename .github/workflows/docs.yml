@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v2
 
       - name: Install deps
-        run: python -m pip install sphinxemoji
+        run: pip install sphinxemoji
 
       # Runs a single command using the runners shell
       - name: Sphinx Build
