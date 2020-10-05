@@ -29,10 +29,9 @@ jobs:
           pre-build-command: pip install sphinxemoji
           docs-folder: .
 
-      - name: Commit docs
+      - name: Add .nojekyll
         run: |
-          touch docs/.nojekyll
-          cp -a _build/html/ docs
+          touch ./_built/html/.nojekyll
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
