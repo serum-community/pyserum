@@ -30,8 +30,7 @@ jobs:
           docs-folder: .
 
       - name: Add .nojekyll
-        run: |
-          touch ./_build/html/.nojekyll
+        run: sudo touch ./_build/html/.nojekyll
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
