@@ -4,7 +4,8 @@ import base64
 from typing import List, NamedTuple, Sequence
 
 from solana.publickey import PublicKey
-from solana.rpc.api import Client, MemcmpOpt
+from solana.rpc.api import Client
+from solana.rpc.types import MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
@@ -75,11 +76,11 @@ class OpenOrdersAccount:
         conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey
     ) -> List[OpenOrdersAccount]:
         filters = [
-            MemcmpOpt(
+            MemcmpOpts(
                 offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
                 bytes=str(market),
             ),
-            MemcmpOpt(
+            MemcmpOpts(
                 offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),
             ),
