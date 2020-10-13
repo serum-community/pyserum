@@ -327,6 +327,7 @@ class Market:
         )
         return instructions.match_orders(params)
 
+    # TODO: add *real* test for this.
     def settle_funds(  # pylint: disable=too-many-arguments
         self,
         owner: Account,
