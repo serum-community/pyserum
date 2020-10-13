@@ -82,6 +82,35 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
 
 
 @pytest.mark.integration
+def test_settle_fund(
+    bootstrapped_market: Market,
+    stubbed_payer: Account,
+    http_client: Client,
+    stubbed_quote_wallet: Account,
+    stubbed_base_wallet: Account,
+):
+    before_quote_balance = extract_balance(http_client.get_token_account_balance(stubbed_quote_wallet.public_key()))
+    before_base_balance = extract_balance(http_client.get_token_account_balance(stubbed_base_wallet.public_key()))
+    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
+
+    for open_order_account in open_order_accounts:
+        sig = bootstrapped_market.settle_funds(
+            stubbed_payer, open_order_account, stubbed_base_wallet.public_key(), stubbed_quote_wallet.public_key()
+        )
+        confirm_transaction(http_client, sig)
+
+    after_quote_balance = extract_balance(http_client.get_token_account_balance(stubbed_quote_wallet.public_key()))
+    after_base_balance = extract_balance(http_client.get_token_account_balance(stubbed_base_wallet.public_key()))
+
+    assert before_quote_balance == after_quote_balance
+    assert before_base_balance == after_base_balance
+
+
+def extract_balance(res: str):
+    return res["result"]["value"]["uiAmount"]
+
+
+@pytest.mark.integration
 def test_order_placement_cancellation_cycle(
     bootstrapped_market: Market,
     stubbed_payer: Account,

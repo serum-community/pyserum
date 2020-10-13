@@ -344,7 +344,7 @@ class Market:
         )
         transaction = Transaction()
         transaction.add(self.make_settle_funds_instruction(open_orders, base_wallet, quote_wallet, vault_signer))
-        return self._send_transaction(transaction)
+        return self._send_transaction(transaction, owner)
 
     def make_settle_funds_instruction(
         self,
