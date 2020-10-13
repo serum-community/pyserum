@@ -92,10 +92,9 @@ def test_settle_fund(
     open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
 
     for open_order_account in open_order_accounts:
-        sig = bootstrapped_market.settle_funds(
+        bootstrapped_market.settle_funds(
             stubbed_payer, open_order_account, stubbed_base_wallet.public_key(), stubbed_quote_wallet.public_key()
         )
-        confirm_transaction(http_client, sig)
 
     after_quote_balance = extract_balance(http_client.get_token_account_balance(stubbed_quote_wallet.public_key()))
     after_base_balance = extract_balance(http_client.get_token_account_balance(stubbed_base_wallet.public_key()))

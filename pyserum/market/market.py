@@ -334,7 +334,7 @@ class Market:
         base_wallet: PublicKey,
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
         opts: TxOpts = TxOpts(),
-    ) -> str:
+    ) -> RPCResponse:
         if open_orders.owner != owner.public_key():
             raise Exception("Invalid open orders account")
         vault_signer = PublicKey.create_program_address(
