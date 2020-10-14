@@ -27,7 +27,7 @@ asks = market.load_asks()
 print("Ask Orders:")
 for ask in asks:
     print("Order id: %d, price: %f, size: %f." % (
-          ask.order_id, ask.order_info.price, ask.order_info.size))
+          ask.order_id, ask.info.price, ask.info.size))
 
 print("\n")
 # Show all current bid order
@@ -35,7 +35,7 @@ print("Bid Orders:")
 bids = market.load_bids()
 for bid in bids:
     print("Order id: %d, price: %f, size: %f." % (
-          bid.order_id, bid.order_info.price, bid.order_info.size))
+          bid.order_id, bid.info.price, bid.info.size))
 ```
 
 ### Market Addresses in Main Net
