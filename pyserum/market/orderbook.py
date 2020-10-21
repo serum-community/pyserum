@@ -43,7 +43,7 @@ class OrderBook:
     def get_l2(self, depth: int) -> List[t.OrderInfo]:
         """Get the Level 2 market information."""
         descending = self._is_bids
-        # The first elment of the inner list is price, the second is quantity.
+        # The first element of the inner list is price, the second is quantity.
         levels: List[List[int]] = []
         for node in self._slab.items(descending):
             price = self.__get_price_from_slab(node)
