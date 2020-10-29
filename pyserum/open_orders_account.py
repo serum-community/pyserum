@@ -6,7 +6,7 @@ from typing import List, NamedTuple, Sequence
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.commitment import Recent
-from solana.rpc.types import MemcmpOpts
+from solana.rpc.types import Commitment, MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
@@ -74,7 +74,7 @@ class OpenOrdersAccount:
 
     @staticmethod
     def find_for_market_and_owner(
-        conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey
+        conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
     ) -> List[OpenOrdersAccount]:
         filters = [
             MemcmpOpts(
@@ -88,7 +88,7 @@ class OpenOrdersAccount:
         ]
         resp = conn.get_program_accounts(
             program_id,
-            commitment=Recent,
+            commitment=commitment,
             encoding="base64",
             memcmp_opts=filters,
             data_size=OPEN_ORDERS_LAYOUT.sizeof(),
