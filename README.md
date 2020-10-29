@@ -7,11 +7,24 @@ Status](https://github.com/serum-community/pyserum/workflows/CI/badge.svg)](http
 Python client library for interacting with the [Project Serum](https://projectserum.com/) DEX.
 
 ## Install
+
 ```sh
 pip install pyserum
 ```
 
-## Get Started
+## Getting Started
+
+### Mainnet Market Addresses
+
+```python
+from pyserum.connection import get_live_markets
+print(get_live_markets())
+```
+
+The source of truth of the market address can be found
+[here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts).
+
+### Get Orderbook
 
 ```python
 from pyserum.connection import conn
@@ -37,10 +50,6 @@ for bid in bids:
     print("Order id: %d, price: %f, size: %f." % (
           bid.order_id, bid.info.price, bid.info.size))
 ```
-
-### Market Addresses in Main Net
-
-The source of truth of the market address can be found [here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts). Feel free to open a PR if the following addresses needs modification or addition.
 
 ## Development
 

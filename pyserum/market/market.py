@@ -1,6 +1,7 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
+import itertools
 import logging
 from typing import List
 
@@ -77,12 +78,22 @@ class Market:
         return OrderBook.from_bytes(self.state, bytes_data)
 
     def load_asks(self) -> OrderBook:
-        """Load the Ask order book."""
+        """Load the ask order book."""
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.from_bytes(self.state, bytes_data)
 
-    def load_orders_for_owner(self) -> List[t.Order]:
-        raise NotImplementedError("load_orders_for_owner not implemented")
+    def load_orders_for_owner(self, owner_address: PublicKey) -> List[t.Order]:
+        """Load orders for owner."""
+        bids = self.load_bids()
+        asks = self.load_asks()
+        open_orders_accounts = self.find_open_orders_accounts_for_owner(owner_address)
+        if not open_orders_accounts:
+            return []
+
+        all_orders = itertools.chain(bids.orders(), asks.orders())
+        open_orders_addresses = {str(o.address) for o in open_orders_accounts}
+        orders = [o for o in all_orders if str(o.open_order_address) in open_orders_addresses]
+        return orders
 
     def load_base_token_for_owner(self):
         raise NotImplementedError("load_base_token_for_owner not implemented")
