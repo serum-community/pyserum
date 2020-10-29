@@ -80,6 +80,27 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account):
 
 
 @pytest.mark.integration
+def test_settle_fund(
+    bootstrapped_market: Market,
+    stubbed_payer: Account,
+    stubbed_quote_wallet: Account,
+    stubbed_base_wallet: Account,
+):
+    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
+
+    for open_order_account in open_order_accounts:
+        assert "error" not in bootstrapped_market.settle_funds(
+            stubbed_payer,
+            open_order_account,
+            stubbed_base_wallet.public_key(),
+            stubbed_quote_wallet.public_key(),
+            opts=TxOpts(skip_confirmation=False),
+        )
+
+    # TODO: Check account states after settling funds
+
+
+@pytest.mark.integration
 def test_order_placement_cancellation_cycle(
     bootstrapped_market: Market,
     stubbed_payer: Account,
