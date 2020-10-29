@@ -1,11 +1,9 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
-from typing import List
-import json
-import itertools
 import logging
-import requests
+import itertools
+from typing import List
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -80,11 +78,12 @@ class Market:
         return OrderBook.from_bytes(self.state, bytes_data)
 
     def load_asks(self) -> OrderBook:
-        """Load the Ask order book."""
+        """Load the ask order book."""
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return OrderBook.from_bytes(self.state, bytes_data)
 
     def load_orders_for_owner(self, owner_address: PublicKey) -> List[t.Order]:
+        """Load orders for owner."""
         bids = self.load_bids()
         asks = self.load_asks()
         open_orders_accounts = self.find_open_orders_accounts_for_owner(owner_address)
@@ -363,7 +362,6 @@ class Market:
         open_orders_account: OpenOrdersAccount,
         base_wallet: PublicKey,
         quote_wallet: PublicKey,
-        referrer_quote_wallet: PublicKey,
         vault_signer: PublicKey,
     ) -> TransactionInstruction:
         return instructions.settle_funds(
@@ -379,29 +377,3 @@ class Market:
                 program_id=self.state.program_id(),
             )
         )
-
-    @staticmethod
-    def get_live_markets():
-        url = "https://raw.githubusercontent.com/project-serum/serum-js/master/src/tokens_and_markets.ts"
-        resp = requests.get(url)
-        page = resp.text
-
-        # Turn this JS into json
-        data = page.split("MARKETS:")[1].split("}> = ")[1].split(";")[0]
-        data = data.replace(" new PublicKey(", "").replace(")", "")
-        for col in ["name", "address", "programId", "deprecated"]:
-            data = data.replace(col, '"{}"'.format(col))
-        data = data.replace("'", '"')
-        data = data.replace(" ", "")
-        data = data.replace("\n", "")
-        data = data.replace(",}", "}")
-        data = data.replace(",]", "]")
-        data = json.loads(data)
-
-        markets = []
-        for raw in data:
-            if raw["deprecated"]:
-                continue
-            markets.append(t.MarketInfo(name=raw["name"], address=raw["address"], program_id=raw["programId"]))
-
-        return markets
