@@ -89,9 +89,15 @@ def test_settle_fund(
     open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
 
     for open_order_account in open_order_accounts:
-        bootstrapped_market.settle_funds(
-            stubbed_payer, open_order_account, stubbed_base_wallet.public_key(), stubbed_quote_wallet.public_key()
+        assert "error" not in bootstrapped_market.settle_funds(
+            stubbed_payer,
+            open_order_account,
+            stubbed_base_wallet.public_key(),
+            stubbed_quote_wallet.public_key(),
+            opts=TxOpts(skip_confirmation=False),
         )
+
+    # TODO: Check account states after settling funds
 
 
 @pytest.mark.integration

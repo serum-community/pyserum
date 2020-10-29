@@ -327,7 +327,6 @@ class Market:
         )
         return instructions.match_orders(params)
 
-    # TODO: add *real* test for this.
     def settle_funds(  # pylint: disable=too-many-arguments
         self,
         owner: Account,
@@ -336,6 +335,7 @@ class Market:
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
         opts: TxOpts = TxOpts(),
     ) -> RPCResponse:
+        # TODO: Handle wrapped sol accounts
         if open_orders.owner != owner.public_key():
             raise Exception("Invalid open orders account")
         vault_signer = PublicKey.create_program_address(
@@ -352,7 +352,7 @@ class Market:
         base_wallet: PublicKey,
         quote_wallet: PublicKey,
         vault_signer: PublicKey,
-    ):
+    ) -> TransactionInstruction:
         return instructions.settle_funds(
             instructions.SettleFundsParams(
                 market=self.state.public_key(),
