@@ -38,13 +38,6 @@ class AccountFlags(NamedTuple):
         )
 
 
-class MarketOpts(NamedTuple):
-    skip_preflight: bool = False
-    """"""
-    confirmations: int = 10
-    """"""
-
-
 class FilledOrder(NamedTuple):
     order_id: int
     """"""

@@ -23,6 +23,8 @@ rope = "*"
 pytest-cov = "*"
 twine = "*"
 setuptools = "*"
+sphinx = "*"
+sphinxemoji = "*"
 
 [packages]
 solana = "*"

@@ -4,11 +4,10 @@ import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.rpc.types import TxOpts
 
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market
-
-from .utils import confirm_transaction
 
 
 @pytest.mark.integration
@@ -60,9 +59,8 @@ def test_market_load_requests(bootstrapped_market: Market):
 
 
 @pytest.mark.integration
-def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_client: Client):
-    sig = bootstrapped_market.match_orders(stubbed_payer, 2)
-    confirm_transaction(http_client, sig)
+def test_match_order(bootstrapped_market: Market, stubbed_payer: Account):
+    bootstrapped_market.match_orders(stubbed_payer, 2, TxOpts(skip_confirmation=False))
 
     request_queue = bootstrapped_market.load_request_queue()
     # 0 request after matching.
@@ -82,23 +80,43 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Account, http_c
 
 
 @pytest.mark.integration
+def test_settle_fund(
+    bootstrapped_market: Market,
+    stubbed_payer: Account,
+    stubbed_quote_wallet: Account,
+    stubbed_base_wallet: Account,
+):
+    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
+
+    for open_order_account in open_order_accounts:
+        assert "error" not in bootstrapped_market.settle_funds(
+            stubbed_payer,
+            open_order_account,
+            stubbed_base_wallet.public_key(),
+            stubbed_quote_wallet.public_key(),
+            opts=TxOpts(skip_confirmation=False),
+        )
+
+    # TODO: Check account states after settling funds
+
+
+@pytest.mark.integration
 def test_order_placement_cancellation_cycle(
     bootstrapped_market: Market,
     stubbed_payer: Account,
-    http_client: Client,
     stubbed_quote_wallet: Account,
     stubbed_base_wallet: Account,
 ):
     initial_request_len = len(bootstrapped_market.load_request_queue())
-    sig = bootstrapped_market.place_order(
+    bootstrapped_market.place_order(
         payer=stubbed_quote_wallet.public_key(),
         owner=stubbed_payer,
         side=Side.Buy,
         order_type=OrderType.Limit,
         limit_price=1000,
         max_quantity=3000,
+        opts=TxOpts(skip_confirmation=False),
     )
-    confirm_transaction(http_client, sig)
 
     request_queue = bootstrapped_market.load_request_queue()
     # 0 request after matching.
@@ -112,19 +130,22 @@ def test_order_placement_cancellation_cycle(
     asks = bootstrapped_market.load_asks()
     assert sum(1 for _ in asks) == 0
 
-    sig = bootstrapped_market.place_order(
+    bootstrapped_market.place_order(
         payer=stubbed_base_wallet.public_key(),
         owner=stubbed_payer,
         side=Side.Sell,
         order_type=OrderType.Limit,
         limit_price=1500,
         max_quantity=3000,
+        opts=TxOpts(skip_confirmation=False),
     )
-    confirm_transaction(http_client, sig)
 
     # The two order shouldn't get executed since there is a price difference of 1
-    sig = bootstrapped_market.match_orders(stubbed_payer, 2)
-    confirm_transaction(http_client, sig)
+    bootstrapped_market.match_orders(
+        stubbed_payer,
+        2,
+        opts=TxOpts(skip_confirmation=False),
+    )
 
     # There should be 1 bid order that we sent earlier.
     bids = bootstrapped_market.load_bids()
@@ -135,22 +156,18 @@ def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 1
 
     for bid in bids:
-        sig = bootstrapped_market.cancel_order(stubbed_payer, bid)
-        confirm_transaction(http_client, sig)
+        bootstrapped_market.cancel_order(stubbed_payer, bid, opts=TxOpts(skip_confirmation=False))
 
-    sig = bootstrapped_market.match_orders(stubbed_payer, 1)
-    confirm_transaction(http_client, sig)
+    bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
 
     # All bid order should have been cancelled.
     bids = bootstrapped_market.load_bids()
     assert sum(1 for _ in bids) == 0
 
     for ask in asks:
-        sig = bootstrapped_market.cancel_order(stubbed_payer, ask)
-        confirm_transaction(http_client, sig)
+        bootstrapped_market.cancel_order(stubbed_payer, ask, opts=TxOpts(skip_confirmation=False))
 
-    sig = bootstrapped_market.match_orders(stubbed_payer, 1)
-    confirm_transaction(http_client, sig)
+    bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
 
     # All ask order should have been cancelled.
     asks = bootstrapped_market.load_asks()

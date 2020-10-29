@@ -10,6 +10,7 @@ import requests
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.rpc.types import RPCResponse, TxOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
@@ -41,12 +42,8 @@ class Market:
         self,
         conn: Client,
         market_state: MarketState,
-        opts: t.MarketOpts = t.MarketOpts(),
     ) -> None:
-        self._skip_preflight = opts.skip_preflight
-        self._confirmations = opts.confirmations
         self._conn = conn
-
         self.state = market_state
 
     @staticmethod
@@ -55,11 +52,10 @@ class Market:
         conn: Client,
         market_address: PublicKey,
         program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
-        opts: t.MarketOpts = t.MarketOpts(),
     ) -> Market:
         """Factory method to create a Market."""
         market_state = MarketState.load(conn, market_address, program_id)
-        return Market(conn, market_state, opts)
+        return Market(conn, market_state)
 
     def support_srm_fee_discounts(self) -> bool:
         raise NotImplementedError("support_srm_fee_discounts not implemented")
@@ -157,7 +153,8 @@ class Market:
         limit_price: int,
         max_quantity: int,
         client_id: int = 0,
-    ):  # TODO: Add open_orders_address_key param and fee_discount_pubkey
+        opts: TxOpts = TxOpts(),
+    ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
@@ -236,7 +233,7 @@ class Market:
                 )
             )
         # TODO: extract `make_place_order_transaction`.
-        return self._send_transaction(transaction, *signers)
+        return self._conn.send_transaction(transaction, *signers, opts=opts)
 
     @staticmethod
     def _get_lamport_need_for_sol_wrapping(
@@ -287,10 +284,11 @@ class Market:
             )
         )
 
-    def cancel_order_by_client_id(self, owner: Account, open_orders_account: PublicKey, client_id: int) -> str:
-        txs = Transaction()
-        txs.add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
-        return self._send_transaction(txs, owner)
+    def cancel_order_by_client_id(
+        self, owner: Account, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
+    ) -> RPCResponse:
+        txs = Transaction().add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
+        return self._conn.send_transaction(txs, owner, opts=opts)
 
     def make_cancel_order_by_client_id_instruction(
         self, owner: Account, open_orders_account: PublicKey, client_id: int
@@ -306,13 +304,13 @@ class Market:
             )
         )
 
-    def cancel_order(self, owner: Account, order: t.Order) -> str:
+    def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
-        return self._send_transaction(txn, owner)
+        return self._conn.send_transaction(txn, owner, opts=opts)
 
-    def match_orders(self, fee_payer: Account, limit: int) -> str:
+    def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
-        return self._send_transaction(txn, fee_payer)
+        return self._conn.send_transaction(txn, fee_payer, opts=opts)
 
     def make_cancel_order_instruction(self, owner: PublicKey, order: t.Order) -> TransactionInstruction:
         params = instructions.CancelOrderParams(
@@ -346,19 +344,41 @@ class Market:
         owner: Account,
         open_orders: OpenOrdersAccount,
         base_wallet: PublicKey,
+        quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+        opts: TxOpts = TxOpts(),
+    ) -> RPCResponse:
+        # TODO: Handle wrapped sol accounts
+        if open_orders.owner != owner.public_key():
+            raise Exception("Invalid open orders account")
+        vault_signer = PublicKey.create_program_address(
+            [bytes(self.state.public_key()), self.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+            self.state.program_id(),
+        )
+        transaction = Transaction()
+        transaction.add(self.make_settle_funds_instruction(open_orders, base_wallet, quote_wallet, vault_signer))
+        return self._conn.send_transaction(transaction, owner, opts=opts)
+
+    def make_settle_funds_instruction(
+        self,
+        open_orders_account: OpenOrdersAccount,
+        base_wallet: PublicKey,
         quote_wallet: PublicKey,
         referrer_quote_wallet: PublicKey,
-    ) -> str:
-        raise NotImplementedError("settle_funds not implemented")
-
-    def _send_transaction(self, transaction: Transaction, *signers: Account) -> str:
-        res = self._conn.send_transaction(transaction, *signers, skip_preflight=self._skip_preflight)
-        if self._confirmations > 0:
-            self.logger.warning("Cannot confirm transaction yet.")
-        signature = res.get("result")
-        if not signature:
-            raise Exception("Transaction not sent successfully")
-        return str(signature)
+        vault_signer: PublicKey,
+    ) -> TransactionInstruction:
+        return instructions.settle_funds(
+            instructions.SettleFundsParams(
+                market=self.state.public_key(),
+                open_orders=open_orders_account.address,
+                owner=open_orders_account.owner,
+                base_vault=self.state.base_vault(),
+                quote_vault=self.state.quote_vault(),
+                base_wallet=base_wallet,
+                quote_wallet=quote_wallet,
+                vault_signer=vault_signer,
+                program_id=self.state.program_id(),
+            )
+        )
 
     @staticmethod
     def get_live_markets():
