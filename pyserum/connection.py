@@ -18,6 +18,7 @@ def get_live_markets():
         data = data.replace(col, '"{}"'.format(col))
     data = data.replace("'", '"')
     data = data.replace(" ", "")
+    data = data.replace("//NewUSDCmarkets", "")
     data = data.replace("\n", "")
     data = data.replace(",}", "}")
     data = data.replace(",]", "]")
