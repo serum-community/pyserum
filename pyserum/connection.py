@@ -1,6 +1,6 @@
 import json
 
-from solana.rpc.api import Client as conn  # pylint: disable=unused-import
+from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
 from solana.rpc.providers.http import requests
 
 from .market.types import MarketInfo

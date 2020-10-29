@@ -1,8 +1,8 @@
 """Market module to interact with Serum DEX."""
 from __future__ import annotations
 
-import logging
 import itertools
+import logging
 from typing import List
 
 from solana.account import Account
