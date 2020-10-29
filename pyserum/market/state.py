@@ -9,7 +9,7 @@ from solana.rpc.api import Client
 
 from pyserum.utils import get_mint_decimals, load_bytes_data
 
-from .._layouts.market import MARKET_LAYOUT_V2 as MARKET_LAYOUT
+from .._layouts.market import MARKET_LAYOUT
 from .types import AccountFlags
 
 
@@ -76,7 +76,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
     def request_queue(self) -> PublicKey:
         return PublicKey(self._decoded.request_queue)
 
-    def vault_signer_nonce(self) -> PublicKey:
+    def vault_signer_nonce(self) -> int:
         return self._decoded.vault_signer_nonce
 
     def base_mint(self) -> PublicKey:
