@@ -22,7 +22,7 @@ print(get_live_markets())
 ```
 
 The source of truth of the market address can be found
-[here](https://github.com/project-serum/serum-js/blob/master/src/tokens_and_markets.ts).
+[here](https://github.com/project-serum/serum-js/blob/master/src/markets.json).
 
 ### Get Orderbook
 
