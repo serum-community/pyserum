@@ -17,11 +17,14 @@ pip install pyserum
 ### Mainnet Market Addresses
 
 ```python
-from pyserum.connection import get_live_markets
+from pyserum.connection import get_live_markets, get_token_mints
+print("tokens: ")
+print(get_token_mints())
+print("markets: ")
 print(get_live_markets())
 ```
 
-The source of truth of the market address can be found
+The source of truth of the market addresses can be found
 [here](https://github.com/project-serum/serum-js/blob/master/src/markets.json).
 
 ### Get Orderbook

@@ -141,3 +141,10 @@ class MarketInfo(NamedTuple):
     """"""
     program_id: PublicKey
     """"""
+
+
+class TokenInfo(NamedTuple):
+    name: str
+    """"""
+    address: PublicKey
+    """"""
