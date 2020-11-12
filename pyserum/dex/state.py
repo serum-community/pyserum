@@ -9,7 +9,7 @@ from solana.rpc.api import Client
 
 from pyserum.utils import get_mint_decimals, load_bytes_data
 
-from .._layouts.dex.market import MARKET_LAYOUT
+from .._layouts.dex.market_state import MARKET_STATE_LAYOUT
 from .types import AccountFlags
 
 
@@ -25,12 +25,12 @@ class MarketState:  # pylint: disable=too-many-public-methods
     @staticmethod
     def LAYOUT() -> Struct:  # pylint: disable=invalid-name
         """Construct layout of the market state."""
-        return MARKET_LAYOUT
+        return MARKET_STATE_LAYOUT
 
     @staticmethod
     def load(conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
         bytes_data = load_bytes_data(market_address, conn)
-        parsed_market = MARKET_LAYOUT.parse(bytes_data)
+        parsed_market = MARKET_STATE_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
@@ -44,7 +44,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
     def from_bytes(
         program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: Sequence[int]
     ) -> MarketState:
-        parsed_market = MARKET_LAYOUT.parse(buffer)
+        parsed_market = MARKET_STATE_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:

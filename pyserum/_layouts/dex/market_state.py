@@ -1,9 +1,9 @@
-from construct import Bytes, Int8ul, Int64ul, Padding  # type: ignore
+from construct import Bytes, Int64ul, Padding  # type: ignore
 from construct import Struct as cStruct  # type: ignore
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
-MARKET_LAYOUT = cStruct(
+MARKET_STATE_LAYOUT = cStruct(
     Padding(5),
     "account_flags" / ACCOUNT_FLAGS_LAYOUT,
     "own_address" / Bytes(32),
@@ -27,5 +27,3 @@ MARKET_LAYOUT = cStruct(
     "referrer_rebate_accrued" / Int64ul,
     Padding(7),
 )
-
-MINT_LAYOUT = cStruct(Padding(44), "decimals" / Int8ul, Padding(37))

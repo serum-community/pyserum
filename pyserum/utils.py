@@ -2,9 +2,8 @@ import base64
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from spl.token._layout import MINT_LAYOUT  # type: ignore # TODO: Remove ignore.
 from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
-
-from pyserum._layouts.dex.market import MINT_LAYOUT
 
 
 def load_bytes_data(addr: PublicKey, conn: Client):
