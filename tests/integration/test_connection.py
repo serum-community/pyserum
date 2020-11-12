@@ -1,5 +1,5 @@
 from pyserum.connection import get_live_markets, get_token_mints
-from pyserum.market.types import MarketInfo, TokenInfo
+from pyserum.dex.types import MarketInfo, TokenInfo
 
 
 def test_get_live_markets():

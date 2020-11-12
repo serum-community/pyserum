@@ -7,7 +7,7 @@ from solana.transaction import AccountMeta, TransactionInstruction
 from solana.utils.validate import validate_instruction_keys, validate_instruction_type
 from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and remove ignore.
 
-from .._layouts.market.instructions import INSTRUCTIONS_LAYOUT, InstructionType
+from .._layouts.dex.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, Side
 
 # V2
@@ -15,7 +15,7 @@ DEFAULT_DEX_PROGRAM_ID = PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o
 
 
 class InitializeMarketParams(NamedTuple):
-    """Initalize market params."""
+    """Initalizemarket params."""
 
     market: PublicKey
     """"""

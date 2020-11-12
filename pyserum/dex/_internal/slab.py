@@ -6,7 +6,7 @@ from typing import Iterable, List, NamedTuple, Optional, Sequence
 from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
-from ..._layouts.market.slab import SLAB_LAYOUT, NodeType
+from ..._layouts.dex.slab import SLAB_LAYOUT, NodeType
 
 
 class SlabHeader(NamedTuple):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Sequence, Union
 
-import pyserum.market.types as t
+import pyserum.dex.types as t
 
 from ._internal.slab import Slab, SlabInnerNode, SlabLeafNode
 from .enums import Side
@@ -41,7 +41,7 @@ class OrderBook:
         return OrderBook(market_state, account_flags, slab)
 
     def get_l2(self, depth: int) -> List[t.OrderInfo]:
-        """Get the Level 2 market information."""
+        """Get the Level 2.dex information."""
         descending = self._is_bids
         # The first element of the inner list is price, the second is quantity.
         levels: List[List[int]] = []

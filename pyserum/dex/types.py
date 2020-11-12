@@ -4,7 +4,7 @@ from typing import NamedTuple, Sequence
 
 from solana.publickey import PublicKey
 
-from .._layouts.market.account_flags import ACCOUNT_FLAGS_LAYOUT
+from .._layouts.dex.account_flags import ACCOUNT_FLAGS_LAYOUT
 from .enums import Side
 
 

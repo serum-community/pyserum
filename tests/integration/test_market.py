@@ -6,8 +6,8 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import TxOpts
 
-from pyserum.market import Market
-from pyserum.market.enums import OrderType, Side
+from pyserum.dex import Market
+from pyserum.dex.enums import OrderType, Side
 
 
 @pytest.mark.integration

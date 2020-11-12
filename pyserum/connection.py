@@ -3,7 +3,7 @@ from typing import List
 from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
 from solana.rpc.providers.http import requests
 
-from .market.types import MarketInfo, TokenInfo
+from .dex.types import MarketInfo, TokenInfo
 
 
 def get_live_markets() -> List[MarketInfo]:

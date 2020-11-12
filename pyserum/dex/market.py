@@ -16,10 +16,10 @@ from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT 
 from spl.token.instructions import CloseAccountParams  # type: ignore
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
-import pyserum.market.instructions as instructions
-import pyserum.market.types as t
+import pyserum.dex.instructions as instructions
+import pyserum.dex.types as t
 
-from .._layouts.market.open_orders import OPEN_ORDERS_LAYOUT
+from .._layouts.dex.open_orders import OPEN_ORDERS_LAYOUT
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .enums import OrderType, Side
@@ -34,7 +34,7 @@ LAMPORTS_PER_SOL = 1000000000
 class Market:
     """Represents a Serum Market."""
 
-    logger = logging.getLogger("pyserum.market.Market")
+    logger = logging.getLogger("pyserum.dex.Market")
 
     def __init__(
         self,

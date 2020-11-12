@@ -2,8 +2,8 @@
 
 from solana.publickey import PublicKey
 
-import pyserum.market.instructions as inlib
-from pyserum.market.enums import OrderType, Side
+import pyserum.dex.instructions as inlib
+from pyserum.dex.enums import OrderType, Side
 
 
 def test_initialize_market():

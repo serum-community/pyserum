@@ -5,7 +5,7 @@ from typing import List, Optional, Sequence, Tuple, Union, cast
 from construct import Container  # type: ignore
 from solana.publickey import PublicKey
 
-from ..._layouts.market.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
+from ..._layouts.dex.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
 from ..types import Event, EventFlags, Request, ReuqestFlags
 
 

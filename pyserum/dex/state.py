@@ -9,7 +9,7 @@ from solana.rpc.api import Client
 
 from pyserum.utils import get_mint_decimals, load_bytes_data
 
-from .._layouts.market.market import MARKET_LAYOUT
+from .._layouts.dex.market import MARKET_LAYOUT
 from .types import AccountFlags
 
 
@@ -24,33 +24,33 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def LAYOUT() -> Struct:  # pylint: disable=invalid-name
-        """Construct layout of the market state."""
+        """Construct layout of the.dex state."""
         return MARKET_LAYOUT
 
     @staticmethod
     def load(conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
         bytes_data = load_bytes_data(market_address, conn)
-        parsed_market = MARKET_LAYOUT.parse(bytes_data)
+        parsed.dex = MARKET_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
-            raise Exception("Invalid market")
+        if not parsed.dex.account_flags.initialized or not parsed.dex.account_flags.dex:
+            raise Exception("Invalid.dex")
 
-        base_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
-        quote_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
-        return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+        base_mint_decimals = get_mint_decimals(conn, PublicKey(parsed.dex.base_mint))
+        quote_mint_decimals = get_mint_decimals(conn, PublicKey(parsed.dex.quote_mint))
+        return MarketState(parsed.dex, program_id, base_mint_decimals, quote_mint_decimals)
 
     @staticmethod
     def from_bytes(
         program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: Sequence[int]
     ) -> MarketState:
-        parsed_market = MARKET_LAYOUT.parse(buffer)
+        parsed.dex = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
-            raise Exception("Invalid market")
+        if not parsed.dex.account_flags.initialized or not parsed.dex.account_flags.dex:
+            raise Exception("Invalid.dex")
 
-        return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+        return MarketState(parsed.dex, program_id, base_mint_decimals, quote_mint_decimals)
 
     def program_id(self) -> PublicKey:
         return self._program_id
