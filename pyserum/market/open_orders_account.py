@@ -10,9 +10,9 @@ from solana.rpc.types import Commitment, MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
-from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from .instructions import DEFAULT_DEX_PROGRAM_ID
-from .utils import load_bytes_data
+from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from ..instructions import DEFAULT_DEX_PROGRAM_ID
+from ..utils import load_bytes_data
 
 
 class ProgramAccount(NamedTuple):

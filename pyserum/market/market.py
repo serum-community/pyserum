@@ -20,10 +20,10 @@ import pyserum.instructions as instructions
 import pyserum.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .enums import OrderType, Side
+from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .orderbook import OrderBook
 from .state import MarketState
 
