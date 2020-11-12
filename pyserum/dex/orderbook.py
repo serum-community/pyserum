@@ -41,7 +41,7 @@ class OrderBook:
         return OrderBook(market_state, account_flags, slab)
 
     def get_l2(self, depth: int) -> List[t.OrderInfo]:
-        """Get the Level 2.dex information."""
+        """Get the Level 2 market information."""
         descending = self._is_bids
         # The first element of the inner list is price, the second is quantity.
         levels: List[List[int]] = []

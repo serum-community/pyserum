@@ -24,7 +24,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def LAYOUT() -> Struct:  # pylint: disable=invalid-name
-        """Construct layout of the.dex state."""
+        """Construct layout of the market state."""
         return MARKET_LAYOUT
 
     @staticmethod
@@ -34,7 +34,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.dex:
-            raise Exception("Invalid.dex")
+            raise Exception("Invalid market")
 
         base_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
         quote_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
@@ -48,7 +48,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.dex:
-            raise Exception("Invalid.dex")
+            raise Exception("Invalid market")
 
         return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 

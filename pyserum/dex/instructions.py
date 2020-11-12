@@ -15,7 +15,7 @@ DEFAULT_DEX_PROGRAM_ID = PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o
 
 
 class InitializeMarketParams(NamedTuple):
-    """Initalizemarket params."""
+    """Initalize market params."""
 
     market: PublicKey
     """"""
