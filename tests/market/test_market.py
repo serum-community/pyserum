@@ -8,7 +8,7 @@ from pyserum.instructions import DEFAULT_DEX_PROGRAM_ID
 from pyserum.market import Market, OrderBook, State
 from pyserum.market.types import AccountFlags, Order, OrderInfo
 
-from .binary_file_path import ASK_ORDER_BIN_PATH
+from tests.binary_file_path import ASK_ORDER_BIN_PATH
 
 
 @pytest.fixture(scope="module")

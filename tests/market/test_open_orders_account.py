@@ -5,7 +5,7 @@ from solana.publickey import PublicKey
 
 from pyserum.open_orders_account import OPEN_ORDERS_LAYOUT, OpenOrdersAccount
 
-from .binary_file_path import OPEN_ORDER_ACCOUNT_BIN_PATH
+from tests.binary_file_path import OPEN_ORDER_ACCOUNT_BIN_PATH
 
 
 # TODO: This tests is not ran due to the v1 layout to v2 layout upgrade, we
