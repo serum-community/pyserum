@@ -20,14 +20,13 @@ import pyserum.dex.instructions as instructions
 import pyserum.dex.types as t
 
 from .._layouts.dex.open_orders import OPEN_ORDERS_LAYOUT
+from ..constants import LAMPORTS_PER_SOL, MAINNET_DEX_PROGRAM_ID
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .enums import OrderType, Side
 from .open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from .orderbook import OrderBook
 from .state import MarketState
-
-LAMPORTS_PER_SOL = 1000000000
 
 
 # pylint: disable=too-many-public-methods
@@ -49,7 +48,7 @@ class Market:
     def load(
         conn: Client,
         market_address: PublicKey,
-        program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
+        program_id: PublicKey = MAINNET_DEX_PROGRAM_ID,
     ) -> Market:
         """Factory method to create a Market.
 

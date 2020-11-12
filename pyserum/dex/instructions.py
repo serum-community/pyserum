@@ -8,10 +8,8 @@ from solana.utils.validate import validate_instruction_keys, validate_instructio
 from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and remove ignore.
 
 from .._layouts.dex.instructions import INSTRUCTIONS_LAYOUT, InstructionType
+from ..constants import MAINNET_DEX_PROGRAM_ID
 from .enums import OrderType, Side
-
-# V2
-DEFAULT_DEX_PROGRAM_ID = PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
 
 
 class InitializeMarketParams(NamedTuple):
@@ -45,7 +43,7 @@ class InitializeMarketParams(NamedTuple):
     """"""
     quote_dust_threshold: int
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
 
 
 class NewOrderParams(NamedTuple):
@@ -75,7 +73,7 @@ class NewOrderParams(NamedTuple):
     """"""
     client_id: int = 0
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
     """"""
 
 
@@ -98,7 +96,7 @@ class MatchOrdersParams(NamedTuple):
     """"""
     limit: int
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
     """"""
 
 
@@ -113,7 +111,7 @@ class ConsumeEventsParams(NamedTuple):
     """"""
     limit: int
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
     """"""
 
 
@@ -134,7 +132,7 @@ class CancelOrderParams(NamedTuple):
     """"""
     open_orders_slot: int
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
     """"""
 
 
@@ -151,7 +149,7 @@ class CancelOrderByClientIDParams(NamedTuple):
     """"""
     client_id: int
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
     """"""
 
 
@@ -174,7 +172,7 @@ class SettleFundsParams(NamedTuple):
     """"""
     vault_signer: PublicKey
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID
 
 
 def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:

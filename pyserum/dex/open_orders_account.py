@@ -11,8 +11,8 @@ from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
 from .._layouts.dex.open_orders import OPEN_ORDERS_LAYOUT
+from ..constants import MAINNET_DEX_PROGRAM_ID
 from ..utils import load_bytes_data
-from .instructions import DEFAULT_DEX_PROGRAM_ID
 
 
 class ProgramAccount(NamedTuple):
@@ -119,7 +119,7 @@ def make_create_account_instruction(
     owner_address: PublicKey,
     new_account_address: PublicKey,
     lamports: int,
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
+    program_id: PublicKey = MAINNET_DEX_PROGRAM_ID,
 ) -> TransactionInstruction:
     return create_account(
         CreateAccountParams(
