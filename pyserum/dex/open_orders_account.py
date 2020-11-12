@@ -23,9 +23,8 @@ class ProgramAccount(NamedTuple):
     owner: PublicKey
 
 
-class OpenOrdersAccount:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-instance-attributes
+# TODO: Make this class a named tuple
+class OpenOrdersAccount:  # pylint: disable=too-many-arguments,too-many-instance-attributes
     def __init__(
         self,
         address: PublicKey,

@@ -44,7 +44,6 @@ class Market:
         self.state = market_state
 
     @staticmethod
-    # pylint: disable=unused-argument
     def load(
         conn: Client,
         market_address: PublicKey,
