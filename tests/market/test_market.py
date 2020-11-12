@@ -4,8 +4,8 @@ import pytest
 from construct import Container
 from solana.rpc.api import Client
 
+from pyserum.constants import MAINNET_DEX_PROGRAM_ID
 from pyserum.dex import Market, OrderBook, State
-from pyserum.dex.instructions import DEFAULT_DEX_PROGRAM_ID
 from pyserum.dex.types import AccountFlags, Order, OrderInfo
 from tests.binary_file_path import ASK_ORDER_BIN_PATH
 
@@ -41,7 +41,7 @@ def stubbed_market() -> Market:
                 quote_lot_size=10,
             )
         ),
-        program_id=DEFAULT_DEX_PROGRAM_ID,
+        program_id=MAINNET_DEX_PROGRAM_ID,
         base_mint_decimals=6,
         quote_mint_decimals=6,
     )
