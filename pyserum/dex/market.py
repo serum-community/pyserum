@@ -51,7 +51,12 @@ class Market:
         market_address: PublicKey,
         program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
     ) -> Market:
-        """Factory method to create a Market."""
+        """Factory method to create a Market.
+
+        :param conn: The connection that we use to load the data, created from `solana.rpc.api`.
+        :param market_address: The market address that you want to connect to.
+        :param program_id: The program id of the given market, it will use the default value if not provided.
+        """
         market_state = MarketState.load(conn, market_address, program_id)
         return Market(conn, market_state)
 
@@ -99,6 +104,10 @@ class Market:
         raise NotImplementedError("load_base_token_for_owner not implemented")
 
     def load_event_queue(self) -> List[t.Event]:
+        """Load the event queue which includes the fill item and out item. For any trades two fill items are added to
+        the event queue. And in case of a trade, cancel or IOC order that missed, out items are added to the event
+        queue.
+        """
         bytes_data = load_bytes_data(self.state.event_queue(), self._conn)
         return decode_event_queue(bytes_data)
 
