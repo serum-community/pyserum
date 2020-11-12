@@ -13,8 +13,7 @@ Welcome to pyserum's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   market
-   instructions
+   dex 
 
 |:construction:| |:construction:| |:construction:| |:construction:| |:construction:| **Under Construction!** |:construction:| |:construction:| |:construction:| |:construction:| |:construction:|
 
