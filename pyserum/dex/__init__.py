@@ -1,5 +1,4 @@
-import pyserum.dex.instructions
-
+import pyserum.dex.instructions  # noqa: F401
 from .enums import OrderType, Side  # noqa: F401
 from .market import Market  # noqa: F401
 from .orderbook import OrderBook  # noqa: F401
