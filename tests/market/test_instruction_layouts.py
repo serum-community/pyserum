@@ -1,7 +1,7 @@
 """Tests for instruction layouts."""
 from solana.publickey import PublicKey
 
-from pyserum._layouts.instructions import _VERSION, INSTRUCTIONS_LAYOUT, InstructionType
+from pyserum._layouts.market.instructions import _VERSION, INSTRUCTIONS_LAYOUT, InstructionType
 from pyserum.market.enums import OrderType, Side
 
 

@@ -1,6 +1,6 @@
 """Tests for account flags layout."""
 
-from pyserum._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
+from pyserum._layouts.market.account_flags import ACCOUNT_FLAGS_LAYOUT
 
 
 def default_flags():

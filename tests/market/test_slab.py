@@ -2,7 +2,7 @@
 
 import base64
 
-from pyserum._layouts.slab import ORDER_BOOK_LAYOUT, SLAB_HEADER_LAYOUT, SLAB_LAYOUT, SLAB_NODE_LAYOUT
+from pyserum._layouts.market.slab import ORDER_BOOK_LAYOUT, SLAB_HEADER_LAYOUT, SLAB_LAYOUT, SLAB_NODE_LAYOUT
 from pyserum.market._internal.slab import Slab
 
 from tests.binary_file_path import ASK_ORDER_BIN_PATH

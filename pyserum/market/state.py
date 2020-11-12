@@ -9,7 +9,7 @@ from solana.rpc.api import Client
 
 from pyserum.utils import get_mint_decimals, load_bytes_data
 
-from .._layouts.market import MARKET_LAYOUT
+from .._layouts.market.market import MARKET_LAYOUT
 from .types import AccountFlags
 
 

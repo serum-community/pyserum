@@ -19,7 +19,7 @@ from spl.token.instructions import InitializeAccountParams, close_account, initi
 import pyserum.market.instructions as instructions
 import pyserum.market.types as t
 
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from .._layouts.market.open_orders import OPEN_ORDERS_LAYOUT
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .enums import OrderType, Side
