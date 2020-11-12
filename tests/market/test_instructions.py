@@ -2,7 +2,7 @@
 
 from solana.publickey import PublicKey
 
-import pyserum.instructions as inlib
+import pyserum.market.instructions as inlib
 from pyserum.market.enums import OrderType, Side
 
 
