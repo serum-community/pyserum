@@ -5,7 +5,7 @@ from typing import NamedTuple, Sequence
 from solana.publickey import PublicKey
 
 from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
-from ..enums import Side
+from .enums import Side
 
 
 class AccountFlags(NamedTuple):

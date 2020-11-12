@@ -4,8 +4,8 @@ from typing import Iterable, List, Sequence, Union
 
 import pyserum.market.types as t
 
-from ..enums import Side
 from ._internal.slab import Slab, SlabInnerNode, SlabLeafNode
+from .enums import Side
 from .state import MarketState
 
 

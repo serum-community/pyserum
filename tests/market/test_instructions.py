@@ -3,7 +3,7 @@
 from solana.publickey import PublicKey
 
 import pyserum.instructions as inlib
-from pyserum.enums import OrderType, Side
+from pyserum.market.enums import OrderType, Side
 
 
 def test_initialize_market():
