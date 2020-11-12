@@ -33,7 +33,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.dex:
+        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
             raise Exception("Invalid market")
 
         base_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
@@ -47,7 +47,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         parsed_market = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.dex:
+        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
             raise Exception("Invalid market")
 
         return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
