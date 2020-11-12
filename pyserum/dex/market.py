@@ -60,9 +60,6 @@ class Market:
         market_state = MarketState.load(conn, market_address, program_id)
         return Market(conn, market_state)
 
-    def support_srm_fee_discounts(self) -> bool:
-        raise NotImplementedError("support_srm_fee_discounts not implemented")
-
     def find_fee_discount_keys(self, owner: PublicKey, cache_duration: int):
         raise NotImplementedError("find_fee_discount_keys not implemented")
 
@@ -73,6 +70,9 @@ class Market:
         return OpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
+
+    def find_base_token_accounts_for_owner(self):
+        raise NotImplementedError("find_base_token_accounts_for_owner not implemented")
 
     def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
         raise NotImplementedError("find_quote_token_accounts_for_owner not implemented")
@@ -99,9 +99,6 @@ class Market:
         open_orders_addresses = {str(o.address) for o in open_orders_accounts}
         orders = [o for o in all_orders if str(o.open_order_address) in open_orders_addresses]
         return orders
-
-    def load_base_token_for_owner(self):
-        raise NotImplementedError("load_base_token_for_owner not implemented")
 
     def load_event_queue(self) -> List[t.Event]:
         """Load the event queue which includes the fill item and out item. For any trades two fill items are added to
