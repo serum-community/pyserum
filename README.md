@@ -54,6 +54,12 @@ for bid in bids:
           bid.order_id, bid.info.price, bid.info.size))
 ```
 
+### Support
+
+Need help? You can find us on the Serum Discord:
+
+[![Discord Chat](https://img.shields.io/discord/739225212658122886?color=blueviolet)](https://discord.gg/fvbaQ6uyv5)
+
 ## Development
 
 ### Setup
