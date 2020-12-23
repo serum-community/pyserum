@@ -373,6 +373,11 @@ class Market:
         quote_wallet: PublicKey,
         vault_signer: PublicKey,
     ) -> TransactionInstruction:
+        if base_wallet == self.state.base_vault(): 
+            raise ValueError("base_wallet should not be a vault address")
+        if quote_wallet == self.state.quote_vault():
+            raise ValueError("quote_wallet should not be a vault address")
+
         return instructions.settle_funds(
             instructions.SettleFundsParams(
                 market=self.state.public_key(),

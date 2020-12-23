@@ -88,6 +88,24 @@ def test_settle_fund(
 ):
     open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
 
+    with pytest.raises(ValueError):
+        # Should not allow base_wallet to be base_vault
+        bootstrapped_market.settle_funds(
+            stubbed_payer,
+            open_order_accounts[0],
+            bootstrapped_market.state.base_vault(),
+            stubbed_quote_wallet.public_key(),
+        )
+
+    with pytest.raises(ValueError):
+        # Should not allow quote_wallet to be wallet_vault
+        bootstrapped_market.settle_funds(
+            stubbed_payer,
+            open_order_accounts[0],
+            stubbed_base_wallet.public_key(),
+            bootstrapped_market.state.quote_vault(),
+        )
+
     for open_order_account in open_order_accounts:
         assert "error" not in bootstrapped_market.settle_funds(
             stubbed_payer,
