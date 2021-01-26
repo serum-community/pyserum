@@ -145,7 +145,7 @@ class Market:
         )
         size = event.native_quantity_paid / self.state.base_spl_token_multiplier()
         return t.FilledOrder(
-            order_id=int.from_bytes(event.order_id, "little"),
+            order_id=event.order_id,
             side=side,
             price=price,
             size=size,
