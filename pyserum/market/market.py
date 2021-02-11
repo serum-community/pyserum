@@ -36,13 +36,10 @@ class Market:
 
     logger = logging.getLogger("pyserum.market.Market")
 
-    def __init__(
-        self,
-        conn: Client,
-        market_state: MarketState,
-    ) -> None:
+    def __init__(self, conn: Client, market_state: MarketState, force_use_request_queue: bool = False) -> None:
         self._conn = conn
         self.state = market_state
+        self.force_use_request_queue = force_use_request_queue
 
     @staticmethod
     # pylint: disable=unused-argument
@@ -50,6 +47,7 @@ class Market:
         conn: Client,
         market_address: PublicKey,
         program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
+        force_use_request_queue: bool = False,
     ) -> Market:
         """Factory method to create a Market.
 
@@ -58,7 +56,7 @@ class Market:
         :param program_id: The program id of the given market, it will use the default value if not provided.
         """
         market_state = MarketState.load(conn, market_address, program_id)
-        return Market(conn, market_state)
+        return Market(conn, market_state, force_use_request_queue)
 
     def _use_request_queue(self) -> bool:
         return (
@@ -70,6 +68,7 @@ class Market:
             or
             # DEX Version 2
             self.state.program_id == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
+            or self.force_use_request_queue
         )
 
     def support_srm_fee_discounts(self) -> bool:
