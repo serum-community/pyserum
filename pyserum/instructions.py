@@ -210,13 +210,13 @@ class NewOrderV3Params(NamedTuple):
     """"""
     order_type: OrderType
     """"""
+    self_trade_behavior: SelfTradeBehavior
+    """"""
     client_id: int = 0
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
-    self_trade_behavior: SelfTradeBehavior
-    """"""
-    feeDiscountPubkey: PublicKey = None
+    fee_discount_pubkey: PublicKey = None
 
 
 class CancelOrderV2Params(NamedTuple):
