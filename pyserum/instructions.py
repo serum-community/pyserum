@@ -212,6 +212,8 @@ class NewOrderV3Params(NamedTuple):
     """"""
     self_trade_behavior: SelfTradeBehavior
     """"""
+    limit: int
+    """"""
     client_id: int = 0
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
@@ -390,7 +392,7 @@ def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> Can
     )
 
 
-def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderParams:
+def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.NewOrderV3)
     return NewOrderV3Params(
         market=instruction.keys[0].pubkey,
@@ -414,7 +416,7 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderParams:
     )
 
 
-def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderParams:
+def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderV2)
     return CancelOrderV2Params(
         market=instruction.keys[0].pubkey,
@@ -429,7 +431,7 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderPa
     )
 
 
-def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
+def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientIdV2)
     return CancelOrderByClientIDV2Params(
         market=instruction.keys[0].pubkey,
