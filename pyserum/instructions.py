@@ -212,7 +212,7 @@ class NewOrderV3Params(NamedTuple):
     """"""
     self_trade_behavior: SelfTradeBehavior
     """"""
-    limit: int
+    limit: Optional[int]
     """"""
     client_id: int = 0
     """"""
@@ -260,8 +260,6 @@ class CancelOrderByClientIDV2Params(NamedTuple):
     open_orders: PublicKey
     """"""
     owner: PublicKey
-    """"""
-    request_queue: PublicKey
     """"""
     client_id: int
     """"""
