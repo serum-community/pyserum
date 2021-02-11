@@ -325,6 +325,7 @@ class Market:
                 program_id=self.state.program_id(),
                 self_trade_behavior=SelfTradeBehavior.DecrementTake,
                 fee_discount_pubkey=fee_discount_pubkey,
+                limit=65535,
             )
         )
 
@@ -356,7 +357,6 @@ class Market:
                 bids=self.state.bids(),
                 asks=self.state.asks(),
                 event_queue=self.state.event_queue(),
-                request_queue=self.state.request_queue(),
                 client_id=client_id,
                 program_id=self.state.program_id(),
             )
