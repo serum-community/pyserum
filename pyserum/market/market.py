@@ -325,6 +325,7 @@ class Market:
                     client_id=client_id,
                     program_id=self.state.program_id(),
                     self_trade_behavior=SelfTradeBehavior.DecrementTake,
+                    fee_discount_pubkey=fee_discount_pubkey,
                 )
             )
 
@@ -348,19 +349,18 @@ class Market:
                     program_id=self.state.program_id(),
                 )
             )
-        else:
-            return instructions.cancel_order_by_client_id_v2(
-                instructions.CancelOrderByClientIDV2Params(
-                    market=self.state.public_key(),
-                    owner=owner.public_key(),
-                    open_orders=open_orders_account,
-                    bids=self.state.bids(),
-                    asks=self.state.asks(),
-                    event_queue=self.state.event_queue(),
-                    client_id=client_id,
-                    program_id=self.state.program_id(),
-                )
+        return instructions.cancel_order_by_client_id_v2(
+            instructions.CancelOrderByClientIDV2Params(
+                market=self.state.public_key(),
+                owner=owner.public_key(),
+                open_orders=open_orders_account,
+                bids=self.state.bids(),
+                asks=self.state.asks(),
+                event_queue=self.state.event_queue(),
+                client_id=client_id,
+                program_id=self.state.program_id(),
             )
+        )
 
     def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
@@ -380,21 +380,20 @@ class Market:
                     program_id=self.state.program_id(),
                 )
             )
-        else:
-            return instructions.cancel_order_v2(
-                instructions.CancelOrderV2Params(
-                    market=self.state.public_key(),
-                    owner=owner,
-                    open_orders=order.open_order_address,
-                    bids=self.state.bids(),
-                    asks=self.state.asks(),
-                    event_queue=self.state.event_queue(),
-                    side=order.side,
-                    order_id=order.order_id,
-                    open_orders_slot=order.open_order_slot,
-                    program_id=self.state.program_id(),
-                )
+        return instructions.cancel_order_v2(
+            instructions.CancelOrderV2Params(
+                market=self.state.public_key(),
+                owner=owner,
+                open_orders=order.open_order_address,
+                bids=self.state.bids(),
+                asks=self.state.asks(),
+                event_queue=self.state.event_queue(),
+                side=order.side,
+                order_id=order.order_id,
+                open_orders_slot=order.open_order_slot,
+                program_id=self.state.program_id(),
             )
+        )
 
     def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
