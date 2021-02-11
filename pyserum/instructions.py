@@ -1,5 +1,5 @@
 """Serum Dex Instructions."""
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Optional
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
@@ -218,7 +218,7 @@ class NewOrderV3Params(NamedTuple):
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
-    fee_discount_pubkey: PublicKey = None
+    fee_discount_pubkey: Optional[PublicKey] = None
 
 
 class CancelOrderV2Params(NamedTuple):
@@ -618,9 +618,9 @@ def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
         AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
         AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
     ]
-    if params.feeDiscountPubkey:
+    if params.fee_discount_pubkey:
         touched_keys.append(
-            AccountMeta(pubkey=params.feeDiscountPubkey, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False),
         )
     return TransactionInstruction(
         keys=touched_keys,
