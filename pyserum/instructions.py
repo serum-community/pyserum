@@ -190,6 +190,8 @@ class NewOrderV3Params(NamedTuple):
     """"""
     request_queue: PublicKey
     """"""
+    event_queue: PublicKey
+    """"""
     bids: PublicKey
     """"""
     asks: PublicKey
@@ -274,6 +276,9 @@ def __parse_and_validate_instruction(instruction: TransactionInstruction, instru
         InstructionType.CancelOrder: 4,
         InstructionType.CancelOrderByClientID: 4,
         InstructionType.SettleFunds: 9,
+        InstructionType.NewOrderV3: 12,
+        InstructionType.CancelOrderV2: 6,
+        InstructionType.CancelOrderByClientIdV2: 6,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -391,15 +396,21 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderParams:
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
         request_queue=instruction.keys[2].pubkey,
-        payer=instruction.keys[3].pubkey,
-        owner=instruction.keys[4].pubkey,
-        base_vault=instruction.keys[5].pubkey,
-        quote_vault=instruction.keys[6].pubkey,
+        event_queue=instruction.keys[3].pubkey,
+        bids=instruction.keys[4].pubkey,
+        asks=instruction.keys[5].pubkey,
+        payer=instruction.keys[6].pubkey,
+        owner=instruction.keys[7].pubkey,
+        base_vault=instruction.keys[8].pubkey,
+        quote_vault=instruction.keys[9].pubkey,
         side=data.args.side,
         limit_price=data.args.limit_price,
-        max_quantity=data.args.max_quantity,
-        order_type=data.args.order_type,
+        max_base_quantity=data.args.max_base_quantity,
+        max_quote_quantity=data.args.max_quote_quantity,
+        self_trade_behavior=SelfTradeBehavior(data.args.self_trade_behavior),
+        order_type=OrderType(data.args.order_type),
         client_id=data.args.client_id,
+        limit=data.args.limit,
     )
 
 
@@ -407,9 +418,11 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderPa
     data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderV2)
     return CancelOrderV2Params(
         market=instruction.keys[0].pubkey,
-        open_orders=instruction.keys[1].pubkey,
-        request_queue=instruction.keys[2].pubkey,
-        owner=instruction.keys[3].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        open_orders=instruction.keys[3].pubkey,
+        owner=instruction.keys[4].pubkey,
+        event_queue=instruction.keys[5].pubkey,
         side=Side(data.args.side),
         order_id=int.from_bytes(data.args.order_id, "little"),
         open_orders_slot=data.args.open_orders_slot,
@@ -420,9 +433,11 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
     data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientIdV2)
     return CancelOrderByClientIDV2Params(
         market=instruction.keys[0].pubkey,
-        open_orders=instruction.keys[1].pubkey,
-        request_queue=instruction.keys[2].pubkey,
-        owner=instruction.keys[3].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        open_orders=instruction.keys[3].pubkey,
+        owner=instruction.keys[4].pubkey,
+        event_queue=instruction.keys[5].pubkey,
         client_id=data.args.client_id,
     )
 

@@ -20,7 +20,7 @@ import pyserum.instructions as instructions
 import pyserum.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
-from ..enums import OrderType, Side
+from ..enums import OrderType, SelfTradeBehavior, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
@@ -59,6 +59,18 @@ class Market:
         """
         market_state = MarketState.load(conn, market_address, program_id)
         return Market(conn, market_state)
+
+    def _use_request_queue(self) -> bool:
+        return (
+            # DEX Version 1
+            self.state.program_id == PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
+            or
+            # DEX Version 1
+            self.state.program_id == PublicKey("BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg")
+            or
+            # DEX Version 2
+            self.state.program_id == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
+        )
 
     def support_srm_fee_discounts(self) -> bool:
         raise NotImplementedError("support_srm_fee_discounts not implemented")
@@ -158,8 +170,8 @@ class Market:
         owner: Account,
         order_type: OrderType,
         side: Side,
-        limit_price: int,
-        max_quantity: int,
+        limit_price: float,
+        max_quantity: float,
         client_id: int = 0,
         opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
@@ -265,32 +277,57 @@ class Market:
         owner: Account,
         order_type: OrderType,
         side: Side,
-        limit_price: int,
-        max_quantity: int,
+        limit_price: float,
+        max_quantity: float,
         client_id: int,
         open_order_account: PublicKey,
+        fee_discount_pubkey: PublicKey = None,
     ) -> TransactionInstruction:
         if self.state.base_size_number_to_lots(max_quantity) < 0:
             raise Exception("Size lot %d is too small" % max_quantity)
         if self.state.price_number_to_lots(limit_price) < 0:
             raise Exception("Price lot %d is too small" % limit_price)
-        return instructions.new_order(
-            instructions.NewOrderParams(
-                market=self.state.public_key(),
-                open_orders=open_order_account,
-                payer=payer,
-                owner=owner.public_key(),
-                request_queue=self.state.request_queue(),
-                base_vault=self.state.base_vault(),
-                quote_vault=self.state.quote_vault(),
-                side=side,
-                limit_price=limit_price,
-                max_quantity=max_quantity,
-                order_type=order_type,
-                client_id=client_id,
-                program_id=self.state.program_id(),
+        if self._use_request_queue():
+            return instructions.new_order(
+                instructions.NewOrderParams(
+                    market=self.state.public_key(),
+                    open_orders=open_order_account,
+                    payer=payer,
+                    owner=owner.public_key(),
+                    request_queue=self.state.request_queue(),
+                    base_vault=self.state.base_vault(),
+                    quote_vault=self.state.quote_vault(),
+                    side=side,
+                    limit_price=self.state.price_number_to_lots(limit_price),
+                    max_quantity=self.state.base_size_number_to_lots(max_quantity),
+                    order_type=order_type,
+                    client_id=client_id,
+                    program_id=self.state.program_id(),
+                )
             )
-        )
+        else:
+            return instructions.new_order_v3(
+                instructions.NewOrderV3Params(
+                    market=self.state.public_key(),
+                    open_orders=open_order_account,
+                    payer=payer,
+                    owner=owner.public_key(),
+                    request_queue=self.state.request_queue(),
+                    event_queue=self.state.event_queue(),
+                    bids=self.state.bids(),
+                    asks=self.state.asks(),
+                    base_vault=self.state.base_vault(),
+                    quote_vault=self.state.quote_vault(),
+                    side=side,
+                    limit_price=self.state.price_number_to_lots(limit_price),
+                    max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
+                    max_quote_quantity=self.state.quote_size_number_to_lots(max_quantity * limit_price),
+                    order_type=order_type,
+                    client_id=client_id,
+                    program_id=self.state.program_id(),
+                    self_trade_behavior=SelfTradeBehavior.DecrementTake,
+                )
+            )
 
     def cancel_order_by_client_id(
         self, owner: Account, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
@@ -301,37 +338,68 @@ class Market:
     def make_cancel_order_by_client_id_instruction(
         self, owner: Account, open_orders_account: PublicKey, client_id: int
     ) -> TransactionInstruction:
-        return instructions.cancel_order_by_client_id(
-            instructions.CancelOrderByClientIDParams(
-                market=self.state.public_key(),
-                owner=owner.public_key(),
-                open_orders=open_orders_account,
-                request_queue=self.state.request_queue(),
-                client_id=client_id,
-                program_id=self.state.program_id(),
+        if self._use_request_queue():
+            return instructions.cancel_order_by_client_id(
+                instructions.CancelOrderByClientIDParams(
+                    market=self.state.public_key(),
+                    owner=owner.public_key(),
+                    open_orders=open_orders_account,
+                    request_queue=self.state.request_queue(),
+                    client_id=client_id,
+                    program_id=self.state.program_id(),
+                )
             )
-        )
+        else:
+            return instructions.cancel_order_by_client_id_v2(
+                instructions.CancelOrderByClientIDV2Params(
+                    market=self.state.public_key(),
+                    owner=owner.public_key(),
+                    open_orders=open_orders_account,
+                    bids=self.state.bids(),
+                    asks=self.state.asks(),
+                    event_queue=self.state.event_queue(),
+                    client_id=client_id,
+                    program_id=self.state.program_id(),
+                )
+            )
 
     def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_cancel_order_instruction(owner.public_key(), order))
         return self._conn.send_transaction(txn, owner, opts=opts)
 
+    def make_cancel_order_instruction(self, owner: PublicKey, order: t.Order) -> TransactionInstruction:
+        if self._use_request_queue():
+            return instructions.cancel_order(
+                instructions.CancelOrderParams(
+                    market=self.state.public_key(),
+                    owner=owner,
+                    open_orders=order.open_order_address,
+                    request_queue=self.state.request_queue(),
+                    side=order.side,
+                    order_id=order.order_id,
+                    open_orders_slot=order.open_order_slot,
+                    program_id=self.state.program_id(),
+                )
+            )
+        else:
+            return instructions.cancel_order_v2(
+                instructions.CancelOrderV2Params(
+                    market=self.state.public_key(),
+                    owner=owner,
+                    open_orders=order.open_order_address,
+                    bids=self.state.bids(),
+                    asks=self.state.asks(),
+                    event_queue=self.state.event_queue(),
+                    side=order.side,
+                    order_id=order.order_id,
+                    open_orders_slot=order.open_order_slot,
+                    program_id=self.state.program_id(),
+                )
+            )
+
     def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = Transaction().add(self.make_match_orders_instruction(limit))
         return self._conn.send_transaction(txn, fee_payer, opts=opts)
-
-    def make_cancel_order_instruction(self, owner: PublicKey, order: t.Order) -> TransactionInstruction:
-        params = instructions.CancelOrderParams(
-            market=self.state.public_key(),
-            owner=owner,
-            open_orders=order.open_order_address,
-            request_queue=self.state.request_queue(),
-            side=order.side,
-            order_id=order.order_id,
-            open_orders_slot=order.open_order_slot,
-            program_id=self.state.program_id(),
-        )
-        return instructions.cancel_order(params)
 
     def make_match_orders_instruction(self, limit: int) -> TransactionInstruction:
         params = instructions.MatchOrdersParams(
