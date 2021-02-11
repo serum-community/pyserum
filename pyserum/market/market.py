@@ -304,30 +304,29 @@ class Market:
                     program_id=self.state.program_id(),
                 )
             )
-        else:
-            return instructions.new_order_v3(
-                instructions.NewOrderV3Params(
-                    market=self.state.public_key(),
-                    open_orders=open_order_account,
-                    payer=payer,
-                    owner=owner.public_key(),
-                    request_queue=self.state.request_queue(),
-                    event_queue=self.state.event_queue(),
-                    bids=self.state.bids(),
-                    asks=self.state.asks(),
-                    base_vault=self.state.base_vault(),
-                    quote_vault=self.state.quote_vault(),
-                    side=side,
-                    limit_price=self.state.price_number_to_lots(limit_price),
-                    max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
-                    max_quote_quantity=self.state.quote_size_number_to_lots(max_quantity * limit_price),
-                    order_type=order_type,
-                    client_id=client_id,
-                    program_id=self.state.program_id(),
-                    self_trade_behavior=SelfTradeBehavior.DecrementTake,
-                    fee_discount_pubkey=fee_discount_pubkey,
-                )
+        return instructions.new_order_v3(
+            instructions.NewOrderV3Params(
+                market=self.state.public_key(),
+                open_orders=open_order_account,
+                payer=payer,
+                owner=owner.public_key(),
+                request_queue=self.state.request_queue(),
+                event_queue=self.state.event_queue(),
+                bids=self.state.bids(),
+                asks=self.state.asks(),
+                base_vault=self.state.base_vault(),
+                quote_vault=self.state.quote_vault(),
+                side=side,
+                limit_price=self.state.price_number_to_lots(limit_price),
+                max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
+                max_quote_quantity=self.state.quote_size_number_to_lots(max_quantity * limit_price),
+                order_type=order_type,
+                client_id=client_id,
+                program_id=self.state.program_id(),
+                self_trade_behavior=SelfTradeBehavior.DecrementTake,
+                fee_discount_pubkey=fee_discount_pubkey,
             )
+        )
 
     def cancel_order_by_client_id(
         self, owner: Account, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
