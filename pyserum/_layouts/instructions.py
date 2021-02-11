@@ -16,6 +16,9 @@ class InstructionType(IntEnum):
     CancelOrder = 4
     SettleFunds = 5
     CancelOrderByClientID = 6
+    NewOrderV3 = 10
+    CancelOrderV2 = 11
+    CancelOrderByClientIdV2 = 12
 
 
 _VERSION = 0
@@ -49,6 +52,24 @@ _CANCEL_ORDER = cStruct(
 
 _CANCEL_ORDER_BY_CLIENTID = cStruct("client_id" / Int64ul)
 
+_NEW_ORDER_V3 = cStruct(
+    "side" / Int32ul,  # Enum
+    "limit_price" / Int64ul,
+    "max_base_quantity" / Int64ul,
+    "max_quote_quantity" / Int64ul,
+    "self_trade_behavior" / Int32ul,
+    "order_type" / Int32ul,  # Enum
+    "client_id" / Int64ul,
+    "limit" / Int16ul,
+)
+
+_CANCEL_ORDER_V2 = cStruct(
+    "side" / Int32ul,  # Enum
+    "order_id" / KEY,
+)
+
+_CANCEL_ORDER_BY_CLIENTID_V2 = cStruct("client_id" / Int64ul)
+
 INSTRUCTIONS_LAYOUT = cStruct(
     "version" / Const(_VERSION, Int8ul),
     "instruction_type" / Int32ul,
@@ -63,6 +84,9 @@ INSTRUCTIONS_LAYOUT = cStruct(
             InstructionType.CancelOrder: _CANCEL_ORDER,
             InstructionType.SettleFunds: Pass,  # Empty list
             InstructionType.CancelOrderByClientID: _CANCEL_ORDER_BY_CLIENTID,
+            InstructionType.NewOrderV3: _NEW_ORDER_V3,
+            InstructionType.CancelOrderV2: _CANCEL_ORDER_V2,
+            InstructionType.CancelOrderByClientIdV2: _CANCEL_ORDER_BY_CLIENTID_V2,
         },
     ),
 )
