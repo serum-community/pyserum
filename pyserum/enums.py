@@ -25,5 +25,5 @@ class OrderType(IntEnum):
 
 class SelfTradeBehavior(IntEnum):
     DecrementTake = 0
-    cancelProvide = 1
-    abortTransaction = 2
+    CancelProvide = 1
+    AbortTransaction = 2
