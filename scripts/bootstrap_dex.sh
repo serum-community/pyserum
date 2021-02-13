@@ -16,7 +16,7 @@ fi
 docker-compose up -d
 if ! hash solana 2>/dev/null; then
     echo Installing Solana tool suite ...
-    curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.4.27/install/solana-install-init.sh | sh -s - v1.3.9
+    curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.4.21/install/solana-install-init.sh | sh -s - v1.3.9
     export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
     echo Generating keypair ...
     solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
