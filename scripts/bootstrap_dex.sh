@@ -13,16 +13,17 @@ else
     exit 1
 fi
 
-docker-compose up -d
+
 if ! hash solana 2>/dev/null; then
     echo Installing Solana tool suite ...
-    curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.4.18/install/solana-install-init.sh | SOLANA_RELEASE=v1.4.18 sh -s - v1.4.18
+    curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.5.8/install/solana-install-init.sh | SOLANA_RELEASE=v1.5.8 sh -s - v1.5.8
     export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
     echo Generating keypair ...
     solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
 fi
-solana --version
-solana config set --url "http://localhost:8899"
+
+solana-test-validator
+solana config set --url "http://127.0.0.1:8899"
 curl -s -L "https://github.com/serum-community/serum-dex/releases/download/v2/serum_dex-$os_type.so" > serum_dex.so
 sleep 1
 solana airdrop 10000
