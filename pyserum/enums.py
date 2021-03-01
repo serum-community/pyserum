@@ -21,3 +21,9 @@ class OrderType(IntEnum):
     """"""
     PostOnly = 2
     """"""
+
+
+class SelfTradeBehavior(IntEnum):
+    DecrementTake = 0
+    CancelProvide = 1
+    AbortTransaction = 2

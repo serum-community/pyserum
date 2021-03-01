@@ -1,5 +1,5 @@
 """Serum Dex Instructions."""
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Optional
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
@@ -8,7 +8,7 @@ from solana.utils.validate import validate_instruction_keys, validate_instructio
 from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and remove ignore.
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
-from .enums import OrderType, Side
+from .enums import OrderType, SelfTradeBehavior, Side
 
 # V2
 DEFAULT_DEX_PROGRAM_ID = PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
@@ -177,6 +177,96 @@ class SettleFundsParams(NamedTuple):
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
 
 
+class NewOrderV3Params(NamedTuple):
+    """New order params."""
+
+    market: PublicKey
+    """"""
+    open_orders: PublicKey
+    """"""
+    payer: PublicKey
+    """"""
+    owner: PublicKey
+    """"""
+    request_queue: PublicKey
+    """"""
+    event_queue: PublicKey
+    """"""
+    bids: PublicKey
+    """"""
+    asks: PublicKey
+    """"""
+    base_vault: PublicKey
+    """"""
+    quote_vault: PublicKey
+    """"""
+    side: Side
+    """"""
+    limit_price: int
+    """"""
+    max_base_quantity: int
+    """"""
+    max_quote_quantity: int
+    """"""
+    order_type: OrderType
+    """"""
+    self_trade_behavior: SelfTradeBehavior
+    """"""
+    limit: Optional[int]
+    """"""
+    client_id: int = 0
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+    fee_discount_pubkey: Optional[PublicKey] = None
+
+
+class CancelOrderV2Params(NamedTuple):
+    """Cancel order params."""
+
+    market: PublicKey
+    """"""
+    bids: PublicKey
+    """"""
+    asks: PublicKey
+    """"""
+    event_queue: PublicKey
+    """"""
+    open_orders: PublicKey
+    """"""
+    owner: PublicKey
+    """"""
+    side: Side
+    """"""
+    order_id: int
+    """"""
+    open_orders_slot: int
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+
+
+class CancelOrderByClientIDV2Params(NamedTuple):
+    """Cancel order by client ID params."""
+
+    market: PublicKey
+    """"""
+    bids: PublicKey
+    """"""
+    asks: PublicKey
+    """"""
+    event_queue: PublicKey
+    """"""
+    open_orders: PublicKey
+    """"""
+    owner: PublicKey
+    """"""
+    client_id: int
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+
+
 def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:
     instruction_type_to_length_map: Dict[InstructionType, int] = {
         InstructionType.InitializeMarket: 9,
@@ -186,6 +276,9 @@ def __parse_and_validate_instruction(instruction: TransactionInstruction, instru
         InstructionType.CancelOrder: 4,
         InstructionType.CancelOrderByClientID: 4,
         InstructionType.SettleFunds: 9,
+        InstructionType.NewOrderV3: 12,
+        InstructionType.CancelOrderV2: 6,
+        InstructionType.CancelOrderByClientIdV2: 6,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -293,6 +386,58 @@ def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> Can
         open_orders=instruction.keys[1].pubkey,
         request_queue=instruction.keys[2].pubkey,
         owner=instruction.keys[3].pubkey,
+        client_id=data.args.client_id,
+    )
+
+
+def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params:
+    data = __parse_and_validate_instruction(instruction, InstructionType.NewOrderV3)
+    return NewOrderV3Params(
+        market=instruction.keys[0].pubkey,
+        open_orders=instruction.keys[1].pubkey,
+        request_queue=instruction.keys[2].pubkey,
+        event_queue=instruction.keys[3].pubkey,
+        bids=instruction.keys[4].pubkey,
+        asks=instruction.keys[5].pubkey,
+        payer=instruction.keys[6].pubkey,
+        owner=instruction.keys[7].pubkey,
+        base_vault=instruction.keys[8].pubkey,
+        quote_vault=instruction.keys[9].pubkey,
+        side=data.args.side,
+        limit_price=data.args.limit_price,
+        max_base_quantity=data.args.max_base_quantity,
+        max_quote_quantity=data.args.max_quote_quantity,
+        self_trade_behavior=SelfTradeBehavior(data.args.self_trade_behavior),
+        order_type=OrderType(data.args.order_type),
+        client_id=data.args.client_id,
+        limit=data.args.limit,
+    )
+
+
+def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2Params:
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderV2)
+    return CancelOrderV2Params(
+        market=instruction.keys[0].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        open_orders=instruction.keys[3].pubkey,
+        owner=instruction.keys[4].pubkey,
+        event_queue=instruction.keys[5].pubkey,
+        side=Side(data.args.side),
+        order_id=int.from_bytes(data.args.order_id, "little"),
+        open_orders_slot=data.args.open_orders_slot,
+    )
+
+
+def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDV2Params:
+    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientIdV2)
+    return CancelOrderByClientIDV2Params(
+        market=instruction.keys[0].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        open_orders=instruction.keys[3].pubkey,
+        owner=instruction.keys[4].pubkey,
+        event_queue=instruction.keys[5].pubkey,
         client_id=data.args.client_id,
     )
 
@@ -447,6 +592,94 @@ def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> Transactio
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
                 instruction_type=InstructionType.CancelOrderByClientID,
+                args=dict(
+                    client_id=params.client_id,
+                ),
+            )
+        ),
+    )
+
+
+def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
+    """Generate a transaction instruction to place new order."""
+    touched_keys = [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.payer, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
+    ]
+    if params.fee_discount_pubkey:
+        touched_keys.append(
+            AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False),
+        )
+    return TransactionInstruction(
+        keys=touched_keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.NewOrderV3,
+                args=dict(
+                    side=params.side,
+                    limit_price=params.limit_price,
+                    max_base_quantity=params.max_base_quantity,
+                    max_quote_quantity=params.max_quote_quantity,
+                    self_trade_behavior=params.self_trade_behavior,
+                    order_type=params.order_type,
+                    client_id=params.client_id,
+                    limit=65535,
+                ),
+            )
+        ),
+    )
+
+
+def cancel_order_v2(params: CancelOrderV2Params) -> TransactionInstruction:
+    """Generate a transaction instruction to cancel order."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrderV2,
+                args=dict(
+                    side=params.side,
+                    order_id=params.order_id.to_bytes(16, byteorder="little"),
+                ),
+            )
+        ),
+    )
+
+
+def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params) -> TransactionInstruction:
+    """Generate a transaction instruction to cancel order by client id."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CancelOrderByClientIdV2,
                 args=dict(
                     client_id=params.client_id,
                 ),

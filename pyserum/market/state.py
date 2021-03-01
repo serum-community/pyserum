@@ -147,4 +147,10 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return float(size * self.base_lot_size()) / self.base_spl_token_multiplier()
 
     def base_size_number_to_lots(self, size: float) -> int:
-        return int(math.floor(size * 10 ** self._base_mint_decimals) / self.base_lot_size())
+        return int(math.floor(size * self.base_spl_token_multiplier()) / self.base_lot_size())
+
+    def quote_size_lots_to_number(self, size: int) -> float:
+        return float(size * self.quote_lot_size()) / self.quote_spl_token_multiplier()
+
+    def quote_size_number_to_lots(self, size: float) -> int:
+        return int(math.floor(size * self.quote_spl_token_multiplier()) / self.quote_lot_size())
