@@ -10,15 +10,15 @@ from ..types import Event, EventFlags, Request, ReuqestFlags
 
 
 class QueueType(IntEnum):
-    Event = 1
-    Request = 2
+    EVENT = 1
+    REQUEST = 2
 
 
 def __from_bytes(
     buffer: Sequence[int], queue_type: QueueType, history: Optional[int]
 ) -> Tuple[Container, List[Union[Event, Request]]]:
     header = QUEUE_HEADER_LAYOUT.parse(buffer)
-    layout_size = EVENT_LAYOUT.sizeof() if queue_type == QueueType.Event else REQUEST_LAYOUT.sizeof()
+    layout_size = EVENT_LAYOUT.sizeof() if queue_type == QueueType.EVENT else REQUEST_LAYOUT.sizeof()
     alloc_len = math.floor((len(buffer) - QUEUE_HEADER_LAYOUT.sizeof()) / layout_size)
     nodes: List[Union[Event, Request]] = []
     if history:
@@ -35,7 +35,7 @@ def __from_bytes(
 
 
 def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
-    if queue_type == QueueType.Event:  # pylint: disable=no-else-return
+    if queue_type == QueueType.EVENT:  # pylint: disable=no-else-return
         parsed_item = EVENT_LAYOUT.parse(buffer)
         parsed_event_flags = parsed_item.event_flags
         event_flags = EventFlags(
@@ -80,14 +80,14 @@ def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Ev
 
 
 def decode_request_queue(buffer: bytes, history: Optional[int] = None) -> List[Request]:
-    header, nodes = __from_bytes(buffer, QueueType.Request, history)
+    header, nodes = __from_bytes(buffer, QueueType.REQUEST, history)
     if not header.account_flags.initialized or not header.account_flags.request_queue:
         raise Exception("Invalid requests queue, either not initialized or not a request queue.")
     return cast(List[Request], nodes)
 
 
 def decode_event_queue(buffer: bytes, history: Optional[int] = None) -> List[Event]:
-    header, nodes = __from_bytes(buffer, QueueType.Event, history)
+    header, nodes = __from_bytes(buffer, QueueType.EVENT, history)
     if not header.account_flags.initialized or not header.account_flags.event_queue:
         raise Exception("Invalid events queue, either not initialized or not a event queue.")
     return cast(List[Event], nodes)

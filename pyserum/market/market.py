@@ -137,14 +137,14 @@ class Market:
 
     def parse_fill_event(self, event) -> t.FilledOrder:
         if event.event_flags.bid:
-            side = Side.Buy
+            side = Side.BUY
             price_before_fees = (
                 event.native_quantity_released + event.native_fee_or_rebate
                 if event.event_flags.maker
                 else event.native_quantity_released - event.native_fee_or_rebate
             )
         else:
-            side = Side.Sell
+            side = Side.SELL
             price_before_fees = (
                 event.native_quantity_released - event.native_fee_or_rebate
                 if event.event_flags.maker
@@ -259,7 +259,7 @@ class Market:
         price: float, size: float, side: Side, open_orders_accounts: List[OpenOrdersAccount]
     ) -> int:
         lamports = 0
-        if side == Side.Buy:
+        if side == Side.BUY:
             lamports = round(price * size * 1.01 * LAMPORTS_PER_SOL)
             if open_orders_accounts:
                 lamports -= open_orders_accounts[0].quote_token_free
@@ -325,7 +325,7 @@ class Market:
                 order_type=order_type,
                 client_id=client_id,
                 program_id=self.state.program_id(),
-                self_trade_behavior=SelfTradeBehavior.DecrementTake,
+                self_trade_behavior=SelfTradeBehavior.DECREMENT_TAKE,
                 fee_discount_pubkey=fee_discount_pubkey,
                 limit=65535,
             )

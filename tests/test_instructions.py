@@ -38,7 +38,7 @@ def test_new_orders():
         request_queue=PublicKey(4),
         base_vault=PublicKey(5),
         quote_vault=PublicKey(6),
-        side=Side.Buy,
+        side=Side.BUY,
         limit_price=1,
         max_quantity=1,
         order_type=OrderType.IOC,
@@ -82,7 +82,7 @@ def test_cancel_order():
         request_queue=PublicKey(1),
         owner=PublicKey(2),
         open_orders=PublicKey(3),
-        side=Side.Buy,
+        side=Side.BUY,
         order_id=1,
         open_orders_slot=1,
     )
