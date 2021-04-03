@@ -91,6 +91,7 @@ def test_parse_cancel_order_by_client_id():
     args = {"client_id": 123}
     expected = bytes.fromhex("00060000007b00000000000000")  # Raw hex from serum.js
     assert (
-        INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID, args=args)) == expected
+        INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID, args=args))
+        == expected
     )
     assert_parsed_layout(InstructionType.CANCEL_ORDER_BY_CLIENT_ID, args, expected)
