@@ -199,8 +199,8 @@ class Market:
             raise ValueError("Invalid payer account")
 
         # TODO: add integration test for SOL wrapping.
-        should_wrap_sol = (side == side.Buy and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
-            side == side.Sell and self.state.base_mint == WRAPPED_SOL_MINT
+        should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
+            side == Side.SELL and self.state.base_mint == WRAPPED_SOL_MINT
         )
         wrapped_sol_account = Account()
         if should_wrap_sol:
