@@ -319,7 +319,9 @@ class Market:
                 side=side,
                 limit_price=self.state.price_number_to_lots(limit_price),
                 max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
-                max_quote_quantity=self.state.base_size_number_to_lots(max_quantity) * self.state.quote_lot_size() * self.state.price_number_to_lots(limit_price),
+                max_quote_quantity=self.state.base_size_number_to_lots(max_quantity)
+                * self.state.quote_lot_size()
+                * self.state.price_number_to_lots(limit_price),
                 order_type=order_type,
                 client_id=client_id,
                 program_id=self.state.program_id(),
