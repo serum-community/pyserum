@@ -6,24 +6,24 @@ from enum import IntEnum
 class Side(IntEnum):
     """Side of the orderbook to trade."""
 
-    Buy = 0
+    BUY = 0
     """"""
-    Sell = 1
+    SELL = 1
     """"""
 
 
 class OrderType(IntEnum):
     """"Type of order."""
 
-    Limit = 0
+    LIMIT = 0
     """"""
     IOC = 1
     """"""
-    PostOnly = 2
+    POST_ONLY = 2
     """"""
 
 
 class SelfTradeBehavior(IntEnum):
-    DecrementTake = 0
-    CancelProvide = 1
-    AbortTransaction = 2
+    DECREMENT_TAKE = 0
+    CANCEL_PROVIDE = 1
+    ABORT_TRANSACTION = 2

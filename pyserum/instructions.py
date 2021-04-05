@@ -269,16 +269,16 @@ class CancelOrderByClientIDV2Params(NamedTuple):
 
 def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:
     instruction_type_to_length_map: Dict[InstructionType, int] = {
-        InstructionType.InitializeMarket: 9,
-        InstructionType.NewOrder: 9,
-        InstructionType.MatchOrder: 7,
-        InstructionType.ConsumeEvents: 2,
-        InstructionType.CancelOrder: 4,
-        InstructionType.CancelOrderByClientID: 4,
-        InstructionType.SettleFunds: 9,
-        InstructionType.NewOrderV3: 12,
-        InstructionType.CancelOrderV2: 6,
-        InstructionType.CancelOrderByClientIdV2: 6,
+        InstructionType.INITIALIZE_MARKET: 9,
+        InstructionType.NEW_ORDER: 9,
+        InstructionType.MATCH_ORDER: 7,
+        InstructionType.CONSUME_EVENTS: 2,
+        InstructionType.CANCEL_ORDER: 4,
+        InstructionType.CANCEL_ORDER_BY_CLIENT_ID: 4,
+        InstructionType.SETTLE_FUNDS: 9,
+        InstructionType.NEW_ORDER_V3: 12,
+        InstructionType.CANCEL_ORDER_V2: 6,
+        InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: 6,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -288,7 +288,7 @@ def __parse_and_validate_instruction(instruction: TransactionInstruction, instru
 
 def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.InitializeMarket)
+    data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -309,7 +309,7 @@ def decode_initialize_market(instruction: TransactionInstruction) -> InitializeM
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.NewOrder)
+    data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER)
     return NewOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -328,7 +328,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.MatchOrder)
+    data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDER)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -343,7 +343,7 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.ConsumeEvents)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CONSUME_EVENTS)
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
         market=instruction.keys[-2].pubkey,
@@ -353,7 +353,7 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrder)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER)
     return CancelOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -380,7 +380,7 @@ def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParam
 
 
 def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientID)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -391,7 +391,7 @@ def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> Can
 
 
 def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params:
-    data = __parse_and_validate_instruction(instruction, InstructionType.NewOrderV3)
+    data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER_V3)
     return NewOrderV3Params(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -415,7 +415,7 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
 
 
 def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2Params:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderV2)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_V2)
     return CancelOrderV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -430,7 +430,7 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2
 
 
 def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDV2Params:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CancelOrderByClientIdV2)
+    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2)
     return CancelOrderByClientIDV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -459,7 +459,7 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.InitializeMarket,
+                instruction_type=InstructionType.INITIALIZE_MARKET,
                 args=dict(
                     base_lot_size=params.base_lot_size,
                     quote_lot_size=params.quote_lot_size,
@@ -489,7 +489,7 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.NewOrder,
+                instruction_type=InstructionType.NEW_ORDER,
                 args=dict(
                     side=params.side,
                     limit_price=params.limit_price,
@@ -516,7 +516,7 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
         ],
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.MatchOrder, args=dict(limit=params.limit))
+            dict(instruction_type=InstructionType.MATCH_ORDER, args=dict(limit=params.limit))
         ),
     )
 
@@ -531,7 +531,7 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
         keys=keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.ConsumeEvents, args=dict(limit=params.limit))
+            dict(instruction_type=InstructionType.CONSUME_EVENTS, args=dict(limit=params.limit))
         ),
     )
 
@@ -548,7 +548,7 @@ def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.CancelOrder,
+                instruction_type=InstructionType.CANCEL_ORDER,
                 args=dict(
                     side=params.side,
                     order_id=params.order_id.to_bytes(16, byteorder="little"),
@@ -575,7 +575,7 @@ def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
             AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SettleFunds, args=dict())),
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SETTLE_FUNDS, args=dict())),
     )
 
 
@@ -591,7 +591,7 @@ def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> Transactio
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.CancelOrderByClientID,
+                instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID,
                 args=dict(
                     client_id=params.client_id,
                 ),
@@ -625,7 +625,7 @@ def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.NewOrderV3,
+                instruction_type=InstructionType.NEW_ORDER_V3,
                 args=dict(
                     side=params.side,
                     limit_price=params.limit_price,
@@ -655,7 +655,7 @@ def cancel_order_v2(params: CancelOrderV2Params) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.CancelOrderV2,
+                instruction_type=InstructionType.CANCEL_ORDER_V2,
                 args=dict(
                     side=params.side,
                     order_id=params.order_id.to_bytes(16, byteorder="little"),
@@ -679,7 +679,7 @@ def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params) -> Trans
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.CancelOrderByClientIdV2,
+                instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2,
                 args=dict(
                     client_id=params.client_id,
                 ),

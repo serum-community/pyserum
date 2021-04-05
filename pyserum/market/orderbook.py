@@ -82,6 +82,6 @@ class OrderBook:
                     size=self._market_state.base_size_lots_to_number(node.quantity),
                     size_lots=node.quantity,
                 ),
-                side=Side.Buy if self._is_bids else Side.Sell,
+                side=Side.BUY if self._is_bids else Side.SELL,
                 open_order_slot=node.owner_slot,
             )

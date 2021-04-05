@@ -9,16 +9,16 @@ from .slab import KEY
 
 
 class InstructionType(IntEnum):
-    InitializeMarket = 0
-    NewOrder = 1
-    MatchOrder = 2
-    ConsumeEvents = 3
-    CancelOrder = 4
-    SettleFunds = 5
-    CancelOrderByClientID = 6
-    NewOrderV3 = 10
-    CancelOrderV2 = 11
-    CancelOrderByClientIdV2 = 12
+    INITIALIZE_MARKET = 0
+    NEW_ORDER = 1
+    MATCH_ORDER = 2
+    CONSUME_EVENTS = 3
+    CANCEL_ORDER = 4
+    SETTLE_FUNDS = 5
+    CANCEL_ORDER_BY_CLIENT_ID = 6
+    NEW_ORDER_V3 = 10
+    CANCEL_ORDER_V2 = 11
+    CANCEL_ORDER_BY_CLIENT_ID_V2 = 12
 
 
 _VERSION = 0
@@ -77,16 +77,16 @@ INSTRUCTIONS_LAYOUT = cStruct(
     / Switch(
         lambda this: this.instruction_type,
         {
-            InstructionType.InitializeMarket: _INITIALIZE_MARKET,
-            InstructionType.NewOrder: _NEW_ORDER,
-            InstructionType.MatchOrder: _MATCH_ORDERS,
-            InstructionType.ConsumeEvents: _CONSUME_EVENTS,
-            InstructionType.CancelOrder: _CANCEL_ORDER,
-            InstructionType.SettleFunds: Pass,  # Empty list
-            InstructionType.CancelOrderByClientID: _CANCEL_ORDER_BY_CLIENTID,
-            InstructionType.NewOrderV3: _NEW_ORDER_V3,
-            InstructionType.CancelOrderV2: _CANCEL_ORDER_V2,
-            InstructionType.CancelOrderByClientIdV2: _CANCEL_ORDER_BY_CLIENTID_V2,
+            InstructionType.INITIALIZE_MARKET: _INITIALIZE_MARKET,
+            InstructionType.NEW_ORDER: _NEW_ORDER,
+            InstructionType.MATCH_ORDER: _MATCH_ORDERS,
+            InstructionType.CONSUME_EVENTS: _CONSUME_EVENTS,
+            InstructionType.CANCEL_ORDER: _CANCEL_ORDER,
+            InstructionType.SETTLE_FUNDS: Pass,  # Empty list
+            InstructionType.CANCEL_ORDER_BY_CLIENT_ID: _CANCEL_ORDER_BY_CLIENTID,
+            InstructionType.NEW_ORDER_V3: _NEW_ORDER_V3,
+            InstructionType.CANCEL_ORDER_V2: _CANCEL_ORDER_V2,
+            InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: _CANCEL_ORDER_BY_CLIENTID_V2,
         },
     ),
 )

@@ -129,8 +129,8 @@ def test_order_placement_cancellation_cycle(
     bootstrapped_market.place_order(
         payer=stubbed_quote_wallet.public_key(),
         owner=stubbed_payer,
-        side=Side.Buy,
-        order_type=OrderType.Limit,
+        side=Side.BUY,
+        order_type=OrderType.LIMIT,
         limit_price=1000,
         max_quantity=3000,
         opts=TxOpts(skip_confirmation=False),
@@ -151,8 +151,8 @@ def test_order_placement_cancellation_cycle(
     bootstrapped_market.place_order(
         payer=stubbed_base_wallet.public_key(),
         owner=stubbed_payer,
-        side=Side.Sell,
-        order_type=OrderType.Limit,
+        side=Side.SELL,
+        order_type=OrderType.LIMIT,
         limit_price=1500,
         max_quantity=3000,
         opts=TxOpts(skip_confirmation=False),
