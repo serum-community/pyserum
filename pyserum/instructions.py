@@ -10,7 +10,7 @@ from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, SelfTradeBehavior, Side
 
-# V2
+# V3
 DEFAULT_DEX_PROGRAM_ID = PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 
 
