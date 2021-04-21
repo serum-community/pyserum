@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="pyserum",
-    version="0.3.1a2",
+    version="0.3.2a1",
     author="serum-community",
     description="""Python client library for interacting with the Project Serum DEX.""",
     include_package_data=True,
