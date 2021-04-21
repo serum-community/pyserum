@@ -10,7 +10,6 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse, TxOpts
 from solana.system_program import CreateAccountParams, create_account
-from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import Transaction, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 from spl.token.instructions import CloseAccountParams  # type: ignore
@@ -179,31 +178,36 @@ class Market:
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
         if not open_order_accounts:
             new_open_orders_account = Account()
+            place_order_open_order_account = new_open_orders_account.public_key()
             mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
             balanced_needed = mbfre_resp["result"]
             transaction.add(
                 make_create_account_instruction(
-                    owner.public_key(),
-                    new_open_orders_account.public_key(),
-                    balanced_needed,
-                    self.state.program_id(),
+                    owner_address=owner.public_key(),
+                    new_account_address=new_open_orders_account.public_key(),
+                    lamports=balanced_needed,
+                    program_id=self.state.program_id(),
                 )
             )
             signers.append(new_open_orders_account)
             # TODO: Cache new_open_orders_account
-
-        # TODO: Handle open_orders_address_key
+        else:
+            place_order_open_order_account = open_order_accounts[0].address
         # TODO: Handle fee_discount_pubkey
 
+        # unwrapped SOL cannot be used for payment
         if payer == owner.public_key():
-            raise ValueError("Invalid payer account")
+            raise ValueError("Invalid payer account. Cannot use unwrapped SOL.")
 
         # TODO: add integration test for SOL wrapping.
         should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
-            side == Side.SELL and self.state.base_mint == WRAPPED_SOL_MINT
+            side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
         )
-        wrapped_sol_account = Account()
+
         if should_wrap_sol:
+            wrapped_sol_account = Account()
+            payer = wrapped_sol_account.public_key()
+            signers.append(wrapped_sol_account)
             transaction.add(
                 create_account(
                     CreateAccountParams(
@@ -223,21 +227,21 @@ class Market:
                         account=wrapped_sol_account.public_key(),
                         mint=WRAPPED_SOL_MINT,
                         owner=owner.public_key(),
-                        program_id=SYSVAR_RENT_PUBKEY,
+                        program_id=TOKEN_PROGRAM_ID,
                     )
                 )
             )
 
         transaction.add(
             self.make_place_order_instruction(
-                wrapped_sol_account.public_key() if should_wrap_sol else payer,
-                owner,
-                order_type,
-                side,
-                limit_price,
-                max_quantity,
-                client_id,
-                open_order_accounts[0].address if open_order_accounts else new_open_orders_account.public_key(),
+                payer=payer,
+                owner=owner,
+                order_type=order_type,
+                side=side,
+                limit_price=limit_price,
+                max_quantity=max_quantity,
+                client_id=client_id,
+                open_order_account=place_order_open_order_account,
             )
         )
 
@@ -248,6 +252,7 @@ class Market:
                         account=wrapped_sol_account.public_key(),
                         owner=owner.public_key(),
                         dest=owner.public_key(),
+                        program_id=TOKEN_PROGRAM_ID,
                     )
                 )
             )
@@ -431,7 +436,59 @@ class Market:
             self.state.program_id(),
         )
         transaction = Transaction()
-        transaction.add(self.make_settle_funds_instruction(open_orders, base_wallet, quote_wallet, vault_signer))
+        signers: List[Account] = [owner]
+
+        should_wrap_sol = (self.state.quote_mint() == WRAPPED_SOL_MINT) or (self.state.base_mint() == WRAPPED_SOL_MINT)
+
+        if should_wrap_sol:
+            wrapped_sol_account = Account()
+            signers.append(wrapped_sol_account)
+            # make a wrapped SOL account with enough balance to
+            # fund the trade, run the program, then send itself back home
+            transaction.add(
+                create_account(
+                    CreateAccountParams(
+                        from_pubkey=owner.public_key(),
+                        new_account_pubkey=wrapped_sol_account.public_key(),
+                        lamports=self._conn.get_minimum_balance_for_rent_exemption(165)["result"],
+                        space=ACCOUNT_LEN,
+                        program_id=TOKEN_PROGRAM_ID,
+                    )
+                )
+            )
+            # this was also broken upstream. it should be minting wrapped SOL, and using the token program ID
+            transaction.add(
+                initialize_account(
+                    InitializeAccountParams(
+                        account=wrapped_sol_account.public_key(),
+                        mint=WRAPPED_SOL_MINT,
+                        owner=owner.public_key(),
+                        program_id=TOKEN_PROGRAM_ID,
+                    )
+                )
+            )
+
+        transaction.add(
+            self.make_settle_funds_instruction(
+                open_orders,
+                base_wallet if self.state.base_mint() != WRAPPED_SOL_MINT else wrapped_sol_account.public_key(),
+                quote_wallet if self.state.quote_mint() != WRAPPED_SOL_MINT else wrapped_sol_account.public_key(),
+                vault_signer,
+            )
+        )
+
+        if should_wrap_sol:
+            # close out the account and send the funds home when the trade is completed/cancelled
+            transaction.add(
+                close_account(
+                    CloseAccountParams(
+                        account=wrapped_sol_account.public_key(),
+                        owner=owner.public_key(),
+                        dest=owner.public_key(),
+                        program_id=TOKEN_PROGRAM_ID,
+                    )
+                )
+            )
         return self._conn.send_transaction(transaction, owner, opts=opts)
 
     def make_settle_funds_instruction(
