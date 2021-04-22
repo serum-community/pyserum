@@ -209,7 +209,7 @@ class Market:
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
-        discount_key_result = self.find_best_fee_discount_key(owner.public_key())
+        discount_key_result = self.find_best_fee_discount_key(owner.public_key(), 0)
         if not open_order_accounts:
             new_open_orders_account = Account()
             place_order_open_order_account = new_open_orders_account.public_key()
