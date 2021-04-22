@@ -11,6 +11,7 @@ from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse, TxOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import Transaction, TransactionInstruction
+from spl.token.client import Token
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
 from spl.token.instructions import CloseAccountParams  # type: ignore
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
@@ -20,6 +21,7 @@ import pyserum.market.types as t
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, SelfTradeBehavior, Side
+from ..fees import supports_srm_fee_discount, get_fee_tier
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
@@ -27,6 +29,8 @@ from .orderbook import OrderBook
 from .state import MarketState
 
 LAMPORTS_PER_SOL = 1000000000
+MSRM_MINT = PublicKey("MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L")
+SRM_MINT = PublicKey("SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt")
 
 
 # pylint: disable=too-many-public-methods
@@ -71,13 +75,42 @@ class Market:
         )
 
     def support_srm_fee_discounts(self) -> bool:
-        raise NotImplementedError("support_srm_fee_discounts not implemented")
+        return supports_srm_fee_discount(self.state.program_id())
 
     def find_fee_discount_keys(self, owner: PublicKey, cache_duration: int):
-        raise NotImplementedError("find_fee_discount_keys not implemented")
+        if self.support_srm_fee_discounts():
+            accounts = []
+            msrm_token = Token(self._conn, MSRM_MINT, self.state.program_id(), Account())
+            srm_token = Token(self._conn, SRM_MINT, self.state.program_id(), Account())
+            msrm_accts_resp = msrm_token.get_accounts(owner=owner, is_delegate=True)
+            srm_accts_resp = srm_token.get_accounts(owner=owner, is_delegate=True)
+            if "result" in msrm_accts_resp:
+                for msrm_acct in msrm_accts_resp["result"]["value"]:
+                    msrm_balance_response = msrm_token.get_balance(PublicKey(msrm_acct["pubkey"]))
+                    if "result" in msrm_balance_response:
+                        accounts.append(
+                            {
+                                "pubkey": msrm_acct["pubkey"],
+                                "fee_tier": get_fee_tier(0, msrm_balance_response["result"]["value"]["uiAmount"]),
+                            }
+                        )
+            if "result" in srm_accts_resp:
+                for srm_acct in srm_accts_resp["result"]["value"]:
+                    srm_balance_response = srm_token.get_balance(PublicKey(srm_acct["pubkey"]))
+                    if "result" in srm_balance_response:
+                        accounts.append(
+                            {
+                                "pubkey": srm_acct["pubkey"],
+                                "fee_tier": get_fee_tier(srm_balance_response["result"]["value"]["uiAmount"], 0),
+                            }
+                        )
+            accounts.sort(key=lambda discount_key: discount_key["fee_tier"])
+            return accounts
 
     def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int):
-        raise NotImplementedError("find_best_fee_discount_key not implemented")
+        discount_keys = self.find_fee_discount_keys(owner, cache_duration)
+        if discount_keys:
+            return discount_keys[0]
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(
@@ -176,6 +209,7 @@ class Market:
         transaction = Transaction()
         signers: List[Account] = [owner]
         open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
+        discount_key_result = self.find_best_fee_discount_key(owner.public_key())
         if not open_order_accounts:
             new_open_orders_account = Account()
             place_order_open_order_account = new_open_orders_account.public_key()
@@ -193,7 +227,6 @@ class Market:
             # TODO: Cache new_open_orders_account
         else:
             place_order_open_order_account = open_order_accounts[0].address
-        # TODO: Handle fee_discount_pubkey
 
         # unwrapped SOL cannot be used for payment
         if payer == owner.public_key():
@@ -242,6 +275,7 @@ class Market:
                 max_quantity=max_quantity,
                 client_id=client_id,
                 open_order_account=place_order_open_order_account,
+                fee_discount_pubkey=PublicKey(discount_key_result["pubkey"]) if discount_key_result else None,
             )
         )
 
