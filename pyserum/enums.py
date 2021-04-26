@@ -13,7 +13,7 @@ class Side(IntEnum):
 
 
 class OrderType(IntEnum):
-    """"Type of order."""
+    """Type of order."""
 
     LIMIT = 0
     """"""
