@@ -32,7 +32,6 @@ def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
 
 
 def get_layout_version(program_id: PublicKey):
-    if program_id in PROGRAM_LAYOUT_VERSIONS:
-        return PROGRAM_LAYOUT_VERSIONS[program_id]
-    else:
-        return None
+    if str(program_id) in PROGRAM_LAYOUT_VERSIONS:
+        return PROGRAM_LAYOUT_VERSIONS[str(program_id)]
+    return None

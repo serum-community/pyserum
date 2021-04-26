@@ -77,9 +77,10 @@ class Market:
     def support_srm_fee_discounts(self) -> bool:
         return supports_srm_fee_discount(self.state.program_id())
 
+    # pylint: disable=unused-argument
     def find_fee_discount_keys(self, owner: PublicKey, cache_duration: int):
+        accounts = []
         if self.support_srm_fee_discounts():
-            accounts = []
             msrm_token = Token(self._conn, MSRM_MINT, self.state.program_id(), Account())
             srm_token = Token(self._conn, SRM_MINT, self.state.program_id(), Account())
             msrm_accts_resp = msrm_token.get_accounts(owner=owner, is_delegate=True)
@@ -105,12 +106,13 @@ class Market:
                             }
                         )
             accounts.sort(key=lambda discount_key: discount_key["fee_tier"])
-            return accounts
+        return accounts
 
     def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int):
         discount_keys = self.find_fee_discount_keys(owner, cache_duration)
         if discount_keys:
             return discount_keys[0]
+        return None
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(
