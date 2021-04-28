@@ -7,7 +7,7 @@ from .market.types import MarketInfo, TokenInfo
 
 
 def get_live_markets() -> List[MarketInfo]:
-    url = "https://raw.githubusercontent.com/project-serum/serum-js/master/src/markets.json"
+    url = "https://raw.githubusercontent.com/project-serum/serum-ts/master/packages/serum/src/markets.json"
     return [
         MarketInfo(name=m["name"], address=m["address"], program_id=m["programId"])
         for m in requests.get(url).json()
@@ -16,5 +16,5 @@ def get_live_markets() -> List[MarketInfo]:
 
 
 def get_token_mints() -> List[TokenInfo]:
-    url = "https://raw.githubusercontent.com/project-serum/serum-js/master/src/token-mints.json"
+    url = "https://raw.githubusercontent.com/project-serum/serum-ts/master/packages/serum/src/token-mints.json"
     return [TokenInfo(**t) for t in requests.get(url).json()]
