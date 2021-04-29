@@ -80,7 +80,7 @@ class NewOrderParams(NamedTuple):
 
 
 class MatchOrdersParams(NamedTuple):
-    """"Match order params."""
+    """Match order params."""
 
     market: PublicKey
     """"""
