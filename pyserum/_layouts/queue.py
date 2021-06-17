@@ -44,7 +44,7 @@ EVENT_FLAGS_LAYOUT = BitsSwapped(
         "out" / Flag,
         "bid" / Flag,
         "maker" / Flag,
-        Const(0, BitsInteger(4)),  # Padding
+        Padding(4),
     )
 )
 
