@@ -10,7 +10,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "construct>=2.10.56, <3.0.0",
-        "solana>=0.3.0, <1.0.0",
+        "solana>=0.11.2, <1.0.0",
     ],
     python_requires=">=3.7, <4",
     license="MIT",

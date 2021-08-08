@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List, NamedTuple, Optional, Sequence
 
-from construct import Container  # type: ignore
+from construct import Container, ListContainer
 from solana.publickey import PublicKey
 
 from ..._layouts.slab import SLAB_LAYOUT, NodeType
@@ -51,7 +51,7 @@ class Slab:
         self._nodes: List[SlabNode] = nodes
 
     @staticmethod
-    def __build(nodes: Container) -> List[SlabNode]:
+    def __build(nodes: ListContainer) -> List[SlabNode]:
         res: List[SlabNode] = []
         for construct_node in nodes:
             node_type = construct_node.tag
@@ -90,7 +90,7 @@ class Slab:
         return res
 
     @staticmethod
-    def from_bytes(buffer: Sequence[int]) -> Slab:
+    def from_bytes(buffer: bytes) -> Slab:
         parsed_slab = SLAB_LAYOUT.parse(buffer)
         header = parsed_slab.header
         nodes = parsed_slab.nodes

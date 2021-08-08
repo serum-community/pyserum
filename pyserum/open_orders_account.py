@@ -53,7 +53,7 @@ class OpenOrdersAccount:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, buffer: Sequence[int]) -> OpenOrdersAccount:
+    def from_bytes(address: PublicKey, buffer: bytes) -> OpenOrdersAccount:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")

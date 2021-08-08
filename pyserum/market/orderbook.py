@@ -32,7 +32,7 @@ class OrderBook:
         return node.key >> 64
 
     @staticmethod
-    def from_bytes(market_state: MarketState, buffer: Sequence[int]) -> OrderBook:
+    def from_bytes(market_state: MarketState, buffer: bytes) -> OrderBook:
         """Decode the given buffer into an order book."""
         # This is a bit hacky at the moment. The first 5 bytes are padding, the
         # total length is 8 bytes which is 5 + 8 = 13 bytes.

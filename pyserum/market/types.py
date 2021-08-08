@@ -25,7 +25,7 @@ class AccountFlags(NamedTuple):
     """"""
 
     @staticmethod
-    def from_bytes(buffer: Sequence[int]) -> AccountFlags:
+    def from_bytes(buffer: bytes) -> AccountFlags:
         con = ACCOUNT_FLAGS_LAYOUT.parse(buffer)
         return AccountFlags(
             initialized=con.initialized,

@@ -1,7 +1,7 @@
 """Layouts for dex instructions data."""
 from enum import IntEnum
 
-from construct import Switch  # type: ignore
+from construct import Switch
 from construct import Bytes, Const, Int8ul, Int16ul, Int32ul, Int64ul, Pass
 from construct import Struct as cStruct
 

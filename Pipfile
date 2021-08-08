@@ -27,9 +27,10 @@ sphinx = "*"
 sphinxemoji = "*"
 
 [packages]
-solana = "*"
+solana = {version = ">=0.11.2"}
 construct = "*"
 flake8 = "*"
+construct-typing = "*"
 
 [requires]
 python_version = "3.7"

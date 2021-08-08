@@ -11,8 +11,8 @@ from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse, TxOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import Transaction, TransactionInstruction
-from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
-from spl.token.instructions import CloseAccountParams  # type: ignore
+from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT
+from spl.token.instructions import CloseAccountParams
 from spl.token.instructions import InitializeAccountParams, close_account, initialize_account
 
 import pyserum.instructions as instructions
