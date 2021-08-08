@@ -1,6 +1,6 @@
 import math
 from enum import IntEnum
-from typing import List, Optional, Sequence, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 from construct import Container
 from solana.publickey import PublicKey

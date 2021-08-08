@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 from solana.publickey import PublicKey
 

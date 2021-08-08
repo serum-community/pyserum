@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, List, NamedTuple, Optional, Sequence
+from typing import Iterable, List, NamedTuple, Optional
 
-from construct import Container, ListContainer
+from construct import ListContainer
 from solana.publickey import PublicKey
 
 from ..._layouts.slab import SLAB_LAYOUT, NodeType

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Sequence, Union
+from typing import Iterable, List, Union
 
 import pyserum.market.types as t
 
