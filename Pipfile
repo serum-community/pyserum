@@ -27,7 +27,7 @@ sphinx = "*"
 sphinxemoji = "*"
 
 [packages]
-solana = {version = ">=0.11.2"}
+solana = {version = ">=0.11.3"}
 construct = "*"
 flake8 = "*"
 construct-typing = "*"
