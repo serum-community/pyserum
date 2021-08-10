@@ -1,5 +1,4 @@
-from construct import Bytes, Int64ul, Padding  # type: ignore
-from construct import Struct as cStruct
+from construct import Bytes, Int64ul, Padding, Struct as cStruct
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 

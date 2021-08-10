@@ -4,13 +4,13 @@ from setuptools import find_packages, setup
 
 setup(
     name="pyserum",
-    version="0.3.4a1",
+    version="0.3.5a1",
     author="serum-community",
     description="""Python client library for interacting with the Project Serum DEX.""",
-    include_package_data=True,
     install_requires=[
         "construct>=2.10.56, <3.0.0",
-        "solana>=0.3.0, <1.0.0",
+        "construct-typing>=0.5.1, <1.0.0",
+        "solana>=0.11.3, <1.0.0",
     ],
     python_requires=">=3.7, <4",
     license="MIT",

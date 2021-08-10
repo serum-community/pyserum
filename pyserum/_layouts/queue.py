@@ -1,6 +1,5 @@
-from construct import BitStruct  # type: ignore
-from construct import BitsInteger, BitsSwapped, Bytes, Const, Flag, Int8ul, Int32ul, Int64ul, Padding
-from construct import Struct as cStruct  # type: ignore
+from construct import BitStruct, BitsInteger, BitsSwapped, Bytes, Const, Flag, Int8ul, Int32ul, Int64ul, Padding
+from construct import Struct as cStruct
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 

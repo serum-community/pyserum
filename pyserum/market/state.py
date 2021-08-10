@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import math
-from typing import Sequence
 
-from construct import Container, Struct  # type: ignore
+from construct import Container, Struct
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
@@ -42,7 +41,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def from_bytes(
-        program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: Sequence[int]
+        program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
     ) -> MarketState:
         parsed_market = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!

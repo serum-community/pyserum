@@ -2,7 +2,7 @@ import base64
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from spl.token.constants import WRAPPED_SOL_MINT  # type: ignore # TODO: Remove ignore.
+from spl.token.constants import WRAPPED_SOL_MINT
 
 from pyserum._layouts.market import MINT_LAYOUT
 

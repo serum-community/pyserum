@@ -1,11 +1,12 @@
 """Serum Dex Instructions."""
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from solana.utils.validate import validate_instruction_keys, validate_instruction_type
-from spl.token.constants import TOKEN_PROGRAM_ID  # type: ignore # TODO: Fix and remove ignore.
+from spl.token.constants import TOKEN_PROGRAM_ID
+from construct import Container
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, SelfTradeBehavior, Side
@@ -267,7 +268,9 @@ class CancelOrderByClientIDV2Params(NamedTuple):
     """"""
 
 
-def __parse_and_validate_instruction(instruction: TransactionInstruction, instruction_type: InstructionType) -> Any:
+def __parse_and_validate_instruction(
+    instruction: TransactionInstruction, instruction_type: InstructionType
+) -> Container:
     instruction_type_to_length_map: Dict[InstructionType, int] = {
         InstructionType.INITIALIZE_MARKET: 9,
         InstructionType.NEW_ORDER: 9,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Sequence
+from typing import NamedTuple
 
 from solana.publickey import PublicKey
 
@@ -25,7 +25,7 @@ class AccountFlags(NamedTuple):
     """"""
 
     @staticmethod
-    def from_bytes(buffer: Sequence[int]) -> AccountFlags:
+    def from_bytes(buffer: bytes) -> AccountFlags:
         con = ACCOUNT_FLAGS_LAYOUT.parse(buffer)
         return AccountFlags(
             initialized=con.initialized,

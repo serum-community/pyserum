@@ -1,8 +1,8 @@
 import math
 from enum import IntEnum
-from typing import List, Optional, Sequence, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
-from construct import Container  # type: ignore
+from construct import Container
 from solana.publickey import PublicKey
 
 from ..._layouts.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
@@ -15,7 +15,7 @@ class QueueType(IntEnum):
 
 
 def __from_bytes(
-    buffer: Sequence[int], queue_type: QueueType, history: Optional[int]
+    buffer: bytes, queue_type: QueueType, history: Optional[int]
 ) -> Tuple[Container, List[Union[Event, Request]]]:
     header = QUEUE_HEADER_LAYOUT.parse(buffer)
     layout_size = EVENT_LAYOUT.sizeof() if queue_type == QueueType.EVENT else REQUEST_LAYOUT.sizeof()
@@ -34,7 +34,7 @@ def __from_bytes(
     return header, nodes
 
 
-def __parse_queue_item(buffer: Sequence[int], queue_type: QueueType) -> Union[Event, Request]:
+def __parse_queue_item(buffer: bytes, queue_type: QueueType) -> Union[Event, Request]:
     if queue_type == QueueType.EVENT:  # pylint: disable=no-else-return
         parsed_item = EVENT_LAYOUT.parse(buffer)
         parsed_event_flags = parsed_item.event_flags

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List, NamedTuple, Sequence
+from typing import List, NamedTuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -53,7 +53,7 @@ class OpenOrdersAccount:
         self.client_ids = client_ids
 
     @staticmethod
-    def from_bytes(address: PublicKey, buffer: Sequence[int]) -> OpenOrdersAccount:
+    def from_bytes(address: PublicKey, buffer: bytes) -> OpenOrdersAccount:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
