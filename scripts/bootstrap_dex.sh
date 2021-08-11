@@ -18,8 +18,10 @@ if ! hash solana 2>/dev/null; then
     echo Installing Solana tool suite ...
     curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.5.8/install/solana-install-init.sh | SOLANA_RELEASE=v1.5.8 sh -s - v1.5.8
     export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-    echo Generating keypair ...
-    solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
+    if [ ! -f ~/.config/solana/id.json ]; then
+        echo Generating keypair ...
+        solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
+    fi
 fi
 
 solana-test-validator & echo $! > solana_test_validator.pid
