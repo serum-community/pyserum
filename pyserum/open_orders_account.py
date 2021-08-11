@@ -26,7 +26,7 @@ class ProgramAccount(NamedTuple):
 _T = TypeVar("_T", bound="_OpenOrdersAccountCore")
 
 
-class _OpenOrdersAccountCore:
+class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     # pylint: disable=too-many-arguments
     def __init__(
         self,

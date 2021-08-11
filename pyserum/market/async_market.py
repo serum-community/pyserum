@@ -153,9 +153,11 @@ class AsyncMarket(MarketCore):
     ) -> RPCResponse:
         # TODO: Handle wrapped sol accounts
         should_wrap_sol = self._settle_funds_should_wrap_sol()
-        min_bal_for_rent_exemption = (
-            await self._conn.get_minimum_balance_for_rent_exemption(165)["result"] if should_wrap_sol else 0
-        )  # value only matters if should_wrap_sol
+        if should_wrap_sol:
+            mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(165)
+            min_bal_for_rent_exemption = mbfre_resp["result"]
+        else:
+            min_bal_for_rent_exemption = 0  # value only matters if should_wrap_sol
         transaction = self._build_settle_funds_tx(
             owner=owner,
             open_orders=open_orders,

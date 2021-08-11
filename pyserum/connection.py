@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 import requests
 
 from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
+from solana.publickey import PublicKey
 from .market.types import MarketInfo, TokenInfo
 
 LIVE_MARKETS_URL = "https://raw.githubusercontent.com/project-serum/serum-ts/master/packages/serum/src/markets.json"
@@ -16,7 +17,7 @@ def parse_live_markets(data: List[Dict[str, Any]]) -> List[MarketInfo]:
 
 
 def parse_token_mints(data: List[Dict[str, str]]) -> List[TokenInfo]:
-    return [TokenInfo(**t) for t in data]
+    return [TokenInfo(name=t["name"], address=PublicKey(t["address"])) for t in data]
 
 
 def get_live_markets() -> List[MarketInfo]:

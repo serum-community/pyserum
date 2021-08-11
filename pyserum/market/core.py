@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-from typing import List
+from typing import List, Union
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -19,6 +19,7 @@ import pyserum.market.types as t
 
 from ..enums import OrderType, SelfTradeBehavior, Side
 from ..open_orders_account import OpenOrdersAccount, make_create_account_instruction
+from ..async_open_orders_account import AsyncOpenOrdersAccount
 from ._internal.queue import decode_event_queue
 from .orderbook import OrderBook
 from .state import MarketState
@@ -140,7 +141,7 @@ class MarketCore:
         limit_price: float,
         max_quantity: float,
         client_id: int,
-        open_order_accounts: List[OpenOrdersAccount],
+        open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
         place_order_open_order_account: PublicKey,
     ) -> None:
         # unwrapped SOL cannot be used for payment
@@ -214,7 +215,10 @@ class MarketCore:
 
     @staticmethod
     def _get_lamport_need_for_sol_wrapping(
-        price: float, size: float, side: Side, open_orders_accounts: List[OpenOrdersAccount]
+        price: float,
+        size: float,
+        side: Side,
+        open_orders_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
     ) -> int:
         lamports = 0
         if side == Side.BUY:
@@ -373,7 +377,7 @@ class MarketCore:
     def _build_settle_funds_tx(  # pylint: disable=too-many-arguments
         self,
         owner: Account,
-        open_orders: OpenOrdersAccount,
+        open_orders: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
         base_wallet: PublicKey,
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
         min_bal_for_rent_exemption: int,
@@ -445,7 +449,7 @@ class MarketCore:
 
     def make_settle_funds_instruction(
         self,
-        open_orders_account: OpenOrdersAccount,
+        open_orders_account: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
         base_wallet: PublicKey,
         quote_wallet: PublicKey,
         vault_signer: PublicKey,
