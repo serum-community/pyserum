@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import base64
-from typing import List, NamedTuple
+from typing import List, NamedTuple, TypeVar, Type, Tuple
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.commitment import Recent
-from solana.rpc.types import Commitment, MemcmpOpts
+from solana.rpc.types import Commitment, MemcmpOpts, RPCResponse
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
@@ -23,9 +23,11 @@ class ProgramAccount(NamedTuple):
     owner: PublicKey
 
 
-class OpenOrdersAccount:
+_T = TypeVar("_T", bound="_OpenOrdersAccountCore")
+
+
+class _OpenOrdersAccountCore:
     # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         address: PublicKey,
@@ -52,13 +54,13 @@ class OpenOrdersAccount:
         self.orders = orders
         self.client_ids = client_ids
 
-    @staticmethod
-    def from_bytes(address: PublicKey, buffer: bytes) -> OpenOrdersAccount:
+    @classmethod
+    def from_bytes(cls: Type[_T], address: PublicKey, buffer: bytes) -> _T:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
 
-        return OpenOrdersAccount(
+        return cls(
             address=address,
             market=PublicKey(open_order_decoded.market),
             owner=PublicKey(open_order_decoded.owner),
@@ -72,27 +74,8 @@ class OpenOrdersAccount:
             client_ids=open_order_decoded.client_ids,
         )
 
-    @staticmethod
-    def find_for_market_and_owner(
-        conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
-    ) -> List[OpenOrdersAccount]:
-        filters = [
-            MemcmpOpts(
-                offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
-                bytes=str(market),
-            ),
-            MemcmpOpts(
-                offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
-                bytes=str(owner),
-            ),
-        ]
-        resp = conn.get_program_accounts(
-            program_id,
-            commitment=commitment,
-            encoding="base64",
-            memcmp_opts=filters,
-            data_size=OPEN_ORDERS_LAYOUT.sizeof(),
-        )
+    @classmethod
+    def _process_get_program_accounts_resp(cls: Type[_T], resp: RPCResponse) -> List[_T]:
         accounts = []
         for account in resp["result"]:
             account_details = account["account"]
@@ -106,13 +89,49 @@ class OpenOrdersAccount:
                 )
             )
 
-        return [OpenOrdersAccount.from_bytes(account.public_key, account.data) for account in accounts]
+        return [cls.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod
-    def load(conn: Client, address: str) -> OpenOrdersAccount:
+    def _build_get_program_accounts_args(
+        market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
+    ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
+        filters = [
+            MemcmpOpts(
+                offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
+                bytes=str(market),
+            ),
+            MemcmpOpts(
+                offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
+                bytes=str(owner),
+            ),
+        ]
+        data_slice = None
+        return (
+            program_id,
+            commitment,
+            "base64",
+            data_slice,
+            OPEN_ORDERS_LAYOUT.sizeof(),
+            filters,
+        )
+
+
+class OpenOrdersAccount(_OpenOrdersAccountCore):
+    @classmethod
+    def find_for_market_and_owner(  # pylint: disable=too-many-arguments
+        cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
+    ) -> List[OpenOrdersAccount]:
+        args = cls._build_get_program_accounts_args(
+            market=market, program_id=program_id, owner=owner, commitment=commitment
+        )
+        resp = conn.get_program_accounts(*args)
+        return cls._process_get_program_accounts_resp(resp)
+
+    @classmethod
+    def load(cls, conn: Client, address: str) -> OpenOrdersAccount:
         addr_pub_key = PublicKey(address)
         bytes_data = load_bytes_data(addr_pub_key, conn)
-        return OpenOrdersAccount.from_bytes(addr_pub_key, bytes_data)
+        return cls.from_bytes(addr_pub_key, bytes_data)
 
 
 def make_create_account_instruction(
