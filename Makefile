@@ -25,7 +25,7 @@ test-publish:
 	pipenv run twine upload -r testpypi -u serum-community dist/*
 
 unit-tests:
-	pipenv run pytest -v -m "not integration"
+	pipenv run pytest -v -m "not integration and not async_integration"
 
 int-tests:
 	bash scripts/run_int_tests.sh
