@@ -28,7 +28,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return MARKET_LAYOUT
 
     @staticmethod
-    def _make_parsed_market(bytes_data: bytes):
+    def _make_parsed_market(bytes_data: bytes) -> Container:
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
