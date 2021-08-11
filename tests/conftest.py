@@ -163,11 +163,14 @@ def event_loop():
     loop.close()
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.fixture(scope="session")
 def async_http_client(event_loop) -> AsyncClient:  # pylint: disable=redefined-outer-name
     """Solana async http client."""
     cc = async_conn("http://localhost:8899")  # pylint: disable=invalid-name
     if not event_loop.run_until_complete(cc.is_connected()):
-        raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
-    return cc
+        raise Exception(
+            "Could not connect to local node. Please run `make async-int-tests` to run async integration tests."
+        )
+    yield cc
+    event_loop.run_until_complete(cc.close())

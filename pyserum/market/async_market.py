@@ -47,7 +47,7 @@ class AsyncMarket(MarketCore):
         :param market_address: The market address that you want to connect to.
         :param program_id: The program id of the given market, it will use the default value if not provided.
         """
-        market_state = await MarketState.load(conn, market_address, program_id)
+        market_state = await MarketState.async_load(conn, market_address, program_id)
         return cls(conn, market_state, force_use_request_queue)
 
     async def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[AsyncOpenOrdersAccount]:

@@ -10,19 +10,19 @@ from pyserum.enums import OrderType, Side
 from pyserum.market import AsyncMarket
 
 
-@pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.async_integration
 @pytest.fixture(scope="module")
-async def bootstrapped_market(
-    async_http_client: AsyncClient, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey
+def bootstrapped_market(
+    async_http_client: AsyncClient, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey, event_loop
 ) -> AsyncMarket:
-    return await AsyncMarket.load(
-        async_http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True
+    return event_loop.run_until_complete(
+        AsyncMarket.load(async_http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True)
     )
 
 
-@pytest.mark.integration
-def test_bootstrapped_market(
+@pytest.mark.async_integration
+@pytest.mark.asyncio
+async def test_bootstrapped_market(
     bootstrapped_market: AsyncMarket,
     stubbed_market_pk: PublicKey,
     stubbed_dex_program_pk: PublicKey,
@@ -36,7 +36,7 @@ def test_bootstrapped_market(
     assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key()
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_market_load_bid(bootstrapped_market: AsyncMarket):
     # TODO: test for non-zero order case.
@@ -44,7 +44,7 @@ async def test_market_load_bid(bootstrapped_market: AsyncMarket):
     assert sum(1 for _ in bids) == 0
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_market_load_asks(bootstrapped_market: AsyncMarket):
     # TODO: test for non-zero order case.
@@ -52,14 +52,14 @@ async def test_market_load_asks(bootstrapped_market: AsyncMarket):
     assert sum(1 for _ in asks) == 0
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_market_load_events(bootstrapped_market: AsyncMarket):
     event_queue = await bootstrapped_market.load_event_queue()
     assert len(event_queue) == 0
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_market_load_requests(bootstrapped_market: AsyncMarket):
     request_queue = await bootstrapped_market.load_request_queue()
@@ -67,7 +67,7 @@ async def test_market_load_requests(bootstrapped_market: AsyncMarket):
     assert len(request_queue) == 2
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Account):
     await bootstrapped_market.match_orders(stubbed_payer, 2, TxOpts(skip_confirmation=False))
@@ -89,7 +89,7 @@ async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Acco
     assert sum(1 for _ in asks) == 0
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_settle_fund(
     bootstrapped_market: AsyncMarket,
@@ -129,7 +129,7 @@ async def test_settle_fund(
     # TODO: Check account states after settling funds
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_order_placement_cancellation_cycle(
     bootstrapped_market: AsyncMarket,

@@ -30,6 +30,9 @@ unit-tests:
 int-tests:
 	bash scripts/run_int_tests.sh
 
+async-int-tests:
+	bash scripts/run_async_int_tests.sh
+
 # Minimal makefile for Sphinx documentation
 #
 

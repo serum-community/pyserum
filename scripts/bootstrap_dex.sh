@@ -22,7 +22,7 @@ if ! hash solana 2>/dev/null; then
     solana-keygen new -o ~/.config/solana/id.json --no-passphrase --silent
 fi
 
-solana-test-validator &
+solana-test-validator & echo $! > solana_test_validator.pid
 solana config set --url "http://127.0.0.1:8899"
 curl -s -L "https://github.com/serum-community/serum-dex/releases/download/v2/serum_dex-$os_type.so" > serum_dex.so
 sleep 1

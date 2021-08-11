@@ -5,7 +5,7 @@ from pyserum.async_connection import get_live_markets, get_token_mints
 from pyserum.market.types import MarketInfo, TokenInfo
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_get_live_markets():
     """Test get_live_markets."""
@@ -14,7 +14,7 @@ async def test_get_live_markets():
     assert all(isinstance(market_info, MarketInfo) for market_info in resp)
 
 
-@pytest.mark.integration
+@pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_get_token_mints():
     """Test get_token_mints."""
