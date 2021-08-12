@@ -9,7 +9,7 @@ echo "Waiting $wait_time seconds to make sure the market has started"
 sleep $wait_time
 
 
-pipenv run pytest -m integration --cov=./ --cov-report=xml --cov-append)
+pipenv run pytest -m integration --cov=./ --cov-report=xml --cov-append
 
 bash scripts/clean_up.sh
 
