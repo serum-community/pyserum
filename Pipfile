@@ -14,7 +14,6 @@ jupyterlab = "*"
 black = "*"
 pytest = "*"
 pylint = "*"
-pytest-tornasync = "*"
 mypy = "*"
 pydocstyle = "*"
 flake8 = "*"
@@ -25,6 +24,8 @@ twine = "*"
 setuptools = "*"
 sphinx = "*"
 sphinxemoji = "*"
+pytest-asyncio = "*"
+types-requests = "*"
 
 [packages]
 solana = {version = ">=0.11.3"}

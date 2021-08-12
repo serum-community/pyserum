@@ -1,11 +1,14 @@
 from typing import Dict
+import asyncio
 
 import pytest
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 
 from pyserum.connection import conn
+from pyserum.async_connection import async_conn
 
 
 @pytest.mark.integration
@@ -150,3 +153,24 @@ def http_client() -> Client:
     if not cc.is_connected():
         raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
     return cc
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Event loop for pytest-asyncio."""
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.mark.async_integration
+@pytest.fixture(scope="session")
+def async_http_client(event_loop) -> AsyncClient:  # pylint: disable=redefined-outer-name
+    """Solana async http client."""
+    cc = async_conn("http://localhost:8899")  # pylint: disable=invalid-name
+    if not event_loop.run_until_complete(cc.is_connected()):
+        raise Exception(
+            "Could not connect to local node. Please run `make async-int-tests` to run async integration tests."
+        )
+    yield cc
+    event_loop.run_until_complete(cc.close())

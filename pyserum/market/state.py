@@ -5,8 +5,9 @@ import math
 from construct import Container, Struct
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+from solana.rpc.async_api import AsyncClient
 
-from pyserum.utils import get_mint_decimals, load_bytes_data
+from pyserum import utils, async_utils
 
 from .._layouts.market import MARKET_LAYOUT
 from .types import AccountFlags
@@ -27,21 +28,34 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return MARKET_LAYOUT
 
     @staticmethod
-    def load(conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
-        bytes_data = load_bytes_data(market_address, conn)
+    def _make_parsed_market(bytes_data: bytes) -> Container:
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
             raise Exception("Invalid market")
+        return parsed_market
 
-        base_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
-        quote_mint_decimals = get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
-        return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+    @classmethod
+    def load(cls, conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
+        bytes_data = utils.load_bytes_data(market_address, conn)
+        parsed_market = cls._make_parsed_market(bytes_data)
 
-    @staticmethod
+        base_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
+        quote_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
+        return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+
+    @classmethod
+    async def async_load(cls, conn: AsyncClient, market_address: PublicKey, program_id: PublicKey) -> MarketState:
+        bytes_data = await async_utils.load_bytes_data(market_address, conn)
+        parsed_market = cls._make_parsed_market(bytes_data)
+        base_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
+        quote_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
+        return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+
+    @classmethod
     def from_bytes(
-        program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
+        cls, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
     ) -> MarketState:
         parsed_market = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
@@ -49,7 +63,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
             raise Exception("Invalid market")
 
-        return MarketState(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
+        return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
     def program_id(self) -> PublicKey:
         return self._program_id

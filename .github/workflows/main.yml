@@ -42,7 +42,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pipenv run pytest -v -m "not integration"
+          pipenv run pytest -v -m "not integration and not async_integration"
 
   coverage:
     # The type of runner that the job will run on

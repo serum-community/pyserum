@@ -35,3 +35,6 @@ jobs:
 
       - name: Run integration tests
         run: scripts/run_int_tests.sh
+
+      - name: Run async integration tests
+        run: scripts/run_async_int_tests.sh
