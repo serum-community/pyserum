@@ -9,7 +9,7 @@ sleep $wait_time
 
 
 exit_code=1
-if (pipenv run pytest --cov=./ --cov-report=xml); then
+if (pipenv run pytest --cov=./ --cov-report=xml --cov-append); then
   echo "The script ran ok"
   exit_code=0
 fi
