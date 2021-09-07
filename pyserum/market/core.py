@@ -377,6 +377,7 @@ class MarketCore:
     def _build_settle_funds_tx(  # pylint: disable=too-many-arguments
         self,
         owner: Account,
+        signers: List[Account],
         open_orders: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
         base_wallet: PublicKey,
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
@@ -391,7 +392,6 @@ class MarketCore:
             self.state.program_id(),
         )
         transaction = Transaction()
-        signers: List[Account] = [owner]
 
         if should_wrap_sol:
             wrapped_sol_account = Account()
