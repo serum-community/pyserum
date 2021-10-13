@@ -1,7 +1,8 @@
 # pylint: disable=redefined-outer-name
 
 import pytest
-from solana.account import Account
+
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.async_api import AsyncClient
 from solana.rpc.types import TxOpts
@@ -69,7 +70,7 @@ async def test_market_load_requests(bootstrapped_market: AsyncMarket):
 
 @pytest.mark.async_integration
 @pytest.mark.asyncio
-async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Account):
+async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Keypair):
     await bootstrapped_market.match_orders(stubbed_payer, 2, TxOpts(skip_confirmation=False))
 
     request_queue = await bootstrapped_market.load_request_queue()
@@ -93,9 +94,9 @@ async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Acco
 @pytest.mark.asyncio
 async def test_settle_fund(
     bootstrapped_market: AsyncMarket,
-    stubbed_payer: Account,
-    stubbed_quote_wallet: Account,
-    stubbed_base_wallet: Account,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
     open_order_accounts = await bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
 
@@ -133,13 +134,13 @@ async def test_settle_fund(
 @pytest.mark.asyncio
 async def test_order_placement_cancellation_cycle(
     bootstrapped_market: AsyncMarket,
-    stubbed_payer: Account,
-    stubbed_quote_wallet: Account,
-    stubbed_base_wallet: Account,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
     initial_request_len = len(await bootstrapped_market.load_request_queue())
     await bootstrapped_market.place_order(
-        payer=stubbed_quote_wallet.public_key(),
+        payer=stubbed_quote_wallet.public_key,
         owner=stubbed_payer,
         side=Side.BUY,
         order_type=OrderType.LIMIT,

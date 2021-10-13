@@ -1,21 +1,23 @@
 import pytest
-from solana.account import Account
+
+# from solana.account import Keypair
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 
 
 @pytest.mark.integration
 def test_payer(stubbed_payer):
-    assert isinstance(stubbed_payer, Account)
+    assert isinstance(stubbed_payer, Keypair)
 
 
 @pytest.mark.integration
 def test_base_mint(stubbed_base_mint):
-    assert isinstance(stubbed_base_mint, Account)
+    assert isinstance(stubbed_base_mint, Keypair)
 
 
 @pytest.mark.integration
 def test_base_wallet(stubbed_base_wallet):
-    assert isinstance(stubbed_base_wallet, Account)
+    assert isinstance(stubbed_base_wallet, Keypair)
 
 
 @pytest.mark.integration
@@ -25,12 +27,12 @@ def test_base_vault_pk(stubbed_base_vault_pk):
 
 @pytest.mark.integration
 def test_quote_mint(stubbed_quote_mint):
-    assert isinstance(stubbed_quote_mint, Account)
+    assert isinstance(stubbed_quote_mint, Keypair)
 
 
 @pytest.mark.integration
 def test_quote_wallet(stubbed_quote_wallet):
-    assert isinstance(stubbed_quote_wallet, Account)
+    assert isinstance(stubbed_quote_wallet, Keypair)
 
 
 @pytest.mark.integration
