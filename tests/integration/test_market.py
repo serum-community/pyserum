@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name
 
 import pytest
-
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
