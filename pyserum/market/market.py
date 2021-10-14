@@ -156,6 +156,7 @@ class Market(MarketCore):
         min_bal_for_rent_exemption = (
             self._conn.get_minimum_balance_for_rent_exemption(165)["result"] if should_wrap_sol else 0
         )  # value only matters if should_wrap_sol
+        signers = [owner]
         transaction = self._build_settle_funds_tx(
             owner=owner,
             signers=signers,

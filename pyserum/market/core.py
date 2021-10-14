@@ -200,9 +200,9 @@ class MarketCore:
             transaction.add(
                 close_account(
                     CloseAccountParams(
-                        account=wrapped_sol_account.public_key(),
-                        owner=owner.public_key(),
-                        dest=owner.public_key(),
+                        account=wrapped_sol_account.public_key,
+                        owner=owner.public_key,
+                        dest=owner.public_key,
                         program_id=TOKEN_PROGRAM_ID,
                     )
                 )
@@ -253,7 +253,7 @@ class MarketCore:
         if self._use_request_queue():
             return instructions.new_order(
                 instructions.NewOrderParams(
-                    market=self.state.public_key,
+                    market=self.state.public_key(),
                     open_orders=open_order_account,
                     payer=payer,
                     owner=owner.public_key,
@@ -296,18 +296,18 @@ class MarketCore:
         )
 
     def _build_cancel_order_by_client_id_tx(
-        self, owner: Account, open_orders_account: PublicKey, client_id: int
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int
     ) -> Transaction:
         return Transaction().add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
 
     def make_cancel_order_by_client_id_instruction(
-        self, owner: Account, open_orders_account: PublicKey, client_id: int
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int
     ) -> TransactionInstruction:
         if self._use_request_queue():
             return instructions.cancel_order_by_client_id(
                 instructions.CancelOrderByClientIDParams(
                     market=self.state.public_key(),
-                    owner=owner.public_key(),
+                    owner=owner.public_key,
                     open_orders=open_orders_account,
                     request_queue=self.state.request_queue(),
                     client_id=client_id,
@@ -317,7 +317,7 @@ class MarketCore:
         return instructions.cancel_order_by_client_id_v2(
             instructions.CancelOrderByClientIDV2Params(
                 market=self.state.public_key(),
-                owner=owner.public_key(),
+                owner=owner.public_key,
                 open_orders=open_orders_account,
                 bids=self.state.bids(),
                 asks=self.state.asks(),
