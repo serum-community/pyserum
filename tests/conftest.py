@@ -29,7 +29,9 @@ def __bs_params() -> Dict[str, str]:
 
 def __bootstrap_account(pubkey: str, secretkey: str) -> Keypair:
     secret = [int(b) for b in secretkey[1:-1].split(" ")]
-    keypair = Keypair.from_secret_key(secret)
+   
+    secret_bytes = bytes(secret)
+    keypair = Keypair.from_secret_key(secret_bytes)
     assert str(keypair.public_key) == pubkey, "account must map to provided public key"
     return keypair
 
