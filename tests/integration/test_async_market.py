@@ -1,7 +1,6 @@
 # pylint: disable=redefined-outer-name
 
 import pytest
-
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.async_api import AsyncClient
@@ -27,14 +26,14 @@ async def test_bootstrapped_market(
     bootstrapped_market: AsyncMarket,
     stubbed_market_pk: PublicKey,
     stubbed_dex_program_pk: PublicKey,
-    stubbed_base_mint: PublicKey,
-    stubbed_quote_mint: PublicKey,
+    stubbed_base_mint: Keypair,
+    stubbed_quote_mint: Keypair,
 ):
     assert isinstance(bootstrapped_market, AsyncMarket)
     assert bootstrapped_market.state.public_key() == stubbed_market_pk
     assert bootstrapped_market.state.program_id() == stubbed_dex_program_pk
-    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key()
-    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key()
+    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key
+    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key
 
 
 @pytest.mark.async_integration
@@ -162,7 +161,7 @@ async def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 0
 
     await bootstrapped_market.place_order(
-        payer=stubbed_base_wallet.public_key(),
+        payer=stubbed_base_wallet.public_key,
         owner=stubbed_payer,
         side=Side.SELL,
         order_type=OrderType.LIMIT,

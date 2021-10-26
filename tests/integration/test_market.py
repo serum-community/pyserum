@@ -21,14 +21,14 @@ def test_bootstrapped_market(
     bootstrapped_market: Market,
     stubbed_market_pk: PublicKey,
     stubbed_dex_program_pk: PublicKey,
-    stubbed_base_mint: PublicKey,
-    stubbed_quote_mint: PublicKey,
+    stubbed_base_mint: Keypair,
+    stubbed_quote_mint: Keypair,
 ):
     assert isinstance(bootstrapped_market, Market)
     assert bootstrapped_market.state.public_key() == stubbed_market_pk
     assert bootstrapped_market.state.program_id() == stubbed_dex_program_pk
-    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key()
-    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key()
+    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key
+    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key
 
 
 @pytest.mark.integration
