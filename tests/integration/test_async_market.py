@@ -1,7 +1,7 @@
 # pylint: disable=redefined-outer-name
 
 import pytest
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.async_api import AsyncClient
 from solana.rpc.types import TxOpts
@@ -26,14 +26,14 @@ async def test_bootstrapped_market(
     bootstrapped_market: AsyncMarket,
     stubbed_market_pk: PublicKey,
     stubbed_dex_program_pk: PublicKey,
-    stubbed_base_mint: PublicKey,
-    stubbed_quote_mint: PublicKey,
+    stubbed_base_mint: Keypair,
+    stubbed_quote_mint: Keypair,
 ):
     assert isinstance(bootstrapped_market, AsyncMarket)
     assert bootstrapped_market.state.public_key() == stubbed_market_pk
     assert bootstrapped_market.state.program_id() == stubbed_dex_program_pk
-    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key()
-    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key()
+    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key
+    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key
 
 
 @pytest.mark.async_integration
@@ -69,7 +69,7 @@ async def test_market_load_requests(bootstrapped_market: AsyncMarket):
 
 @pytest.mark.async_integration
 @pytest.mark.asyncio
-async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Account):
+async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Keypair):
     await bootstrapped_market.match_orders(stubbed_payer, 2, TxOpts(skip_confirmation=False))
 
     request_queue = await bootstrapped_market.load_request_queue()
@@ -93,11 +93,11 @@ async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Acco
 @pytest.mark.asyncio
 async def test_settle_fund(
     bootstrapped_market: AsyncMarket,
-    stubbed_payer: Account,
-    stubbed_quote_wallet: Account,
-    stubbed_base_wallet: Account,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
-    open_order_accounts = await bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key())
+    open_order_accounts = await bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key)
 
     with pytest.raises(ValueError):
         # Should not allow base_wallet to be base_vault
@@ -105,7 +105,7 @@ async def test_settle_fund(
             stubbed_payer,
             open_order_accounts[0],
             bootstrapped_market.state.base_vault(),
-            stubbed_quote_wallet.public_key(),
+            stubbed_quote_wallet.public_key,
         )
 
     with pytest.raises(ValueError):
@@ -113,7 +113,7 @@ async def test_settle_fund(
         await bootstrapped_market.settle_funds(
             stubbed_payer,
             open_order_accounts[0],
-            stubbed_base_wallet.public_key(),
+            stubbed_base_wallet.public_key,
             bootstrapped_market.state.quote_vault(),
         )
 
@@ -121,8 +121,8 @@ async def test_settle_fund(
         assert "error" not in await bootstrapped_market.settle_funds(
             stubbed_payer,
             open_order_account,
-            stubbed_base_wallet.public_key(),
-            stubbed_quote_wallet.public_key(),
+            stubbed_base_wallet.public_key,
+            stubbed_quote_wallet.public_key,
             opts=TxOpts(skip_confirmation=False),
         )
 
@@ -133,13 +133,13 @@ async def test_settle_fund(
 @pytest.mark.asyncio
 async def test_order_placement_cancellation_cycle(
     bootstrapped_market: AsyncMarket,
-    stubbed_payer: Account,
-    stubbed_quote_wallet: Account,
-    stubbed_base_wallet: Account,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
     initial_request_len = len(await bootstrapped_market.load_request_queue())
     await bootstrapped_market.place_order(
-        payer=stubbed_quote_wallet.public_key(),
+        payer=stubbed_quote_wallet.public_key,
         owner=stubbed_payer,
         side=Side.BUY,
         order_type=OrderType.LIMIT,
@@ -161,7 +161,7 @@ async def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 0
 
     await bootstrapped_market.place_order(
-        payer=stubbed_base_wallet.public_key(),
+        payer=stubbed_base_wallet.public_key,
         owner=stubbed_payer,
         side=Side.SELL,
         order_type=OrderType.LIMIT,

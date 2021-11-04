@@ -2,7 +2,7 @@ from typing import Dict
 import asyncio
 
 import pytest
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.async_api import AsyncClient
@@ -26,11 +26,12 @@ def __bs_params() -> Dict[str, str]:
     return params
 
 
-def __bootstrap_account(pubkey: str, secretkey: str) -> Account:
+def __bootstrap_account(pubkey: str, secretkey: str) -> Keypair:
     secret = [int(b) for b in secretkey[1:-1].split(" ")]
-    account = Account(secret)
-    assert str(account.public_key()) == pubkey, "account must map to provided public key"
-    return account
+    secret_bytes = bytes(secret)
+    keypair = Keypair.from_secret_key(secret_bytes)
+    assert str(keypair.public_key) == pubkey, "account must map to provided public key"
+    return keypair
 
 
 @pytest.mark.integration
@@ -42,35 +43,35 @@ def stubbed_dex_program_pk(__bs_params) -> PublicKey:
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def stubbed_payer(__bs_params) -> Account:
+def stubbed_payer(__bs_params) -> Keypair:
     """Bootstrapped payer account."""
     return __bootstrap_account(__bs_params["payer"], __bs_params["payer_secret"])
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def stubbed_base_mint(__bs_params) -> Account:
+def stubbed_base_mint(__bs_params) -> Keypair:
     """Bootstrapped base mint account."""
     return __bootstrap_account(__bs_params["coin_mint"], __bs_params["coin_mint_secret"])
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def stubbed_quote_mint(__bs_params) -> Account:
+def stubbed_quote_mint(__bs_params) -> Keypair:
     """Bootstrapped quote mint account."""
     return __bootstrap_account(__bs_params["pc_mint"], __bs_params["pc_mint_secret"])
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def stubbed_base_wallet(__bs_params) -> Account:
+def stubbed_base_wallet(__bs_params) -> Keypair:
     """Bootstrapped base mint account."""
     return __bootstrap_account(__bs_params["coin_wallet"], __bs_params["coin_wallet_secret"])
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
-def stubbed_quote_wallet(__bs_params) -> Account:
+def stubbed_quote_wallet(__bs_params) -> Keypair:
     """Bootstrapped quote mint account."""
     return __bootstrap_account(__bs_params["pc_wallet"], __bs_params["pc_wallet_secret"])
 

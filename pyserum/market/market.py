@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import List
 
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse, TxOpts
@@ -91,7 +91,7 @@ class Market(MarketCore):
     def place_order(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         payer: PublicKey,
-        owner: Account,
+        owner: Keypair,
         order_type: OrderType,
         side: Side,
         limit_price: float,
@@ -100,8 +100,8 @@ class Market(MarketCore):
         opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
-        signers: List[Account] = [owner]
-        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key())
+        signers: List[Keypair] = [owner]
+        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key)
         if open_order_accounts:
             place_order_open_order_account = open_order_accounts[0].address
         else:
@@ -128,24 +128,24 @@ class Market(MarketCore):
         return self._conn.send_transaction(transaction, *signers, opts=opts)
 
     def cancel_order_by_client_id(
-        self, owner: Account, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
     ) -> RPCResponse:
         txs = self._build_cancel_order_by_client_id_tx(
             owner=owner, open_orders_account=open_orders_account, client_id=client_id
         )
         return self._conn.send_transaction(txs, owner, opts=opts)
 
-    def cancel_order(self, owner: Account, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
+    def cancel_order(self, owner: Keypair, order: t.Order, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = self._build_cancel_order_tx(owner=owner, order=order)
         return self._conn.send_transaction(txn, owner, opts=opts)
 
-    def match_orders(self, fee_payer: Account, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
+    def match_orders(self, fee_payer: Keypair, limit: int, opts: TxOpts = TxOpts()) -> RPCResponse:
         txn = self._build_match_orders_tx(limit)
         return self._conn.send_transaction(txn, fee_payer, opts=opts)
 
     def settle_funds(  # pylint: disable=too-many-arguments
         self,
-        owner: Account,
+        owner: Keypair,
         open_orders: OpenOrdersAccount,
         base_wallet: PublicKey,
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
@@ -166,4 +166,4 @@ class Market(MarketCore):
             min_bal_for_rent_exemption=min_bal_for_rent_exemption,
             should_wrap_sol=should_wrap_sol,
         )
-        return self._conn.send_transaction(transaction, *signers, opts=opts)
+        return self._conn.send_transaction(transaction, owner, opts=opts)
