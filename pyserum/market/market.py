@@ -166,4 +166,4 @@ class Market(MarketCore):
             min_bal_for_rent_exemption=min_bal_for_rent_exemption,
             should_wrap_sol=should_wrap_sol,
         )
-        return self._conn.send_transaction(transaction, owner, opts=opts)
+        return self._conn.send_transaction(transaction, *signers, opts=opts)
