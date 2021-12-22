@@ -1,5 +1,5 @@
-from typing import Dict
 import asyncio
+from typing import Dict
 
 import pytest
 from solana.keypair import Keypair
@@ -7,8 +7,8 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.async_api import AsyncClient
 
-from pyserum.connection import conn
 from pyserum.async_connection import async_conn
+from pyserum.connection import conn
 
 
 @pytest.mark.integration

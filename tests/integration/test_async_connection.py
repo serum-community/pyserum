@@ -1,6 +1,6 @@
 # pylint: disable=R0801
-import pytest
 import httpx
+import pytest
 
 from pyserum.async_connection import get_live_markets, get_token_mints
 from pyserum.market.types import MarketInfo, TokenInfo

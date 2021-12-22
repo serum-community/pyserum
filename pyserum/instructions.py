@@ -1,12 +1,12 @@
 """Serum Dex Instructions."""
 from typing import Dict, List, NamedTuple, Optional
 
+from construct import Container
 from solana.publickey import PublicKey
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from solana.utils.validate import validate_instruction_keys, validate_instruction_type
 from spl.token.constants import TOKEN_PROGRAM_ID
-from construct import Container
 
 from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, SelfTradeBehavior, Side
@@ -268,6 +268,36 @@ class CancelOrderByClientIDV2Params(NamedTuple):
     """"""
 
 
+class CloseOpenOrdersParams(NamedTuple):
+    """Cancel order by client ID params."""
+
+    open_orders: PublicKey
+    """"""
+    owner: PublicKey
+    """"""
+    sol_wallet: PublicKey
+    """"""
+    market: PublicKey
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+
+
+class InitOpenOrdersParams(NamedTuple):
+    """Cancel order by client ID params."""
+
+    open_orders: PublicKey
+    """"""
+    owner: PublicKey
+    """"""
+    market: PublicKey
+    """"""
+    market_authority: Optional[PublicKey] = None
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+
+
 def __parse_and_validate_instruction(
     instruction: TransactionInstruction, instruction_type: InstructionType
 ) -> Container:
@@ -282,6 +312,8 @@ def __parse_and_validate_instruction(
         InstructionType.NEW_ORDER_V3: 12,
         InstructionType.CANCEL_ORDER_V2: 6,
         InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: 6,
+        InstructionType.CLOSE_OPEN_ORDERS: 4,
+        InstructionType.INIT_OPEN_ORDERS: 3,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -289,7 +321,9 @@ def __parse_and_validate_instruction(
     return data
 
 
-def decode_initialize_market(instruction: TransactionInstruction) -> InitializeMarketParams:
+def decode_initialize_market(
+    instruction: TransactionInstruction,
+) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
     return InitializeMarketParams(
@@ -382,7 +416,9 @@ def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParam
     )
 
 
-def decode_cancel_order_by_client_id(instruction: TransactionInstruction) -> CancelOrderByClientIDParams:
+def decode_cancel_order_by_client_id(
+    instruction: TransactionInstruction,
+) -> CancelOrderByClientIDParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
@@ -442,6 +478,32 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
         owner=instruction.keys[4].pubkey,
         event_queue=instruction.keys[5].pubkey,
         client_id=data.args.client_id,
+    )
+
+
+def decode_close_open_orders(
+    instruction: TransactionInstruction,
+) -> CloseOpenOrdersParams:
+    data = __parse_and_validate_instruction(instruction, InstructionType.CLOSE_OPEN_ORDERS)
+    return CloseOpenOrdersParams(
+        open_orders=instruction.keys[0].pubkey,
+        owner=instruction.keys[1].pubkey,
+        sol_wallet=instruction.keys[2].pubkey,
+        market=instruction.keys[3].pubkey,
+    )
+
+
+def decode_init_open_orders(
+    instruction: TransactionInstruction,
+) -> InitOpenOrdersParams:
+    data = __parse_and_validate_instruction(instruction, InstructionType.INIT_OPEN_ORDERS)
+
+    market_authority = instruction.keys[3].pubkey if len(instruction.keys) == 4 else None
+    return InitOpenOrdersParams(
+        open_orders=instruction.keys[0].pubkey,
+        owner=instruction.keys[1].pubkey,
+        market=instruction.keys[2].pubkey,
+        market_authority=market_authority,
     )
 
 
@@ -519,7 +581,10 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
         ],
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.MATCH_ORDER, args=dict(limit=params.limit))
+            dict(
+                instruction_type=InstructionType.MATCH_ORDER,
+                args=dict(limit=params.limit),
+            )
         ),
     )
 
@@ -534,7 +599,10 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
         keys=keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CONSUME_EVENTS, args=dict(limit=params.limit))
+            dict(
+                instruction_type=InstructionType.CONSUME_EVENTS,
+                args=dict(limit=params.limit),
+            )
         ),
     )
 
@@ -582,7 +650,9 @@ def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
     )
 
 
-def cancel_order_by_client_id(params: CancelOrderByClientIDParams) -> TransactionInstruction:
+def cancel_order_by_client_id(
+    params: CancelOrderByClientIDParams,
+) -> TransactionInstruction:
     """Generate a transaction instruction to cancel order by client id."""
     return TransactionInstruction(
         keys=[
@@ -668,7 +738,9 @@ def cancel_order_v2(params: CancelOrderV2Params) -> TransactionInstruction:
     )
 
 
-def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params) -> TransactionInstruction:
+def cancel_order_by_client_id_v2(
+    params: CancelOrderByClientIDV2Params,
+) -> TransactionInstruction:
     """Generate a transaction instruction to cancel order by client id."""
     return TransactionInstruction(
         keys=[
@@ -688,4 +760,36 @@ def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params) -> Trans
                 ),
             )
         ),
+    )
+
+
+def close_open_orders(params: CloseOpenOrdersParams) -> TransactionInstruction:
+    """Generate a transaction instruction to close open orders account."""
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+            AccountMeta(pubkey=params.sol_wallet, is_signer=False, is_writable=True),
+            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+        ],
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.CLOSE_OPEN_ORDERS, args=dict())),
+    )
+
+
+def init_open_orders(params: InitOpenOrdersParams) -> TransactionInstruction:
+    """Generate a transaction instruction to initialize open orders account."""
+    touched_keys = [
+        AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+    ]
+    if params.market_authority:
+        touched_keys.append(
+            AccountMeta(pubkey=params.market_authority, is_signer=False, is_writable=False),
+        )
+    return TransactionInstruction(
+        keys=touched_keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.INIT_OPEN_ORDERS, args=dict())),
     )

@@ -1,9 +1,9 @@
 """Layouts for dex instructions data."""
 from enum import IntEnum
 
-from construct import Switch
 from construct import Bytes, Const, Int8ul, Int16ul, Int32ul, Int64ul, Pass
 from construct import Struct as cStruct
+from construct import Switch
 
 from .slab import KEY
 
@@ -19,6 +19,8 @@ class InstructionType(IntEnum):
     NEW_ORDER_V3 = 10
     CANCEL_ORDER_V2 = 11
     CANCEL_ORDER_BY_CLIENT_ID_V2 = 12
+    CLOSE_OPEN_ORDERS = 14
+    INIT_OPEN_ORDERS = 15
 
 
 _VERSION = 0
@@ -70,6 +72,9 @@ _CANCEL_ORDER_V2 = cStruct(
 
 _CANCEL_ORDER_BY_CLIENTID_V2 = cStruct("client_id" / Int64ul)
 
+_CLOSE_OPEN_ORDERS = cStruct()
+_INIT_OPEN_ORDERS = cStruct()
+
 INSTRUCTIONS_LAYOUT = cStruct(
     "version" / Const(_VERSION, Int8ul),
     "instruction_type" / Int32ul,
@@ -87,6 +92,8 @@ INSTRUCTIONS_LAYOUT = cStruct(
             InstructionType.NEW_ORDER_V3: _NEW_ORDER_V3,
             InstructionType.CANCEL_ORDER_V2: _CANCEL_ORDER_V2,
             InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: _CANCEL_ORDER_BY_CLIENTID_V2,
+            InstructionType.CLOSE_OPEN_ORDERS: _CLOSE_OPEN_ORDERS,
+            InstructionType.INIT_OPEN_ORDERS: _INIT_OPEN_ORDERS,
         },
     ),
 )
