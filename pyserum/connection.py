@@ -1,9 +1,9 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import requests
-
-from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
 from solana.publickey import PublicKey
+from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
+
 from .market.types import MarketInfo, TokenInfo
 
 LIVE_MARKETS_URL = "https://raw.githubusercontent.com/project-serum/serum-ts/master/packages/serum/src/markets.json"

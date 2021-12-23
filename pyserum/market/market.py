@@ -9,17 +9,17 @@ from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse, TxOpts
 from solana.transaction import Transaction
 
-from pyserum import instructions
 import pyserum.market.types as t
+from pyserum import instructions
 
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
+from .core import MarketCore
 from .orderbook import OrderBook
 from .state import MarketState
-from .core import MarketCore
 
 LAMPORTS_PER_SOL = 1000000000
 

@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from enum import IntEnum
 
-from construct import Switch, Bytes, Int8ul, Int32ul, Int64ul, Padding
+from construct import Bytes, Int8ul, Int32ul, Int64ul, Padding
 from construct import Struct as cStruct
+from construct import Switch
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 

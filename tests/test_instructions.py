@@ -113,3 +113,36 @@ def test_settle_funds():
     )
     instruction = inlib.settle_funds(params)
     assert inlib.decode_settle_funds(instruction) == params
+
+
+def test_close_open_orders():
+    """Test settle funds."""
+    params = inlib.CloseOpenOrdersParams(
+        open_orders=PublicKey(0),
+        owner=PublicKey(1),
+        sol_wallet=PublicKey(2),
+        market=PublicKey(3),
+    )
+    instruction = inlib.close_open_orders(params)
+    assert inlib.decode_close_open_orders(instruction) == params
+
+
+def test_init_open_orders():
+    """Test settle funds."""
+    params = inlib.InitOpenOrdersParams(
+        open_orders=PublicKey(0), owner=PublicKey(1), market=PublicKey(2), market_authority=None
+    )
+    instruction = inlib.init_open_orders(params)
+    assert inlib.decode_init_open_orders(instruction) == params
+
+
+def test_init_open_orders_with_authority():
+    """Test settle funds."""
+    params = inlib.InitOpenOrdersParams(
+        open_orders=PublicKey(0),
+        owner=PublicKey(1),
+        market=PublicKey(2),
+        market_authority=PublicKey(3),
+    )
+    instruction = inlib.init_open_orders(params)
+    assert inlib.decode_init_open_orders(instruction) == params

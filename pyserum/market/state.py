@@ -7,7 +7,7 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.async_api import AsyncClient
 
-from pyserum import utils, async_utils
+from pyserum import async_utils, utils
 
 from .._layouts.market import MARKET_LAYOUT
 from .types import AccountFlags
