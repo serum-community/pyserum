@@ -484,7 +484,6 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
 def decode_close_open_orders(
     instruction: TransactionInstruction,
 ) -> CloseOpenOrdersParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CLOSE_OPEN_ORDERS)
     return CloseOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
@@ -496,8 +495,6 @@ def decode_close_open_orders(
 def decode_init_open_orders(
     instruction: TransactionInstruction,
 ) -> InitOpenOrdersParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.INIT_OPEN_ORDERS)
-
     market_authority = instruction.keys[3].pubkey if len(instruction.keys) == 4 else None
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
