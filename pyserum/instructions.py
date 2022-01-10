@@ -382,9 +382,10 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
     """Decode a consume events instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.CONSUME_EVENTS)
     return ConsumeEventsParams(
-        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
-        market=instruction.keys[-2].pubkey,
-        event_queue=instruction.keys[-1].pubkey,
+        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-4]],
+        market=instruction.keys[-4].pubkey,
+        event_queue=instruction.keys[-3].pubkey,
+        # NOTE - ignoring pc_fee and coin_fee as unused
         limit=data.args.limit,
     )
 
@@ -495,7 +496,7 @@ def decode_close_open_orders(
 def decode_init_open_orders(
     instruction: TransactionInstruction,
 ) -> InitOpenOrdersParams:
-    market_authority = instruction.keys[3].pubkey if len(instruction.keys) == 4 else None
+    market_authority = instruction.keys[-1].pubkey if len(instruction.keys) == 5 else None
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
@@ -590,7 +591,8 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
     """Generate a transaction instruction to consume market events."""
     keys = [
         AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
-        for pubkey in params.open_orders_accounts + [params.market, params.event_queue]
+        # NOTE - last two accounts are required for backwards compatibility but are ignored
+        for pubkey in params.open_orders_accounts + (2 * [params.market, params.event_queue])
     ]
     return TransactionInstruction(
         keys=keys,
@@ -780,6 +782,7 @@ def init_open_orders(params: InitOpenOrdersParams) -> TransactionInstruction:
         AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
         AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
         AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
     ]
     if params.market_authority:
         touched_keys.append(
