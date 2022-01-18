@@ -33,15 +33,18 @@ class MarketState:  # pylint: disable=too-many-public-methods
     def get_layout_version(cls, program_id: PublicKey):
         return cls.PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
 
-    @staticmethod
-    def LAYOUT() -> Struct:  # pylint: disable=invalid-name
+    @classmethod
+    def LAYOUT(cls, program_id: PublicKey) -> Struct:  # pylint: disable=invalid-name
         """Construct layout of the market state."""
-        if M
-        return MARKET_LAYOUT
+        version = MarketState.get_layout_version(program_id)
+        if version == 1:
+            return MARKET_STAT_LAYOUT_V1
+        else:
+            return MARKET_STAT_LAYOUT_V2
 
     @staticmethod
-    def _make_parsed_market(bytes_data: bytes) -> Container:
-        parsed_market = MARKET_LAYOUT.parse(bytes_data)
+    def _make_parsed_market(bytes_data: bytes, program_id: PublicKey) -> Container:
+        parsed_market = MarketState.LAYOUT(program_id).parse(bytes_data)
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
@@ -51,7 +54,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
     @classmethod
     def load(cls, conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
         bytes_data = utils.load_bytes_data(market_address, conn)
-        parsed_market = cls._make_parsed_market(bytes_data)
+        parsed_market = cls._make_parsed_market(bytes_data, program_id)
 
         base_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
         quote_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
@@ -60,7 +63,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
     @classmethod
     async def async_load(cls, conn: AsyncClient, market_address: PublicKey, program_id: PublicKey) -> MarketState:
         bytes_data = await async_utils.load_bytes_data(market_address, conn)
-        parsed_market = cls._make_parsed_market(bytes_data)
+        parsed_market = cls._make_parsed_market(bytes_data, program_id)
         base_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
         quote_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
@@ -69,7 +72,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
     def from_bytes(
         cls, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
     ) -> MarketState:
-        parsed_market = MARKET_LAYOUT.parse(buffer)
+        parsed_market = MarketState.LAYOUT(program_id).parse(buffer)
         # TODO: add ownAddress check!
 
         if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:

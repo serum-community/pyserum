@@ -46,6 +46,7 @@ class Market(MarketCore):
         :param conn: The connection that we use to load the data, created from `solana.rpc.api`.
         :param market_address: The market address that you want to connect to.
         :param program_id: The program id of the given market, it will use the default value if not provided.
+        :param force_use_request_queue:
         """
         market_state = MarketState.load(conn, market_address, program_id)
         return cls(conn, market_state, force_use_request_queue)
