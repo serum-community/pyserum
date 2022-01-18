@@ -37,6 +37,17 @@ REQUEST_LAYOUT = cStruct(
     "client_order_id" / Int64ul,
 )
 
+EVENT_QUEUE_HEADER_LAYOUT = cStruct(
+    Padding(5),
+    "account_flags" / ACCOUNT_FLAGS_LAYOUT,
+    "head" / Int32ul,
+    Padding(4),
+    "count" / Int32ul,
+    Padding(4),
+    "seq_num" / Int32ul,
+    Padding(4),
+)
+
 EVENT_FLAGS_LAYOUT = BitsSwapped(
     BitStruct(
         "fill" / Flag,

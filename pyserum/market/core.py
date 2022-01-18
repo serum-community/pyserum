@@ -46,6 +46,9 @@ class MarketCore:
             or
             # DEX Version 2
             self.state.program_id == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
+            or
+            # DEX Version 3
+            self.state.program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
             or self.force_use_request_queue
         )
 

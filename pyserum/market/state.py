@@ -9,11 +9,18 @@ from solana.rpc.async_api import AsyncClient
 
 from pyserum import async_utils, utils
 
-from .._layouts.market import MARKET_LAYOUT
+from .._layouts.market import MARKET_STAT_LAYOUT_V1, MARKET_STAT_LAYOUT_V2, MARKET_STAT_LAYOUT_V3
 from .types import AccountFlags
 
 
 class MarketState:  # pylint: disable=too-many-public-methods
+    PROGRAM_LAYOUT_VERSIONS = {
+        '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
+        "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
+        "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
+        '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
+    }
+
     def __init__(
         self, parsed_market: Container, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int
     ) -> None:
@@ -22,9 +29,14 @@ class MarketState:  # pylint: disable=too-many-public-methods
         self._base_mint_decimals = base_mint_decimals
         self._quote_mint_decimals = quote_mint_decimals
 
+    @classmethod
+    def get_layout_version(cls, program_id: PublicKey):
+        return cls.PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
+
     @staticmethod
     def LAYOUT() -> Struct:  # pylint: disable=invalid-name
         """Construct layout of the market state."""
+        if M
         return MARKET_LAYOUT
 
     @staticmethod
