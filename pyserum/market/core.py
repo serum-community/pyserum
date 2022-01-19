@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-from typing import List, Union
+from typing import List, Union, Dict, Optional
 
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
@@ -35,22 +35,10 @@ class MarketCore:
     def __init__(self, market_state: MarketState, force_use_request_queue: bool = False) -> None:
         self.state = market_state
         self.force_use_request_queue = force_use_request_queue
+        self._fee_discount_keys_cache: Dict[str, Dict[str, Optional[List, int]]] = {}
 
     def _use_request_queue(self) -> bool:
-        return (
-            # DEX Version 1
-            self.state.program_id == PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
-            or
-            # DEX Version 1
-            self.state.program_id == PublicKey("BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg")
-            or
-            # DEX Version 2
-            self.state.program_id == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
-            or
-            # DEX Version 3
-            self.state.program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-            or self.force_use_request_queue
-        )
+        return self.state.get_layout_version(self.state.program_id()) <= 2 or self.force_use_request_queue
 
     def support_srm_fee_discounts(self) -> bool:
         raise NotImplementedError("support_srm_fee_discounts not implemented")
@@ -77,7 +65,7 @@ class MarketCore:
         orders = [o for o in all_orders if str(o.open_order_address) in open_orders_addresses]
         return orders
 
-    def load_base_token_for_owner(self):
+    def find_base_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
         raise NotImplementedError("load_base_token_for_owner not implemented")
 
     def _parse_fills(self, bytes_data: bytes, limit: int) -> List[t.FilledOrder]:
