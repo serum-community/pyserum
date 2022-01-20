@@ -8,6 +8,7 @@ from typing import List, Dict, Optional
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
+
 from solana.rpc.responses import AccountInfo
 from solana.rpc.types import RPCResponse, TxOpts, TokenAccountOpts
 from solana.transaction import Transaction
@@ -17,7 +18,7 @@ from spl.token.constants import WRAPPED_SOL_MINT
 import pyserum.market.types as t
 from pyserum import instructions
 
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from .._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2
 from ..enums import OrderType, Side
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
@@ -57,6 +58,7 @@ class Market(MarketCore):
         return cls(conn, market_state, force_use_request_queue)
 
     def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
+        # js 有cache 机制。不加也行。
         return OpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
@@ -72,6 +74,7 @@ class Market(MarketCore):
         return self._parse_bids_or_asks(bytes_data)
 
     def load_orders_for_owner(self, owner_address: PublicKey) -> List[t.Order]:
+        #TODO 在js 版本中使用了await， 分别获取了bid ask， 和 open orders
         """Load orders for owner."""
         bids = self.load_bids()
         asks = self.load_asks()

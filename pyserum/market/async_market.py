@@ -12,7 +12,7 @@ from solana.transaction import Transaction
 import pyserum.market.types as t
 from pyserum import instructions
 
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from ..open_orders_account import get_layout
 from ..async_open_orders_account import AsyncOpenOrdersAccount
 from ..async_utils import load_bytes_data
 from ..enums import OrderType, Side
@@ -105,6 +105,7 @@ class AsyncMarket(MarketCore):
         if open_order_accounts:
             place_order_open_order_account = open_order_accounts[0].address
         else:
+            OPEN_ORDERS_LAYOUT = get_layout(self.state.program_id())
             mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
             place_order_open_order_account = self._after_oo_mbfre_resp(
                 mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction

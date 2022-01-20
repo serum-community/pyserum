@@ -14,12 +14,12 @@ from .types import AccountFlags
 
 
 class MarketState:  # pylint: disable=too-many-public-methods
-    PROGRAM_LAYOUT_VERSIONS = {
-        '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
-        "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
-        "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
-        '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
-    }
+    # PROGRAM_LAYOUT_VERSIONS = {
+    #     '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
+    #     "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
+    #     "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
+    #     '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
+    # }
 
     def __init__(
         self, parsed_market: Container, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int
@@ -29,9 +29,15 @@ class MarketState:  # pylint: disable=too-many-public-methods
         self._base_mint_decimals = base_mint_decimals
         self._quote_mint_decimals = quote_mint_decimals
 
-    @classmethod
-    def get_layout_version(cls, program_id: PublicKey):
-        return cls.PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
+    @staticmethod
+    def get_layout_version( program_id: PublicKey):
+        PROGRAM_LAYOUT_VERSIONS = {
+            '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
+            "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
+            "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
+            '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
+        }
+        return PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
 
     @classmethod
     def LAYOUT(cls, program_id: PublicKey) -> Struct:  # pylint: disable=invalid-name
@@ -182,3 +188,5 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
     def quote_size_number_to_lots(self, size: float) -> int:
         return int(math.floor(size * self.quote_spl_token_multiplier()) / self.quote_lot_size())
+
+
