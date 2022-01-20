@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from solana.publickey import PublicKey
 
@@ -25,7 +25,7 @@ def get_fee_rates(fee_tier: int) -> (int, int):  # taker, maker
     return taker, maker
 
 
-def get_fee_tier(msrm_balance: Optional[int, float], srm_balance: Optional[int, float]) -> int:
+def get_fee_tier(msrm_balance: Union[int, float], srm_balance: Union[int, float]) -> int:
     if msrm_balance >= 1:
         return 6
     elif srm_balance >= 1000000:
