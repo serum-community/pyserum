@@ -380,9 +380,7 @@ def decode_initialize_market(
 ) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
-    # todo
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -400,15 +398,14 @@ def decode_initialize_market(
         quote_dust_threshold=data.args.quote_dust_threshold,
         program_id=instruction.program_id,
         authority=instruction.keys[9].pubkey,
-        pruneAuthority=instruction.keys[10].pubkey,
-        crankAuthority=instruction.keys[11].pubkey,
+        prune_authority=instruction.keys[10].pubkey,
+        crank_authority=instruction.keys[11].pubkey,
     )
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return NewOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -428,8 +425,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDER)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -445,20 +441,21 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.CONSUME_EVENTS)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return ConsumeEventsParams(
-        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-2]],
-        market=instruction.keys[-2].pubkey,
-        event_queue=instruction.keys[-1].pubkey,
+        open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-4]],
+        market=instruction.keys[-4].pubkey,
+        event_queue=instruction.keys[-3].pubkey,
+        coin_fee=instruction.keys[-2].pubkey,
+        pc_fee=instruction.keys[-1].pubkey,
         limit=data.args.limit,
+        program_id=instruction.program_id,
     )
 
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return CancelOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -472,8 +469,7 @@ def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParam
 
 def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
     # data = __parse_and_validate_instruction(instruction, InstructionType.SettleFunds)
-    print(instruction, instruction.keys)
-    assert 0, "need to check."
+    # todo need to check
     return SettleFundsParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -490,8 +486,7 @@ def decode_cancel_order_by_client_id(
         instruction: TransactionInstruction,
 ) -> CancelOrderByClientIDParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -503,8 +498,7 @@ def decode_cancel_order_by_client_id(
 
 def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER_V3)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return NewOrderV3Params(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -529,8 +523,7 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
 
 def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_V2)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return CancelOrderV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -540,14 +533,12 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2
         event_queue=instruction.keys[5].pubkey,
         side=Side(data.args.side),
         order_id=int.from_bytes(data.args.order_id, "little"),
-        open_orders_slot=data.args.open_orders_slot,
     )
 
 
 def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2)
-    print(instruction, instruction.keys, data, data.args)
-    assert 0, "need to check."
+    # todo need to check
     return CancelOrderByClientIDV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -562,8 +553,6 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
 def decode_close_open_orders(
         instruction: TransactionInstruction,
 ) -> CloseOpenOrdersParams:
-    print(instruction, instruction.keys)
-    assert 0, "need to check."
     return CloseOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
@@ -576,8 +565,6 @@ def decode_init_open_orders(
         instruction: TransactionInstruction,
 ) -> InitOpenOrdersParams:
     market_authority = instruction.keys[3].pubkey if len(instruction.keys) == 4 else None
-    print(instruction, instruction.keys, market_authority)
-    assert 0, "need to check."
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
