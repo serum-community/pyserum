@@ -86,6 +86,15 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
+    def consume_events_authority(self) -> PublicKey:
+        return PublicKey(self._decoded.consume_events_authority)
+
+    def authority(self) -> PublicKey:
+        return PublicKey(self._decoded.authority)
+
+    def prune_authority(self) -> PublicKey:
+        return PublicKey(self._decoded.prune_authority)
+
     def program_id(self) -> PublicKey:
         return self._program_id
 

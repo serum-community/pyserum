@@ -1,3 +1,13 @@
+from typing import Optional
+
+from solana.publickey import PublicKey
+
+MSRM_MINT = PublicKey('MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L')
+SRM_MINT = PublicKey('SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt')
+MSRM_DECIMALS = 0
+SRM_DECIMALS = 6
+
+
 def get_fee_rates(fee_tier: int) -> (int, int):  # taker, maker
     taker, maker = 0.0022, -0.0003
     if fee_tier == 1:  # SRM2
@@ -15,7 +25,7 @@ def get_fee_rates(fee_tier: int) -> (int, int):  # taker, maker
     return taker, maker
 
 
-def get_fee_tier(msrm_balance: int, srm_balance: int) -> int:
+def get_fee_tier(msrm_balance: Optional[int, float], srm_balance: Optional[int, float]) -> int:
     if msrm_balance >= 1:
         return 6
     elif srm_balance >= 1000000:

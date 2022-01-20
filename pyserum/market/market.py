@@ -17,9 +17,15 @@ from spl.token.constants import WRAPPED_SOL_MINT
 
 import pyserum.market.types as t
 from pyserum import instructions
+from .common import MSRM_MINT, MSRM_DECIMALS, get_fee_tier, SRM_MINT, SRM_DECIMALS
 
+<<<<<<< HEAD
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2
 from ..enums import OrderType, Side
+=======
+from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+from ..enums import OrderType, Side, SelfTradeBehavior
+>>>>>>> f1a716c64edb4836f8d09bac773bf30ac76d0416
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
@@ -37,6 +43,8 @@ class Market(MarketCore):
     def __init__(self, conn: Client, market_state: MarketState, force_use_request_queue: bool = False) -> None:
         super().__init__(market_state=market_state, force_use_request_queue=force_use_request_queue)
         self._conn = conn
+        self._fee_discount_keys_cache: Dict[str, Dict[str, Optional[List, int]]] = {}
+        self._open_orders_accounts_cache: Dict[str, Dict[str, Optional[List[OpenOrdersAccount], int]]] = {}
 
     @classmethod
     # pylint: disable=unused-argument
@@ -57,11 +65,21 @@ class Market(MarketCore):
         market_state = MarketState.load(conn, market_address, program_id)
         return cls(conn, market_state, force_use_request_queue)
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
-        # js 有cache 机制。不加也行。
-        return OpenOrdersAccount.find_for_market_and_owner(
+    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey, cache_duration_ms: int = 0) \
+            -> List[OpenOrdersAccount]:
+        str_owner = owner_address.to_base58().decode()
+        now = int(time.time() * 1000)
+        if str_owner in self._open_orders_accounts_cache and now - self._open_orders_accounts_cache[str_owner]["ts"] < \
+                cache_duration_ms:
+            return self._open_orders_accounts_cache[str_owner]["accounts"]
+        open_orders_accounts_for_owner = OpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
+        self._open_orders_accounts_cache[str_owner] = {
+            "accounts": open_orders_accounts_for_owner,
+            "ts": now,
+        }
+        return open_orders_accounts_for_owner
 
     def load_bids(self) -> OrderBook:
         """Load the bid order book"""
@@ -106,20 +124,37 @@ class Market(MarketCore):
             limit_price: float,
             max_quantity: float,
             client_id: int = 0,
+            open_orders_address_key: PublicKey = None,
+            open_orders_account: Keypair = None,
+            fee_discount_pubkey: PublicKey = None,
+            self_trade_behavior=SelfTradeBehavior.DECREMENT_TAKE,
+            fee_discount_pubkey_cache_duration_ms: int = 0,
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Keypair] = [owner]
-        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key)
-        if open_order_accounts:
-            place_order_open_order_account = open_order_accounts[0].address
+        owner_address = owner.public_key
+        if fee_discount_pubkey:
+            use_fee_discount_pubkey = fee_discount_pubkey
+        elif self.support_srm_fee_discounts():
+            use_fee_discount_pubkey = self.find_best_fee_discount_key(owner_address,
+                                                                      fee_discount_pubkey_cache_duration_ms)["pubkey"]
         else:
+            use_fee_discount_pubkey = None
+        open_orders_accounts = self.find_open_orders_accounts_for_owner(owner.public_key)
+        if not len(open_orders_accounts):
             mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
+            account = open_orders_account if open_orders_account else None
             place_order_open_order_account = self._after_oo_mbfre_resp(
-                mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction
+                mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction, account=account,
             )
-            # TODO: Cache new_open_orders_account
-        # TODO: Handle fee_discount_pubkey
+            self._open_orders_accounts_cache[owner_address.to_base58().decode()]["ts"] = 0
+        elif open_orders_account:
+            place_order_open_order_account = open_orders_account.public_key
+        elif open_orders_address_key:
+            place_order_open_order_account = open_orders_address_key
+        else:
+            place_order_open_order_account = open_orders_accounts[0].address
 
         self._prepare_order_transaction(
             transaction=transaction,
@@ -131,8 +166,10 @@ class Market(MarketCore):
             limit_price=limit_price,
             max_quantity=max_quantity,
             client_id=client_id,
-            open_order_accounts=open_order_accounts,
+            open_order_accounts=open_orders_accounts,
             place_order_open_order_account=place_order_open_order_account,
+            fee_discount_pubkey=use_fee_discount_pubkey,
+            self_trade_behavior=self_trade_behavior,
         )
         return self._conn.send_transaction(transaction, *signers, opts=opts)
 
@@ -158,44 +195,36 @@ class Market(MarketCore):
             open_orders: OpenOrdersAccount,
             base_wallet: PublicKey,
             quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+            referrer_quote_wallet: PublicKey = None,
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:
         # TODO: Handle wrapped sol accounts
-        should_wrap_sol = self._settle_funds_should_wrap_sol()
+        if not open_orders.owner == owner:
+            raise ValueError("Invalid open orders account")
+        if referrer_quote_wallet and not self.support_referral_fee():
+            raise ValueError("This program ID does not support referrerQuoteWallet")
+        should_wrap_sol = (self.state.quote_mint() == WRAPPED_SOL_MINT and quote_wallet == open_orders.owner) or \
+                          (self.state.base_mint() == WRAPPED_SOL_MINT and base_wallet == open_orders.owner)
         min_bal_for_rent_exemption = (
             self._conn.get_minimum_balance_for_rent_exemption(165)["result"] if should_wrap_sol else 0
         )  # value only matters if should_wrap_sol
         signers = [owner]
         transaction = self._build_settle_funds_tx(
-            owner=owner,
             signers=signers,
             open_orders=open_orders,
             base_wallet=base_wallet,
             quote_wallet=quote_wallet,
             min_bal_for_rent_exemption=min_bal_for_rent_exemption,
             should_wrap_sol=should_wrap_sol,
+            referrer_quote_wallet=referrer_quote_wallet,
         )
         return self._conn.send_transaction(transaction, *signers, opts=opts)
 
     def support_srm_fee_discounts(self) -> bool:
         return self.state.get_layout_version(self.state.program_id()) > 1
 
-    @staticmethod
-    def get_fee_rates(fee_tier: int) -> (int, int):  # taker, maker
-        taker, maker = 0.0022, -0.0003
-        if fee_tier == 1:  # SRM2
-            taker, maker = 0.002, -0.0003
-        elif fee_tier == 2:  # SRM3
-            taker, maker = 0.0018, -0.0003
-        elif fee_tier == 3:  # SRM4
-            taker, maker = 0.0016, -0.0003
-        elif fee_tier == 4:  # SRM5
-            taker, maker = 0.0014, -0.0003
-        elif fee_tier == 5:  # SRM6
-            taker, maker = 0.0012, -0.0003
-        elif fee_tier == 6:  # MSRM
-            taker, maker = 0.001, -0.0005
-        return taker, maker
+    def support_referral_fee(self) -> bool:
+        return self.state.get_layout_version(self.state.program_id()) <= 2
 
     @staticmethod
     def get_fee_tier(msrm_balance: int, srm_balance: int) -> int:
@@ -249,12 +278,44 @@ class Market(MarketCore):
     def find_fee_discount_keys(self, owner: PublicKey, cache_duration: int = 0) \
             -> List[Dict[str, Optional[PublicKey, int]]]:
         sorted_accounts = []
-        now = int(time.time())
+        now = int(time.time() * 1000)
         str_owner = owner.to_base58().decode()
         if str_owner in self._fee_discount_keys_cache and \
-            now - self._fee_discount_keys_cache[str_owner]["ts"] < cache_duration:
-            return self._fee_discount_keys_cache[str_owner]["account"]
+                now - self._fee_discount_keys_cache[str_owner]["ts"] < cache_duration:
+            return self._fee_discount_keys_cache[str_owner]["accounts"]
+        if self.support_srm_fee_discounts():
+            msrm_accounts = []
+            for account in self.get_token_account_by_owner_for_mint(owner, MSRM_MINT):
+                balance = self.get_spl_token_balance_from_account_info(account["account"], MSRM_DECIMALS)
+                item = {
+                    "pubkey": account["pubkey"],
+                    "mint": MSRM_MINT,
+                    "balance": balance,
+                    "fee_tier": get_fee_tier(balance, 0)
+                }
+                msrm_accounts.append(item)
+            srm_accounts = []
+            for account in self.get_token_account_by_owner_for_mint(owner, SRM_MINT):
+                balance = self.get_spl_token_balance_from_account_info(account["account"], SRM_DECIMALS)
+                item = {
+                    "pubkey": account["pubkey"],
+                    "mint": SRM_MINT,
+                    "balance": balance,
+                    "fee_tier": get_fee_tier(0, balance)
+                }
+                srm_accounts.append(item)
+            sorted_accounts += msrm_accounts + srm_accounts
+            sorted_accounts.sort(key=lambda i: (i["fee_tier"], i["account"]), reverse=True)
+        self._fee_discount_keys_cache[str_owner] = {
+            "ts": now,
+            "accounts": sorted_accounts
+        }
         return sorted_accounts
 
     def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int = 30000):
-        pass
+        accounts = self.find_fee_discount_keys(owner, cache_duration)
+        res = {"pubkey": None, "fee_tier": 0}
+        if len(accounts):
+            res["pubkey"] = accounts[0]["pubkey"]
+            res["fee_tier"] = accounts[0]["fee_tier"]
+        return res

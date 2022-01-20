@@ -102,8 +102,8 @@ MARKET_STAT_LAYOUT_V3 = cStruct(
     "fee_rate_bps" / Int64ul,
     "referrer_rebate_accrued" / Int64ul,
     "authority" / Bytes(32),
-    "pruneAuthority" / Bytes(32),
-    "consumeEventsAuthority" / Bytes(32),
+    "prune_authority" / Bytes(32),
+    "consume_events_authority" / Bytes(32),
     Padding(992),
     Padding(7),
 )
