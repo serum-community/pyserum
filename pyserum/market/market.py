@@ -19,13 +19,12 @@ import pyserum.market.types as t
 from pyserum import instructions
 from .common import MSRM_MINT, MSRM_DECIMALS, get_fee_tier, SRM_MINT, SRM_DECIMALS
 
-<<<<<<< HEAD
+
 from .._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2
 from ..enums import OrderType, Side
-=======
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
+
 from ..enums import OrderType, Side, SelfTradeBehavior
->>>>>>> f1a716c64edb4836f8d09bac773bf30ac76d0416
+
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
