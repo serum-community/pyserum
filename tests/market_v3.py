@@ -10,16 +10,16 @@ market = Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk, for
 
 
 
-## 读行情
-
-asks = market.load_asks()
-# Show all current ask order
-print("Ask Orders:")
-for ask in asks:
-    print("Order id: %d, price: %f, size: %f." % (
-          ask.order_id, ask.info.price, ask.info.size))
-
-print("\n")
+# ## 读行情
+#
+# asks = market.load_asks()
+# # Show all current ask order
+# print("Ask Orders:")
+# for ask in asks:
+#     print("Order id: %d, price: %f, size: %f." % (
+#           ask.order_id, ask.info.price, ask.info.size))
+#
+# print("\n")
 # # Show all current bid order
 # print("Bid Orders:")
 # bids = market.load_bids()
@@ -31,3 +31,6 @@ print("\n")
 
 my_orders = market.find_open_orders_accounts_for_owner(mykey.public_key)
 print(my_orders)
+for order in my_orders:
+    print(order.base_token_free)
+    print(order.quote_token_free)

@@ -64,7 +64,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
     @classmethod
     def from_bytes(cls: Type[_T], address: PublicKey,program_id:PublicKey, buffer: bytes) -> _T:
 
-        OPEN_ORDERS_LAYOUT = cls.get_layout(program_id)
+        OPEN_ORDERS_LAYOUT = get_layout(program_id)
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
@@ -84,7 +84,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         )
 
     @classmethod
-    def _process_get_program_accounts_resp(cls: Type[_T], resp: RPCResponse) -> List[_T]:
+    def _process_get_program_accounts_resp(cls: Type[_T],program_id:PublicKey, resp: RPCResponse) -> List[_T]:
         accounts = []
         for account in resp["result"]:
             account_details = account["account"]
@@ -98,7 +98,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
                 )
             )
 
-        return [cls.from_bytes(account.public_key, account.data) for account in accounts]
+        return [cls.from_bytes(account.public_key,program_id, account.data) for account in accounts]
 
     @staticmethod
     def _build_get_program_accounts_args(
@@ -133,10 +133,8 @@ class OpenOrdersAccount(_OpenOrdersAccountCore):
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment
         )
-        print(args)
         resp = conn.get_program_accounts(*args)
-        print(resp)
-        return cls._process_get_program_accounts_resp(resp)
+        return cls._process_get_program_accounts_resp(program_id, resp)
 
     @classmethod
     def load(cls, conn: Client, address: str, program_id:PublicKey) -> OpenOrdersAccount:
