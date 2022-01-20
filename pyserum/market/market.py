@@ -18,9 +18,7 @@ from spl.token.constants import WRAPPED_SOL_MINT
 import pyserum.market.types as t
 from pyserum import instructions
 from .common import MSRM_MINT, MSRM_DECIMALS, get_fee_tier, SRM_MINT, SRM_DECIMALS
-
-
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2
+from ..open_orders_account import get_layout as get_open_order_layout
 from ..enums import OrderType, Side
 
 from ..enums import OrderType, Side, SelfTradeBehavior
@@ -31,6 +29,7 @@ from ._internal.queue import decode_event_queue, decode_request_queue
 from .core import MarketCore
 from .orderbook import OrderBook
 from .state import MarketState
+
 
 LAMPORTS_PER_SOL = 1000000000
 
@@ -130,6 +129,10 @@ class Market(MarketCore):
             fee_discount_pubkey_cache_duration_ms: int = 0,
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
+
+        OPEN_ORDERS_LAYOUT= get_open_order_layout( self.state.program_id())
+
+
         transaction = Transaction()
         signers: List[Keypair] = [owner]
         owner_address = owner.public_key
