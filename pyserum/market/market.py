@@ -18,13 +18,8 @@ from spl.token.constants import WRAPPED_SOL_MINT
 import pyserum.market.types as t
 from pyserum import instructions
 from .common import MSRM_MINT, MSRM_DECIMALS, get_fee_tier, SRM_MINT, SRM_DECIMALS
-
-
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT_V2
-from ..enums import OrderType, Side
-
+from ..open_orders_account import get_layout as get_open_order_layout
 from ..enums import OrderType, Side, SelfTradeBehavior
-
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
 from ._internal.queue import decode_event_queue, decode_request_queue
@@ -130,6 +125,7 @@ class Market(MarketCore):
             fee_discount_pubkey_cache_duration_ms: int = 0,
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
+        open_orders_layout = get_open_order_layout(self.state.program_id())
         transaction = Transaction()
         signers: List[Keypair] = [owner]
         owner_address = owner.public_key
@@ -142,7 +138,7 @@ class Market(MarketCore):
             use_fee_discount_pubkey = None
         open_orders_accounts = self.find_open_orders_accounts_for_owner(owner.public_key)
         if not len(open_orders_accounts):
-            mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
+            mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(open_orders_layout.sizeof())
             account = open_orders_account if open_orders_account else None
             place_order_open_order_account = self._after_oo_mbfre_resp(
                 mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction, account=account,
