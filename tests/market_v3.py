@@ -26,7 +26,7 @@ def create_market():
     http_client = Client(rpc_api)
     stubbed_market_pk = PublicKey("teE55QrL4a4QSfydR9dnHF97jgCfptpuigbb53Lo95g")
     stubbed_dex_program_pk = PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    market = Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True)
+    market = Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=False)
     return market
 
 
@@ -57,7 +57,7 @@ def place_order(market: Market):
         payer=stubbed_base_wallet,
         owner=mykey,
         side=Side.BUY,
-        order_type=OrderType.LIMIT,
+        order_type=OrderType.IOC,
         limit_price=4,
         max_quantity=0.2,
         opts=TxOpts(skip_confirmation=False),
@@ -78,7 +78,8 @@ def settle_fund(market: Market):
     open_order_accounts = market.find_open_orders_accounts_for_owner(
         owner_address=mykey.public_key
     )
-    print(f"open_order_accounts: {open_order_accounts}")
+    for open_order_account in open_order_accounts:
+        print(f"open_order_account: {open_order_account.__dict__}")
     res = market.settle_funds(
         owner=mykey,
         open_orders=open_order_accounts[0],
@@ -92,7 +93,8 @@ def cancel_order(market: Market):
     orders = market.load_orders_for_owner(
         owner_address=mykey.public_key
     )
-    print(f"orders: {orders}")
+    for order in orders:
+        print(f"order: {order}")
     res = market.cancel_order(
         owner=mykey,
         order=orders[0],
@@ -112,8 +114,8 @@ if __name__ == '__main__':
     # load_my_order(m, mykey.public_key)
     # load_queue(m)
     place_order(m)
-    match_order(m)
-    settle_fund(m)
-    cancel_order(m)
-    load_fills(m)
+    # match_order(m)
+    # settle_fund(m)
+    # cancel_order(m)
+    # load_fills(m)
 

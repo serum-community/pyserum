@@ -19,11 +19,6 @@ import pyserum.market.types as t
 from pyserum import instructions
 from .common import MSRM_MINT, MSRM_DECIMALS, get_fee_tier, SRM_MINT, SRM_DECIMALS
 from ..open_orders_account import get_layout as get_open_order_layout
-<<<<<<< HEAD
-from ..enums import OrderType, Side
-
-=======
->>>>>>> 2d5c6b2f4eb207aa2844d1e0ad5a71752af335d3
 from ..enums import OrderType, Side, SelfTradeBehavior
 from ..open_orders_account import OpenOrdersAccount
 from ..utils import load_bytes_data
@@ -131,14 +126,7 @@ class Market(MarketCore):
             fee_discount_pubkey_cache_duration_ms: int = 0,
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
-<<<<<<< HEAD
-
-        OPEN_ORDERS_LAYOUT= get_open_order_layout( self.state.program_id())
-
-
-=======
         open_orders_layout = get_open_order_layout(self.state.program_id())
->>>>>>> 2d5c6b2f4eb207aa2844d1e0ad5a71752af335d3
         transaction = Transaction()
         signers: List[Keypair] = [owner]
         owner_address = owner.public_key
@@ -207,7 +195,7 @@ class Market(MarketCore):
             opts: TxOpts = TxOpts(),
     ) -> RPCResponse:
         # TODO: Handle wrapped sol accounts
-        if not open_orders.owner == owner:
+        if not open_orders.owner == owner.public_key:
             raise ValueError("Invalid open orders account")
         if referrer_quote_wallet and not self.support_referral_fee():
             raise ValueError("This program ID does not support referrerQuoteWallet")

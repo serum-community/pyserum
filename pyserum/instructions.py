@@ -627,18 +627,15 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
     ]
     if params.fee_discount_pubkey:
         touched_keys.append(AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False))
+    args = dict(side=params.side, limit_price=params.limit_price, max_quantity=params.max_quantity,
+                order_type=params.order_type, client_id=params.client_id)
     return TransactionInstruction(
         keys=touched_keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
                 instruction_type=InstructionType.NEW_ORDER,
-                args=dict(
-                    side=params.side,
-                    limit_price=params.limit_price,
-                    max_quantity=params.max_quantity,
-                    order_type=params.order_type,
-                ).update(dict(client_id=params.client_id) if params.client_id else {}),
+                args=args,
             )
         ),
     )
