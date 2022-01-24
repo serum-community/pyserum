@@ -3,7 +3,6 @@ from construct import Struct as cStruct
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT
 
-
 OPEN_ORDERS_LAYOUT_V1 = cStruct(
     Padding(5),
     "account_flags" / ACCOUNT_FLAGS_LAYOUT,

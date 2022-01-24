@@ -32,11 +32,7 @@ def stubbed_market() -> Market:
     market_state = State(
         Container(
             dict(
-                account_flags=AccountFlags(
-                    initialized=True,
-                    market=True,
-                    bids=False,
-                ),
+                account_flags=AccountFlags(initialized=True, market=True, bids=False,),
                 quote_dust_threshold=100,
                 base_lot_size=100,
                 quote_lot_size=10,

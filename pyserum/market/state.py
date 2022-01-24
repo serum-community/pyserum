@@ -15,10 +15,10 @@ from .types import AccountFlags
 
 class MarketState:  # pylint: disable=too-many-public-methods
     PROGRAM_LAYOUT_VERSIONS = {
-        '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
+        "4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn": 1,
         "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
         "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
-        '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
+        "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin": 3,
     }
 
     def __init__(
@@ -191,5 +191,3 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
     def quote_size_number_to_lots(self, size: float) -> int:
         return int(math.floor(size * self.quote_spl_token_multiplier()) / self.quote_lot_size())
-
-

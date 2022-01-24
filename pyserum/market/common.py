@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 from solana.publickey import PublicKey
 
-MSRM_MINT = PublicKey('MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L')
-SRM_MINT = PublicKey('SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt')
+MSRM_MINT = PublicKey("MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L")
+SRM_MINT = PublicKey("SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt")
 MSRM_DECIMALS = 0
 SRM_DECIMALS = 6
 

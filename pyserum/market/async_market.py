@@ -12,10 +12,10 @@ from solana.transaction import Transaction
 import pyserum.market.types as t
 from pyserum import instructions
 
-from ..open_orders_account import get_layout
 from ..async_open_orders_account import AsyncOpenOrdersAccount
 from ..async_utils import load_bytes_data
 from ..enums import OrderType, Side
+from ..open_orders_account import get_layout
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .core import MarketCore
 from .orderbook import OrderBook

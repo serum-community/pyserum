@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-from typing import List, Union, Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
@@ -103,8 +103,14 @@ class MarketCore:
             fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
-    def _prepare_new_oo_account(self, owner: Keypair, balance_needed: int, signers: List[Keypair],
-                                transaction: Transaction, account: Keypair = None) -> PublicKey:
+    def _prepare_new_oo_account(
+        self,
+        owner: Keypair,
+        balance_needed: int,
+        signers: List[Keypair],
+        transaction: Transaction,
+        account: Keypair = None,
+    ) -> PublicKey:
         # new_open_orders_account = Account()
         if account:
             new_open_orders_account = account
@@ -121,6 +127,7 @@ class MarketCore:
         )
         signers.append(new_open_orders_account)
         return place_order_open_order_account
+
     """
         open_orders_address_key: PublicKey = None,
         open_orders_account: Keypair = None,
@@ -129,6 +136,7 @@ class MarketCore:
         fee_discount_pubkey_cache_duration_ms: int = 0,
         opts: TxOpts = TxOpts(),
     """
+
     def _prepare_order_transaction(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         transaction: Transaction,
@@ -143,12 +151,13 @@ class MarketCore:
         open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
         place_order_open_order_account: PublicKey,
         fee_discount_pubkey: PublicKey = None,
-        self_trade_behavior: SelfTradeBehavior =SelfTradeBehavior.DECREMENT_TAKE,
+        self_trade_behavior: SelfTradeBehavior = SelfTradeBehavior.DECREMENT_TAKE,
     ) -> None:
         # unwrapped SOL cannot be used for payment
         # TODO: add integration test for SOL wrapping.
         should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
-            side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT)
+            side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
+        )
         if payer == owner.public_key and not should_wrap_sol:
             raise ValueError("Invalid payer account.")
         if should_wrap_sol:
@@ -207,12 +216,18 @@ class MarketCore:
                 )
             )
 
-    def _after_oo_mbfre_resp(self, mbfre_resp: RPCResponse, owner: Keypair, signers: List[Keypair],
-                             transaction: Transaction, account: Keypair = None
+    def _after_oo_mbfre_resp(
+        self,
+        mbfre_resp: RPCResponse,
+        owner: Keypair,
+        signers: List[Keypair],
+        transaction: Transaction,
+        account: Keypair = None,
     ) -> PublicKey:
         balance_needed = mbfre_resp["result"]
-        place_order_open_order_account = self._prepare_new_oo_account(owner, balance_needed, signers, transaction,
-                                                                      account)
+        place_order_open_order_account = self._prepare_new_oo_account(
+            owner, balance_needed, signers, transaction, account
+        )
         return place_order_open_order_account
 
     @staticmethod
@@ -265,7 +280,7 @@ class MarketCore:
                     order_type=order_type,
                     client_id=client_id,
                     program_id=self.state.program_id(),
-                    fee_discount_pubkey=fee_discount_pubkey
+                    fee_discount_pubkey=fee_discount_pubkey,
                 )
             )
         return instructions.new_order_v3(
@@ -283,7 +298,8 @@ class MarketCore:
                 side=side,
                 limit_price=self.state.price_number_to_lots(limit_price),
                 max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
-                max_quote_quantity=self.state.base_size_number_to_lots(max_quantity) * self.state.quote_lot_size()
+                max_quote_quantity=self.state.base_size_number_to_lots(max_quantity)
+                * self.state.quote_lot_size()
                 * self.state.price_number_to_lots(limit_price),
                 order_type=order_type,
                 client_id=client_id,
@@ -357,7 +373,9 @@ class MarketCore:
             )
         )
 
-    def make_consume_events_instruction(self, open_orders_accounts: List[PublicKey], limit: int) -> TransactionInstruction:
+    def make_consume_events_instruction(
+        self, open_orders_accounts: List[PublicKey], limit: int
+    ) -> TransactionInstruction:
         return instructions.consume_events(
             instructions.ConsumeEventsParams(
                 market=self.state.public_key(),
@@ -370,8 +388,9 @@ class MarketCore:
             )
         )
 
-    def make_consume_events_permissioned_instruction(self, open_orders_accounts: List[PublicKey], limit: int,
-                                                     order: t.Order) -> TransactionInstruction:
+    def make_consume_events_permissioned_instruction(
+        self, open_orders_accounts: List[PublicKey], limit: int, order: t.Order
+    ) -> TransactionInstruction:
         return instructions.consume_events_permissioned(
             instructions.ConsumeEventsPermissionedParams(
                 market=self.state.public_key(),

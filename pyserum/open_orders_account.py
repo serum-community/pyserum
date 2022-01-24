@@ -12,8 +12,8 @@ from solana.transaction import TransactionInstruction
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT_V1, OPEN_ORDERS_LAYOUT_V2
 from .instructions import DEFAULT_DEX_PROGRAM_ID
-from .utils import load_bytes_data
 from .market import state
+from .utils import load_bytes_data
 
 get_layout_version = state.MarketState.get_layout_version
 
@@ -36,18 +36,18 @@ def get_layout(program_id: PublicKey = None):
 class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     # pylint: disable=too-many-arguments
     def __init__(
-            self,
-            address: PublicKey,
-            market: PublicKey,
-            owner: PublicKey,
-            base_token_free: int,
-            base_token_total: int,
-            quote_token_free: int,
-            quote_token_total: int,
-            free_slot_bits: int,
-            is_bid_bits: int,
-            orders: List[int],
-            client_ids: List[int],
+        self,
+        address: PublicKey,
+        market: PublicKey,
+        owner: PublicKey,
+        base_token_free: int,
+        base_token_total: int,
+        quote_token_free: int,
+        quote_token_total: int,
+        free_slot_bits: int,
+        is_bid_bits: int,
+        orders: List[int],
+        client_ids: List[int],
     ):
         self.address = address
         self.market = market
@@ -99,13 +99,10 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 
     @staticmethod
     def _build_get_program_accounts_args(
-            market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
+        market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
     ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
         filters = [
-            MemcmpOpts(
-                offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
-                bytes=str(market),
-            ),
+            MemcmpOpts(offset=5 + 8, bytes=str(market),),  # 5 bytes of padding, 8 bytes of account flag
             MemcmpOpts(
                 offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),
@@ -124,8 +121,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 class OpenOrdersAccount(_OpenOrdersAccountCore):
     @classmethod
     def find_for_market_and_owner(  # pylint: disable=too-many-arguments
-            cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey,
-            commitment: Commitment = Recent
+        cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
     ) -> List[OpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment
@@ -141,10 +137,10 @@ class OpenOrdersAccount(_OpenOrdersAccountCore):
 
 
 def make_create_account_instruction(
-        owner_address: PublicKey,
-        new_account_address: PublicKey,
-        lamports: int,
-        program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
+    owner_address: PublicKey,
+    new_account_address: PublicKey,
+    lamports: int,
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
 ) -> TransactionInstruction:
     return create_account(
         CreateAccountParams(

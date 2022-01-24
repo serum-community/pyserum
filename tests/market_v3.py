@@ -1,13 +1,13 @@
 import traceback
 
-from solana.rpc.types import TxOpts
-
-from pyserum.enums import Side, OrderType
-from solana.rpc.api import Client
-from pyserum.market import Market
 from solana.publickey import PublicKey
-from conf.keys import mykey, rpc_api
+from solana.rpc.api import Client
+from solana.rpc.types import TxOpts
 from spl.token.client import Token
+
+from conf.keys import mykey, rpc_api
+from pyserum.enums import OrderType, Side
+from pyserum.market import Market
 
 # constant
 symbol = "RAY-USDT"
@@ -17,10 +17,12 @@ SPL_Token_Program = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
 SPL_Associated_Token_Account_Program = PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
 stubbed_base_wallet, _ = mykey.public_key.find_program_address(
     seeds=[bytes(mykey.public_key), bytes(SPL_Token_Program), bytes(SPL_RAY)],
-    program_id=SPL_Associated_Token_Account_Program)
+    program_id=SPL_Associated_Token_Account_Program,
+)
 stubbed_quote_wallet, _ = mykey.public_key.find_program_address(
     seeds=[bytes(mykey.public_key), bytes(SPL_Token_Program), bytes(SPL_USDT)],
-    program_id=SPL_Associated_Token_Account_Program)
+    program_id=SPL_Associated_Token_Account_Program,
+)
 
 
 # create market
@@ -68,18 +70,12 @@ def place_order(market: Market):
 
 
 def match_order(market: Market):
-    res = market.match_orders(
-        fee_payer=mykey,
-        limit=2,
-        opts=TxOpts(skip_confirmation=False),
-    )
+    res = market.match_orders(fee_payer=mykey, limit=2, opts=TxOpts(skip_confirmation=False),)
     print(f"match_orders: {res}")
 
 
 def settle_fund(market: Market):
-    open_order_accounts = market.find_open_orders_accounts_for_owner(
-        owner_address=mykey.public_key
-    )
+    open_order_accounts = market.find_open_orders_accounts_for_owner(owner_address=mykey.public_key)
     for open_order_account in open_order_accounts:
         print(f"open_order_account: {open_order_account.__dict__}")
     res = market.settle_funds(
@@ -92,16 +88,10 @@ def settle_fund(market: Market):
 
 
 def cancel_order(market: Market):
-    orders = market.load_orders_for_owner(
-        owner_address=mykey.public_key
-    )
+    orders = market.load_orders_for_owner(owner_address=mykey.public_key)
     for order in orders:
         print(f"order: {order}")
-    res = market.cancel_order(
-        owner=mykey,
-        order=orders[0],
-        opts=TxOpts(skip_confirmation=False),
-    )
+    res = market.cancel_order(owner=mykey, order=orders[0], opts=TxOpts(skip_confirmation=False),)
     print(f"cancel_order: {res}")
 
 
@@ -110,7 +100,7 @@ def load_fills(market: Market):
     print(f"load_fills: {res}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = create_market()
     # load_asks_and_bids(m)
     # load_my_order(m, mykey.public_key)
@@ -120,4 +110,3 @@ if __name__ == '__main__':
     # settle_fund(m)
     # cancel_order(m)
     # load_fills(m)
-
