@@ -1,3 +1,5 @@
+import traceback
+
 from solana.rpc.types import TxOpts
 
 from pyserum.enums import Side, OrderType
@@ -54,7 +56,7 @@ def load_queue(market):
 
 def place_order(market: Market):
     res = market.place_order(
-        payer=stubbed_base_wallet,
+        payer=stubbed_quote_wallet,
         owner=mykey,
         side=Side.BUY,
         order_type=OrderType.IOC,

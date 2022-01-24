@@ -3,7 +3,7 @@ import base64
 import pytest
 from solana.publickey import PublicKey
 
-from pyserum.open_orders_account import OPEN_ORDERS_LAYOUT, OpenOrdersAccount
+from pyserum.open_orders_account import OpenOrdersAccount, get_layout
 
 from .binary_file_path import OPEN_ORDER_ACCOUNT_BIN_PATH
 
@@ -16,7 +16,7 @@ def test_decode_open_order_account_layout():
     with open(OPEN_ORDER_ACCOUNT_BIN_PATH, "r") as input_file:
         base64_res = input_file.read()
         data = base64.decodebytes(base64_res.encode("ascii"))
-        open_order_account = OPEN_ORDERS_LAYOUT.parse(data)
+        open_order_account = get_layout().parse(data)
         assert open_order_account.account_flags.open_orders
         assert open_order_account.account_flags.initialized
         assert PublicKey(open_order_account.market) == PublicKey("4r5Bw3HxmxAzPQ2ATUvgF2nFe3B6G1Z2Nq2Nwu77wWc2")

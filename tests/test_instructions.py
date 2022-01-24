@@ -3,7 +3,7 @@
 from solana.publickey import PublicKey
 
 import pyserum.instructions as inlib
-from pyserum.enums import OrderType, Side
+from pyserum.enums import OrderType, Side, SelfTradeBehavior
 
 
 def test_initialize_market():
@@ -29,7 +29,7 @@ def test_initialize_market():
 
 
 def test_new_orders():
-    """Test match orders."""
+    """Test new orders."""
     params = inlib.NewOrderParams(
         market=PublicKey(0),
         open_orders=PublicKey(1),
@@ -65,11 +65,15 @@ def test_match_orders():
 
 
 def test_consume_events():
+    """test consume events."""
     params = inlib.ConsumeEventsParams(
         market=PublicKey(0),
         event_queue=PublicKey(1),
         open_orders_accounts=[PublicKey(i + 2) for i in range(8)],
         limit=1,
+        program_id=PublicKey(3),
+        pc_fee=PublicKey(4),
+        coin_fee=PublicKey(5),
     )
     instruction = inlib.consume_events(params)
     assert inlib.decode_consume_events(instruction) == params
@@ -115,8 +119,69 @@ def test_settle_funds():
     assert inlib.decode_settle_funds(instruction) == params
 
 
+def test_new_order_v3():
+    """Test new order v3."""
+    params = inlib.NewOrderV3Params(
+        market=PublicKey(0),
+        open_orders=PublicKey(1),
+        payer=PublicKey(2),
+        owner=PublicKey(3),
+        request_queue=PublicKey(4),
+        event_queue=PublicKey(5),
+        bids=PublicKey(6),
+        asks=PublicKey(7),
+        base_vault=PublicKey(8),
+        quote_vault=PublicKey(9),
+        side=Side.BUY,
+        limit_price=1,
+        max_base_quantity=2,
+        max_quote_quantity=3,
+        order_type=OrderType.IOC,
+        self_trade_behavior=SelfTradeBehavior.DECREMENT_TAKE,
+        client_id=4,
+        limit=5,
+        program_id=PublicKey(10),
+        # fee_discount_pubkey=PublicKey(11),
+    )
+    instruction = inlib.new_order_v3(params)
+    assert inlib.decode_new_order_v3(instruction) == params
+
+
+def test_cancel_order_v2():
+    """Test cancel order v2."""
+    params = inlib.CancelOrderV2Params(
+        market=PublicKey(0),
+        bids=PublicKey(1),
+        asks=PublicKey(2),
+        event_queue=PublicKey(3),
+        open_orders=PublicKey(4),
+        owner=PublicKey(5),
+        side=Side.BUY,
+        order_id=1,
+        program_id=PublicKey(6),
+    )
+    instruction = inlib.cancel_order_v2(params)
+    assert inlib.decode_cancel_order_v2(instruction) == params
+
+
+def test_cancel_order_by_client_id_v2():
+    """Test cancel order by client id v2."""
+    params = inlib.CancelOrderByClientIDV2Params(
+        market=PublicKey(0),
+        bids=PublicKey(1),
+        asks=PublicKey(2),
+        event_queue=PublicKey(3),
+        open_orders=PublicKey(4),
+        owner=PublicKey(5),
+        client_id=1,
+        program_id=PublicKey(6),
+    )
+    instruction = inlib.cancel_order_by_client_id_v2(params)
+    assert inlib.decode_cancel_order_by_client_id_v2(instruction) == params
+
+
 def test_close_open_orders():
-    """Test settle funds."""
+    """Test close open orders."""
     params = inlib.CloseOpenOrdersParams(
         open_orders=PublicKey(0),
         owner=PublicKey(1),
@@ -128,16 +193,19 @@ def test_close_open_orders():
 
 
 def test_init_open_orders():
-    """Test settle funds."""
+    """Test init open orders."""
     params = inlib.InitOpenOrdersParams(
-        open_orders=PublicKey(0), owner=PublicKey(1), market=PublicKey(2), market_authority=None
+        open_orders=PublicKey(0),
+        owner=PublicKey(1),
+        market=PublicKey(2),
+        market_authority=None
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params
 
 
 def test_init_open_orders_with_authority():
-    """Test settle funds."""
+    """Test init open orders with authority."""
     params = inlib.InitOpenOrdersParams(
         open_orders=PublicKey(0),
         owner=PublicKey(1),
@@ -146,3 +214,21 @@ def test_init_open_orders_with_authority():
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params
+
+
+def test_prune():
+    """Test prune."""
+    params = inlib.PruneParams(
+        market=PublicKey(0),
+        bids=PublicKey(1),
+        asks=PublicKey(2),
+        event_queue=PublicKey(3),
+        prune_authority=PublicKey(4),
+        open_orders=PublicKey(5),
+        open_orders_owner=PublicKey(6),
+        program_id=PublicKey(7),
+        limit=1,
+    )
+    instruction = inlib.prune(params)
+    assert inlib.decode_prune(instruction) == params
+

@@ -12,7 +12,7 @@ def assert_parsed_layout(instruction_type, args, raw_bytes):
     if args:
         assert parsed.args == args
     else:
-        assert not parsed.args
+        assert not parsed.args or parsed
 
 
 def test_parse_initialize_market():

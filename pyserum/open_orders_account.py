@@ -10,12 +10,13 @@ from solana.rpc.types import Commitment, MemcmpOpts, RPCResponse
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
 
-from ._layouts.open_orders import OPEN_ORDERS_LAYOUT_V1,OPEN_ORDERS_LAYOUT_V2
+from ._layouts.open_orders import OPEN_ORDERS_LAYOUT_V1, OPEN_ORDERS_LAYOUT_V2
 from .instructions import DEFAULT_DEX_PROGRAM_ID
 from .utils import load_bytes_data
 from .market import state
 
 get_layout_version = state.MarketState.get_layout_version
+
 
 class ProgramAccount(NamedTuple):
     public_key: PublicKey
@@ -28,25 +29,25 @@ class ProgramAccount(NamedTuple):
 _T = TypeVar("_T", bound="_OpenOrdersAccountCore")
 
 
-def get_layout(program_id: PublicKey):
-    return OPEN_ORDERS_LAYOUT_V1 if get_layout_version(program_id) == 1 else OPEN_ORDERS_LAYOUT_V2
+def get_layout(program_id: PublicKey = None):
+    return OPEN_ORDERS_LAYOUT_V1 if not program_id or get_layout_version(program_id) == 1 else OPEN_ORDERS_LAYOUT_V2
 
 
 class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     # pylint: disable=too-many-arguments
     def __init__(
-        self,
-        address: PublicKey,
-        market: PublicKey,
-        owner: PublicKey,
-        base_token_free: int,
-        base_token_total: int,
-        quote_token_free: int,
-        quote_token_total: int,
-        free_slot_bits: int,
-        is_bid_bits: int,
-        orders: List[int],
-        client_ids: List[int],
+            self,
+            address: PublicKey,
+            market: PublicKey,
+            owner: PublicKey,
+            base_token_free: int,
+            base_token_total: int,
+            quote_token_free: int,
+            quote_token_total: int,
+            free_slot_bits: int,
+            is_bid_bits: int,
+            orders: List[int],
+            client_ids: List[int],
     ):
         self.address = address
         self.market = market
@@ -60,15 +61,11 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         self.orders = orders
         self.client_ids = client_ids
 
-
     @classmethod
-    def from_bytes(cls: Type[_T], address: PublicKey,program_id:PublicKey, buffer: bytes) -> _T:
-
-        OPEN_ORDERS_LAYOUT = get_layout(program_id)
-        open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
+    def from_bytes(cls: Type[_T], address: PublicKey, program_id: PublicKey, buffer: bytes) -> _T:
+        open_order_decoded = get_layout(program_id).parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
-
         return cls(
             address=address,
             market=PublicKey(open_order_decoded.market),
@@ -84,7 +81,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         )
 
     @classmethod
-    def _process_get_program_accounts_resp(cls: Type[_T],program_id:PublicKey, resp: RPCResponse) -> List[_T]:
+    def _process_get_program_accounts_resp(cls: Type[_T], program_id: PublicKey, resp: RPCResponse) -> List[_T]:
         accounts = []
         for account in resp["result"]:
             account_details = account["account"]
@@ -98,13 +95,12 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
                 )
             )
 
-        return [cls.from_bytes(account.public_key,program_id, account.data) for account in accounts]
+        return [cls.from_bytes(account.public_key, program_id, account.data) for account in accounts]
 
     @staticmethod
     def _build_get_program_accounts_args(
-        market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
+            market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
     ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
-        OPEN_ORDERS_LAYOUT = get_layout(program_id)
         filters = [
             MemcmpOpts(
                 offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
@@ -120,7 +116,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
             commitment,
             "base64",
             None,
-            OPEN_ORDERS_LAYOUT.sizeof(),
+            get_layout(program_id).sizeof(),
             filters,
         )
 
@@ -128,7 +124,8 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 class OpenOrdersAccount(_OpenOrdersAccountCore):
     @classmethod
     def find_for_market_and_owner(  # pylint: disable=too-many-arguments
-        cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
+            cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey,
+            commitment: Commitment = Recent
     ) -> List[OpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment
@@ -137,25 +134,24 @@ class OpenOrdersAccount(_OpenOrdersAccountCore):
         return cls._process_get_program_accounts_resp(program_id, resp)
 
     @classmethod
-    def load(cls, conn: Client, address: str, program_id:PublicKey) -> OpenOrdersAccount:
+    def load(cls, conn: Client, address: str, program_id: PublicKey) -> OpenOrdersAccount:
         addr_pub_key = PublicKey(address)
         bytes_data = load_bytes_data(addr_pub_key, conn)
-        return cls.from_bytes(addr_pub_key, program_id,bytes_data)
+        return cls.from_bytes(addr_pub_key, program_id, bytes_data)
 
 
 def make_create_account_instruction(
-    owner_address: PublicKey,
-    new_account_address: PublicKey,
-    lamports: int,
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
+        owner_address: PublicKey,
+        new_account_address: PublicKey,
+        lamports: int,
+        program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID,
 ) -> TransactionInstruction:
-    OPEN_ORDERS_LAYOUT= get_layout(program_id)
     return create_account(
         CreateAccountParams(
             from_pubkey=owner_address,
             new_account_pubkey=new_account_address,
             lamports=lamports,
-            space=OPEN_ORDERS_LAYOUT.sizeof(),
+            space=get_layout(program_id).sizeof(),
             program_id=program_id,
         )
     )

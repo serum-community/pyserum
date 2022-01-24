@@ -14,12 +14,12 @@ from .types import AccountFlags
 
 
 class MarketState:  # pylint: disable=too-many-public-methods
-    # PROGRAM_LAYOUT_VERSIONS = {
-    #     '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
-    #     "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
-    #     "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
-    #     '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
-    # }
+    PROGRAM_LAYOUT_VERSIONS = {
+        '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
+        "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
+        "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
+        '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
+    }
 
     def __init__(
         self, parsed_market: Container, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int
@@ -29,20 +29,14 @@ class MarketState:  # pylint: disable=too-many-public-methods
         self._base_mint_decimals = base_mint_decimals
         self._quote_mint_decimals = quote_mint_decimals
 
-    @staticmethod
-    def get_layout_version( program_id: PublicKey):
-        PROGRAM_LAYOUT_VERSIONS = {
-            '4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn': 1,
-            "BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg": 1,
-            "EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o": 2,
-            '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin': 3,
-        }
-        return PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
+    @classmethod
+    def get_layout_version(cls, program_id: PublicKey):
+        return cls.PROGRAM_LAYOUT_VERSIONS.get(str(program_id), 3)
 
     @classmethod
-    def LAYOUT(cls, program_id: PublicKey) -> Struct:  # pylint: disable=invalid-name
+    def LAYOUT(cls, program_id: PublicKey = None) -> Struct:  # pylint: disable=invalid-name
         """Construct layout of the market state."""
-        version = MarketState.get_layout_version(program_id)
+        version = MarketState.get_layout_version(program_id) if program_id else 1
         if version == 1:
             return MARKET_STAT_LAYOUT_V1
         else:

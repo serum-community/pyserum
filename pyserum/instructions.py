@@ -245,11 +245,11 @@ class NewOrderV3Params(NamedTuple):
     """"""
     self_trade_behavior: SelfTradeBehavior
     """"""
-    limit: Optional[int]
+    program_id: PublicKey
+    """"""
+    limit: int = 65545
     """"""
     client_id: int = 0
-    """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
     fee_discount_pubkey: Optional[PublicKey] = None
     """"""
@@ -358,7 +358,7 @@ def __parse_and_validate_instruction(
     instruction_type_to_length_map: Dict[InstructionType, int] = {
         InstructionType.INITIALIZE_MARKET: 9,
         InstructionType.NEW_ORDER: 9,
-        InstructionType.MATCH_ORDER: 7,
+        InstructionType.MATCH_ORDERS: 7,
         InstructionType.CONSUME_EVENTS: 2,
         InstructionType.CANCEL_ORDER: 4,
         InstructionType.CANCEL_ORDER_BY_CLIENT_ID: 4,
@@ -368,6 +368,7 @@ def __parse_and_validate_instruction(
         InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: 6,
         InstructionType.CLOSE_OPEN_ORDERS: 4,
         InstructionType.INIT_OPEN_ORDERS: 3,
+        InstructionType.PRUNE: 7,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -380,7 +381,6 @@ def decode_initialize_market(
 ) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
-    # todo need to check
     return InitializeMarketParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -397,15 +397,14 @@ def decode_initialize_market(
         vault_signer_nonce=data.args.vault_signer_nonce,
         quote_dust_threshold=data.args.quote_dust_threshold,
         program_id=instruction.program_id,
-        authority=instruction.keys[9].pubkey,
-        prune_authority=instruction.keys[10].pubkey,
-        crank_authority=instruction.keys[11].pubkey,
+        authority=instruction.keys[10].pubkey if len(instruction.keys) > 10 else None,
+        prune_authority=instruction.keys[11].pubkey if len(instruction.keys) > 11 else None,
+        crank_authority=instruction.keys[12].pubkey if len(instruction.keys) > 12 else None,
     )
 
 
 def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER)
-    # todo need to check
     return NewOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -424,8 +423,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDER)
-    # todo need to check
+    data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDERS)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -441,7 +439,6 @@ def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParam
 def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsParams:
     """Decode a consume events instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.CONSUME_EVENTS)
-    # todo need to check
     return ConsumeEventsParams(
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-4]],
         market=instruction.keys[-4].pubkey,
@@ -455,7 +452,6 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
 
 def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER)
-    # todo need to check
     return CancelOrderParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -469,7 +465,6 @@ def decode_cancel_order(instruction: TransactionInstruction) -> CancelOrderParam
 
 def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParams:
     # data = __parse_and_validate_instruction(instruction, InstructionType.SettleFunds)
-    # todo need to check
     return SettleFundsParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -486,7 +481,6 @@ def decode_cancel_order_by_client_id(
         instruction: TransactionInstruction,
 ) -> CancelOrderByClientIDParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
-    # todo need to check
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -498,7 +492,6 @@ def decode_cancel_order_by_client_id(
 
 def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.NEW_ORDER_V3)
-    # todo need to check
     return NewOrderV3Params(
         market=instruction.keys[0].pubkey,
         open_orders=instruction.keys[1].pubkey,
@@ -510,7 +503,7 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
         owner=instruction.keys[7].pubkey,
         base_vault=instruction.keys[8].pubkey,
         quote_vault=instruction.keys[9].pubkey,
-        side=data.args.side,
+        side=Side(data.args.side),
         limit_price=data.args.limit_price,
         max_base_quantity=data.args.max_base_quantity,
         max_quote_quantity=data.args.max_quote_quantity,
@@ -518,12 +511,13 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
         order_type=OrderType(data.args.order_type),
         client_id=data.args.client_id,
         limit=data.args.limit,
+        program_id=instruction.program_id,
+        fee_discount_pubkey=instruction.keys[12].pubkey if len(instruction.keys) > 12 else None
     )
 
 
 def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_V2)
-    # todo need to check
     return CancelOrderV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -533,12 +527,12 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2
         event_queue=instruction.keys[5].pubkey,
         side=Side(data.args.side),
         order_id=int.from_bytes(data.args.order_id, "little"),
+        program_id=instruction.program_id,
     )
 
 
 def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> CancelOrderByClientIDV2Params:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2)
-    # todo need to check
     return CancelOrderByClientIDV2Params(
         market=instruction.keys[0].pubkey,
         bids=instruction.keys[1].pubkey,
@@ -547,6 +541,7 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
         owner=instruction.keys[4].pubkey,
         event_queue=instruction.keys[5].pubkey,
         client_id=data.args.client_id,
+        program_id=instruction.program_id,
     )
 
 
@@ -564,12 +559,29 @@ def decode_close_open_orders(
 def decode_init_open_orders(
         instruction: TransactionInstruction,
 ) -> InitOpenOrdersParams:
-    market_authority = instruction.keys[3].pubkey if len(instruction.keys) == 4 else None
+    market_authority = instruction.keys[4].pubkey if len(instruction.keys) > 4 else None
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
         market=instruction.keys[2].pubkey,
         market_authority=market_authority,
+    )
+
+
+def decode_prune(
+        instruction: TransactionInstruction,
+) -> PruneParams:
+    data = __parse_and_validate_instruction(instruction, InstructionType.PRUNE)
+    return PruneParams(
+        market=instruction.keys[0].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        prune_authority=instruction.keys[3].pubkey,
+        open_orders=instruction.keys[4].pubkey,
+        open_orders_owner=instruction.keys[5].pubkey,
+        event_queue=instruction.keys[6].pubkey,
+        program_id=instruction.program_id,
+        limit=data.args.limit
     )
 
 
@@ -805,7 +817,7 @@ def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
                     self_trade_behavior=params.self_trade_behavior,
                     order_type=params.order_type,
                     client_id=params.client_id,
-                    limit=65535,
+                    limit=params.limit,
                 ),
             )
         ),
