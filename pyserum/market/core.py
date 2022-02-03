@@ -144,17 +144,15 @@ class MarketCore:
         open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
         place_order_open_order_account: PublicKey,
     ) -> None:
-        # unwrapped SOL cannot be used for payment
-        if payer == owner.public_key:
-            raise ValueError("Invalid payer account. Cannot use unwrapped SOL.")
-
         # TODO: add integration test for SOL wrapping.
         should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
             side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
         )
+        # Wrap SOL if payer == raw sol account
+        if payer == owner.public_key and not should_wrap_sol:
+            raise ValueError("Invalid payer account. Payer token account must hold mint tokens associated with market.")
 
         if should_wrap_sol:
-            # wrapped_sol_account = Account()
             wrapped_sol_account = Keypair()
             payer = wrapped_sol_account.public_key
             signers.append(wrapped_sol_account)
