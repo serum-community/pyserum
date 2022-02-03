@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyserum.market.market &#8212; pyserum  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyserum.market.market</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Market module to interact with Serum DEX.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span> <span class="nn">solana.keypair</span> <span class="kn">import</span> <span class="n">Keypair</span>
+<span class="kn">from</span> <span class="nn">solana.publickey</span> <span class="kn">import</span> <span class="n">PublicKey</span>
+<span class="kn">from</span> <span class="nn">solana.rpc.api</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">solana.rpc.types</span> <span class="kn">import</span> <span class="n">RPCResponse</span><span class="p">,</span> <span class="n">TxOpts</span>
+<span class="kn">from</span> <span class="nn">solana.transaction</span> <span class="kn">import</span> <span class="n">Transaction</span>
+
+<span class="kn">import</span> <span class="nn">pyserum.market.types</span> <span class="k">as</span> <span class="nn">t</span>
+<span class="kn">from</span> <span class="nn">pyserum</span> <span class="kn">import</span> <span class="n">instructions</span>
+
+<span class="kn">from</span> <span class="nn">.._layouts.open_orders</span> <span class="kn">import</span> <span class="n">OPEN_ORDERS_LAYOUT</span>
+<span class="kn">from</span> <span class="nn">..enums</span> <span class="kn">import</span> <span class="n">OrderType</span><span class="p">,</span> <span class="n">Side</span>
+<span class="kn">from</span> <span class="nn">..open_orders_account</span> <span class="kn">import</span> <span class="n">OpenOrdersAccount</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">load_bytes_data</span>
+<span class="kn">from</span> <span class="nn">._internal.queue</span> <span class="kn">import</span> <span class="n">decode_event_queue</span><span class="p">,</span> <span class="n">decode_request_queue</span>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">MarketCore</span>
+<span class="kn">from</span> <span class="nn">.orderbook</span> <span class="kn">import</span> <span class="n">OrderBook</span>
+<span class="kn">from</span> <span class="nn">.state</span> <span class="kn">import</span> <span class="n">MarketState</span>
+
+<span class="n">LAMPORTS_PER_SOL</span> <span class="o">=</span> <span class="mi">1000000000</span>
+
+
+<span class="c1"># pylint: disable=too-many-public-methods,abstract-method</span>
+<div class="viewcode-block" id="Market"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market">[docs]</a><span class="k">class</span> <span class="nc">Market</span><span class="p">(</span><span class="n">MarketCore</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a Serum Market.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">:</span> <span class="n">Client</span><span class="p">,</span> <span class="n">market_state</span><span class="p">:</span> <span class="n">MarketState</span><span class="p">,</span> <span class="n">force_use_request_queue</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">market_state</span><span class="o">=</span><span class="n">market_state</span><span class="p">,</span> <span class="n">force_use_request_queue</span><span class="o">=</span><span class="n">force_use_request_queue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span> <span class="o">=</span> <span class="n">conn</span>
+
+<div class="viewcode-block" id="Market.load"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market.load">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="c1"># pylint: disable=unused-argument</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">conn</span><span class="p">:</span> <span class="n">Client</span><span class="p">,</span>
+        <span class="n">market_address</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+        <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">instructions</span><span class="o">.</span><span class="n">DEFAULT_DEX_PROGRAM_ID</span><span class="p">,</span>
+        <span class="n">force_use_request_queue</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Market</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Factory method to create a Market.</span>
+
+<span class="sd">        :param conn: The connection that we use to load the data, created from `solana.rpc.api`.</span>
+<span class="sd">        :param market_address: The market address that you want to connect to.</span>
+<span class="sd">        :param program_id: The program id of the given market, it will use the default value if not provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">market_state</span> <span class="o">=</span> <span class="n">MarketState</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">market_address</span><span class="p">,</span> <span class="n">program_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">market_state</span><span class="p">,</span> <span class="n">force_use_request_queue</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">find_open_orders_accounts_for_owner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner_address</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OpenOrdersAccount</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">OpenOrdersAccount</span><span class="o">.</span><span class="n">find_for_market_and_owner</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">public_key</span><span class="p">(),</span> <span class="n">owner_address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">program_id</span><span class="p">()</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Market.load_bids"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market.load_bids">[docs]</a>    <span class="k">def</span> <span class="nf">load_bids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrderBook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Load the bid order book&quot;&quot;&quot;</span>
+        <span class="n">bytes_data</span> <span class="o">=</span> <span class="n">load_bytes_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">bids</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_bids_or_asks</span><span class="p">(</span><span class="n">bytes_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Market.load_asks"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market.load_asks">[docs]</a>    <span class="k">def</span> <span class="nf">load_asks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrderBook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Load the ask order book.&quot;&quot;&quot;</span>
+        <span class="n">bytes_data</span> <span class="o">=</span> <span class="n">load_bytes_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">asks</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_bids_or_asks</span><span class="p">(</span><span class="n">bytes_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Market.load_orders_for_owner"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market.load_orders_for_owner">[docs]</a>    <span class="k">def</span> <span class="nf">load_orders_for_owner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner_address</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Order</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Load orders for owner.&quot;&quot;&quot;</span>
+        <span class="n">bids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_bids</span><span class="p">()</span>
+        <span class="n">asks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_asks</span><span class="p">()</span>
+        <span class="n">open_orders_accounts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_open_orders_accounts_for_owner</span><span class="p">(</span><span class="n">owner_address</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_orders_for_owner</span><span class="p">(</span><span class="n">bids</span><span class="p">,</span> <span class="n">asks</span><span class="p">,</span> <span class="n">open_orders_accounts</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Market.load_event_queue"><a class="viewcode-back" href="../../../market.html#pyserum.market.Market.load_event_queue">[docs]</a>    <span class="k">def</span> <span class="nf">load_event_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Event</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Load the event queue which includes the fill item and out item. For any trades two fill items are added to</span>
+<span class="sd">        the event queue. And in case of a trade, cancel or IOC order that missed, out items are added to the event</span>
+<span class="sd">        queue.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bytes_data</span> <span class="o">=</span> <span class="n">load_bytes_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">event_queue</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decode_event_queue</span><span class="p">(</span><span class="n">bytes_data</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">load_request_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Request</span><span class="p">]:</span>
+        <span class="n">bytes_data</span> <span class="o">=</span> <span class="n">load_bytes_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">request_queue</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decode_request_queue</span><span class="p">(</span><span class="n">bytes_data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_fills</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">FilledOrder</span><span class="p">]:</span>
+        <span class="n">bytes_data</span> <span class="o">=</span> <span class="n">load_bytes_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">event_queue</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_fills</span><span class="p">(</span><span class="n">bytes_data</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">place_order</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments,too-many-locals</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">payer</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="p">:</span> <span class="n">Keypair</span><span class="p">,</span>
+        <span class="n">order_type</span><span class="p">:</span> <span class="n">OrderType</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">limit_price</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_quantity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">opts</span><span class="p">:</span> <span class="n">TxOpts</span> <span class="o">=</span> <span class="n">TxOpts</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RPCResponse</span><span class="p">:</span>  <span class="c1"># TODO: Add open_orders_address_key param and fee_discount_pubkey</span>
+        <span class="n">transaction</span> <span class="o">=</span> <span class="n">Transaction</span><span class="p">()</span>
+        <span class="n">signers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Keypair</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">owner</span><span class="p">]</span>
+        <span class="n">open_order_accounts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_open_orders_accounts_for_owner</span><span class="p">(</span><span class="n">owner</span><span class="o">.</span><span class="n">public_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">open_order_accounts</span><span class="p">:</span>
+            <span class="n">place_order_open_order_account</span> <span class="o">=</span> <span class="n">open_order_accounts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">address</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mbfre_resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">get_minimum_balance_for_rent_exemption</span><span class="p">(</span><span class="n">OPEN_ORDERS_LAYOUT</span><span class="o">.</span><span class="n">sizeof</span><span class="p">())</span>
+            <span class="n">place_order_open_order_account</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_after_oo_mbfre_resp</span><span class="p">(</span>
+                <span class="n">mbfre_resp</span><span class="o">=</span><span class="n">mbfre_resp</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span> <span class="n">signers</span><span class="o">=</span><span class="n">signers</span><span class="p">,</span> <span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span>
+            <span class="p">)</span>
+            <span class="c1"># TODO: Cache new_open_orders_account</span>
+        <span class="c1"># TODO: Handle fee_discount_pubkey</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_order_transaction</span><span class="p">(</span>
+            <span class="n">transaction</span><span class="o">=</span><span class="n">transaction</span><span class="p">,</span>
+            <span class="n">payer</span><span class="o">=</span><span class="n">payer</span><span class="p">,</span>
+            <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+            <span class="n">order_type</span><span class="o">=</span><span class="n">order_type</span><span class="p">,</span>
+            <span class="n">side</span><span class="o">=</span><span class="n">side</span><span class="p">,</span>
+            <span class="n">signers</span><span class="o">=</span><span class="n">signers</span><span class="p">,</span>
+            <span class="n">limit_price</span><span class="o">=</span><span class="n">limit_price</span><span class="p">,</span>
+            <span class="n">max_quantity</span><span class="o">=</span><span class="n">max_quantity</span><span class="p">,</span>
+            <span class="n">client_id</span><span class="o">=</span><span class="n">client_id</span><span class="p">,</span>
+            <span class="n">open_order_accounts</span><span class="o">=</span><span class="n">open_order_accounts</span><span class="p">,</span>
+            <span class="n">place_order_open_order_account</span><span class="o">=</span><span class="n">place_order_open_order_account</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">*</span><span class="n">signers</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">cancel_order_by_client_id</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="n">Keypair</span><span class="p">,</span> <span class="n">open_orders_account</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span> <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">TxOpts</span> <span class="o">=</span> <span class="n">TxOpts</span><span class="p">()</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RPCResponse</span><span class="p">:</span>
+        <span class="n">txs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_cancel_order_by_client_id_tx</span><span class="p">(</span>
+            <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span> <span class="n">open_orders_account</span><span class="o">=</span><span class="n">open_orders_account</span><span class="p">,</span> <span class="n">client_id</span><span class="o">=</span><span class="n">client_id</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send_transaction</span><span class="p">(</span><span class="n">txs</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">cancel_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="n">Keypair</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Order</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">TxOpts</span> <span class="o">=</span> <span class="n">TxOpts</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">RPCResponse</span><span class="p">:</span>
+        <span class="n">txn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_cancel_order_tx</span><span class="p">(</span><span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send_transaction</span><span class="p">(</span><span class="n">txn</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">match_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fee_payer</span><span class="p">:</span> <span class="n">Keypair</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">TxOpts</span> <span class="o">=</span> <span class="n">TxOpts</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">RPCResponse</span><span class="p">:</span>
+        <span class="n">txn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_match_orders_tx</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send_transaction</span><span class="p">(</span><span class="n">txn</span><span class="p">,</span> <span class="n">fee_payer</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">settle_funds</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">owner</span><span class="p">:</span> <span class="n">Keypair</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="p">:</span> <span class="n">OpenOrdersAccount</span><span class="p">,</span>
+        <span class="n">base_wallet</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>
+        <span class="n">quote_wallet</span><span class="p">:</span> <span class="n">PublicKey</span><span class="p">,</span>  <span class="c1"># TODO: add referrer_quote_wallet.</span>
+        <span class="n">opts</span><span class="p">:</span> <span class="n">TxOpts</span> <span class="o">=</span> <span class="n">TxOpts</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RPCResponse</span><span class="p">:</span>
+        <span class="c1"># TODO: Handle wrapped sol accounts</span>
+        <span class="n">should_wrap_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_settle_funds_should_wrap_sol</span><span class="p">()</span>
+        <span class="n">min_bal_for_rent_exemption</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">get_minimum_balance_for_rent_exemption</span><span class="p">(</span><span class="mi">165</span><span class="p">)[</span><span class="s2">&quot;result&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">should_wrap_sol</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>  <span class="c1"># value only matters if should_wrap_sol</span>
+        <span class="n">signers</span> <span class="o">=</span> <span class="p">[</span><span class="n">owner</span><span class="p">]</span>
+        <span class="n">transaction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_settle_funds_tx</span><span class="p">(</span>
+            <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+            <span class="n">signers</span><span class="o">=</span><span class="n">signers</span><span class="p">,</span>
+            <span class="n">open_orders</span><span class="o">=</span><span class="n">open_orders</span><span class="p">,</span>
+            <span class="n">base_wallet</span><span class="o">=</span><span class="n">base_wallet</span><span class="p">,</span>
+            <span class="n">quote_wallet</span><span class="o">=</span><span class="n">quote_wallet</span><span class="p">,</span>
+            <span class="n">min_bal_for_rent_exemption</span><span class="o">=</span><span class="n">min_bal_for_rent_exemption</span><span class="p">,</span>
+            <span class="n">should_wrap_sol</span><span class="o">=</span><span class="n">should_wrap_sol</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">send_transaction</span><span class="p">(</span><span class="n">transaction</span><span class="p">,</span> <span class="o">*</span><span class="n">signers</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">pyserum</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../market.html">Serum Market</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../instructions.html">DEX Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../instructions.html#module-pyserum.enums">Enums</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, serum-community.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,530 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Serum Market &#8212; pyserum  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DEX Instructions" href="instructions.html" />
+    <link rel="prev" title="Welcome to pyserum’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-pyserum.market">
+<span id="serum-market"></span><h1>Serum Market<a class="headerlink" href="#module-pyserum.market" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pyserum.market.Market">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.</code><code class="sig-name descname">Market</code><span class="sig-paren">(</span><em class="sig-param">conn: solana.rpc.api.Client</em>, <em class="sig-param">market_state: pyserum.market.state.MarketState</em>, <em class="sig-param">force_use_request_queue: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/market.html#Market"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Serum Market.</p>
+<dl class="method">
+<dt id="pyserum.market.Market.load">
+<em class="property">classmethod </em><code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">conn: solana.rpc.api.Client</em>, <em class="sig-param">market_address: solana.publickey.PublicKey</em>, <em class="sig-param">program_id: solana.publickey.PublicKey = 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin</em>, <em class="sig-param">force_use_request_queue: bool = False</em><span class="sig-paren">)</span> &#x2192; pyserum.market.market.Market<a class="reference internal" href="_modules/pyserum/market/market.html#Market.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Factory method to create a Market.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> – The connection that we use to load the data, created from <cite>solana.rpc.api</cite>.</p></li>
+<li><p><strong>market_address</strong> – The market address that you want to connect to.</p></li>
+<li><p><strong>program_id</strong> – The program id of the given market, it will use the default value if not provided.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyserum.market.Market.load_asks">
+<code class="sig-name descname">load_asks</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pyserum.market.orderbook.OrderBook<a class="reference internal" href="_modules/pyserum/market/market.html#Market.load_asks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market.load_asks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the ask order book.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyserum.market.Market.load_bids">
+<code class="sig-name descname">load_bids</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pyserum.market.orderbook.OrderBook<a class="reference internal" href="_modules/pyserum/market/market.html#Market.load_bids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market.load_bids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the bid order book</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyserum.market.Market.load_event_queue">
+<code class="sig-name descname">load_event_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/market.html#Market.load_event_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market.load_event_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the event queue which includes the fill item and out item. For any trades two fill items are added to
+the event queue. And in case of a trade, cancel or IOC order that missed, out items are added to the event
+queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyserum.market.Market.load_orders_for_owner">
+<code class="sig-name descname">load_orders_for_owner</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/market.html#Market.load_orders_for_owner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.Market.load_orders_for_owner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load orders for owner.</p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="module-pyserum.market.state">
+<span id="market-state"></span><h2>Market State<a class="headerlink" href="#module-pyserum.market.state" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyserum.market.state.MarketState">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.state.</code><code class="sig-name descname">MarketState</code><span class="sig-paren">(</span><em class="sig-param">parsed_market: construct.lib.containers.Container</em>, <em class="sig-param">program_id: solana.publickey.PublicKey</em>, <em class="sig-param">base_mint_decimals: int</em>, <em class="sig-param">quote_mint_decimals: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/state.html#MarketState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.state.MarketState" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pyserum.market.state.MarketState.LAYOUT">
+<em class="property">static </em><code class="sig-name descname">LAYOUT</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; construct.core.Struct<a class="reference internal" href="_modules/pyserum/market/state.html#MarketState.LAYOUT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.state.MarketState.LAYOUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct layout of the market state.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pyserum.market.orderbook">
+<span id="orderbook"></span><h2>Orderbook<a class="headerlink" href="#module-pyserum.market.orderbook" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyserum.market.orderbook.OrderBook">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.orderbook.</code><code class="sig-name descname">OrderBook</code><span class="sig-paren">(</span><em class="sig-param">market_state: pyserum.market.state.MarketState</em>, <em class="sig-param">account_flags: pyserum.market.types.AccountFlags</em>, <em class="sig-param">slab: pyserum.market._internal.slab.Slab</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/orderbook.html#OrderBook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.orderbook.OrderBook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an order book.</p>
+<dl class="method">
+<dt id="pyserum.market.orderbook.OrderBook.from_bytes">
+<em class="property">static </em><code class="sig-name descname">from_bytes</code><span class="sig-paren">(</span><em class="sig-param">market_state: pyserum.market.state.MarketState</em>, <em class="sig-param">buffer: bytes</em><span class="sig-paren">)</span> &#x2192; pyserum.market.orderbook.OrderBook<a class="reference internal" href="_modules/pyserum/market/orderbook.html#OrderBook.from_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.orderbook.OrderBook.from_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode the given buffer into an order book.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyserum.market.orderbook.OrderBook.get_l2">
+<code class="sig-name descname">get_l2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/orderbook.html#OrderBook.get_l2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.orderbook.OrderBook.get_l2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Level 2 market information.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pyserum.market.types">
+<span id="types"></span><h2>Types<a class="headerlink" href="#module-pyserum.market.types" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyserum.market.types.AccountFlags">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">AccountFlags</code><span class="sig-paren">(</span><em class="sig-param">initialized</em>, <em class="sig-param">market</em>, <em class="sig-param">open_orders</em>, <em class="sig-param">request_queue</em>, <em class="sig-param">event_queue</em>, <em class="sig-param">bids</em>, <em class="sig-param">asks</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#AccountFlags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.AccountFlags" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.asks">
+<code class="sig-name descname">asks</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.asks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.bids">
+<code class="sig-name descname">bids</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.bids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.event_queue">
+<code class="sig-name descname">event_queue</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.event_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.initialized">
+<code class="sig-name descname">initialized</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.initialized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.market">
+<code class="sig-name descname">market</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.market" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.open_orders">
+<code class="sig-name descname">open_orders</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.open_orders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.AccountFlags.request_queue">
+<code class="sig-name descname">request_queue</code><a class="headerlink" href="#pyserum.market.types.AccountFlags.request_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.Event">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">Event</code><span class="sig-paren">(</span><em class="sig-param">event_flags</em>, <em class="sig-param">open_order_slot</em>, <em class="sig-param">fee_tier</em>, <em class="sig-param">native_quantity_released</em>, <em class="sig-param">native_quantity_paid</em>, <em class="sig-param">native_fee_or_rebate</em>, <em class="sig-param">order_id</em>, <em class="sig-param">public_key</em>, <em class="sig-param">client_order_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.Event" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.Event.client_order_id">
+<code class="sig-name descname">client_order_id</code><a class="headerlink" href="#pyserum.market.types.Event.client_order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.event_flags">
+<code class="sig-name descname">event_flags</code><a class="headerlink" href="#pyserum.market.types.Event.event_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.fee_tier">
+<code class="sig-name descname">fee_tier</code><a class="headerlink" href="#pyserum.market.types.Event.fee_tier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.native_fee_or_rebate">
+<code class="sig-name descname">native_fee_or_rebate</code><a class="headerlink" href="#pyserum.market.types.Event.native_fee_or_rebate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.native_quantity_paid">
+<code class="sig-name descname">native_quantity_paid</code><a class="headerlink" href="#pyserum.market.types.Event.native_quantity_paid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.native_quantity_released">
+<code class="sig-name descname">native_quantity_released</code><a class="headerlink" href="#pyserum.market.types.Event.native_quantity_released" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.open_order_slot">
+<code class="sig-name descname">open_order_slot</code><a class="headerlink" href="#pyserum.market.types.Event.open_order_slot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.order_id">
+<code class="sig-name descname">order_id</code><a class="headerlink" href="#pyserum.market.types.Event.order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Event.public_key">
+<code class="sig-name descname">public_key</code><a class="headerlink" href="#pyserum.market.types.Event.public_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.EventFlags">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">EventFlags</code><span class="sig-paren">(</span><em class="sig-param">fill</em>, <em class="sig-param">out</em>, <em class="sig-param">bid</em>, <em class="sig-param">maker</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#EventFlags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.EventFlags" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.EventFlags.bid">
+<code class="sig-name descname">bid</code><a class="headerlink" href="#pyserum.market.types.EventFlags.bid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.EventFlags.fill">
+<code class="sig-name descname">fill</code><a class="headerlink" href="#pyserum.market.types.EventFlags.fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.EventFlags.maker">
+<code class="sig-name descname">maker</code><a class="headerlink" href="#pyserum.market.types.EventFlags.maker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.EventFlags.out">
+<code class="sig-name descname">out</code><a class="headerlink" href="#pyserum.market.types.EventFlags.out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.FilledOrder">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">FilledOrder</code><span class="sig-paren">(</span><em class="sig-param">order_id</em>, <em class="sig-param">side</em>, <em class="sig-param">price</em>, <em class="sig-param">size</em>, <em class="sig-param">fee_cost</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#FilledOrder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.FilledOrder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.FilledOrder.fee_cost">
+<code class="sig-name descname">fee_cost</code><a class="headerlink" href="#pyserum.market.types.FilledOrder.fee_cost" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.FilledOrder.order_id">
+<code class="sig-name descname">order_id</code><a class="headerlink" href="#pyserum.market.types.FilledOrder.order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.FilledOrder.price">
+<code class="sig-name descname">price</code><a class="headerlink" href="#pyserum.market.types.FilledOrder.price" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.FilledOrder.side">
+<code class="sig-name descname">side</code><a class="headerlink" href="#pyserum.market.types.FilledOrder.side" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.FilledOrder.size">
+<code class="sig-name descname">size</code><a class="headerlink" href="#pyserum.market.types.FilledOrder.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.MarketInfo">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">MarketInfo</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">address</em>, <em class="sig-param">program_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#MarketInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.MarketInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.MarketInfo.address">
+<code class="sig-name descname">address</code><a class="headerlink" href="#pyserum.market.types.MarketInfo.address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.MarketInfo.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#pyserum.market.types.MarketInfo.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.MarketInfo.program_id">
+<code class="sig-name descname">program_id</code><a class="headerlink" href="#pyserum.market.types.MarketInfo.program_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.Order">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">Order</code><span class="sig-paren">(</span><em class="sig-param">order_id</em>, <em class="sig-param">client_id</em>, <em class="sig-param">open_order_address</em>, <em class="sig-param">open_order_slot</em>, <em class="sig-param">fee_tier</em>, <em class="sig-param">info</em>, <em class="sig-param">side</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#Order"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.Order" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.Order.client_id">
+<code class="sig-name descname">client_id</code><a class="headerlink" href="#pyserum.market.types.Order.client_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.fee_tier">
+<code class="sig-name descname">fee_tier</code><a class="headerlink" href="#pyserum.market.types.Order.fee_tier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.info">
+<code class="sig-name descname">info</code><a class="headerlink" href="#pyserum.market.types.Order.info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.open_order_address">
+<code class="sig-name descname">open_order_address</code><a class="headerlink" href="#pyserum.market.types.Order.open_order_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.open_order_slot">
+<code class="sig-name descname">open_order_slot</code><a class="headerlink" href="#pyserum.market.types.Order.open_order_slot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.order_id">
+<code class="sig-name descname">order_id</code><a class="headerlink" href="#pyserum.market.types.Order.order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Order.side">
+<code class="sig-name descname">side</code><a class="headerlink" href="#pyserum.market.types.Order.side" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.OrderInfo">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">OrderInfo</code><span class="sig-paren">(</span><em class="sig-param">price</em>, <em class="sig-param">size</em>, <em class="sig-param">price_lots</em>, <em class="sig-param">size_lots</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#OrderInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.OrderInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.OrderInfo.price">
+<code class="sig-name descname">price</code><a class="headerlink" href="#pyserum.market.types.OrderInfo.price" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.OrderInfo.price_lots">
+<code class="sig-name descname">price_lots</code><a class="headerlink" href="#pyserum.market.types.OrderInfo.price_lots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.OrderInfo.size">
+<code class="sig-name descname">size</code><a class="headerlink" href="#pyserum.market.types.OrderInfo.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.OrderInfo.size_lots">
+<code class="sig-name descname">size_lots</code><a class="headerlink" href="#pyserum.market.types.OrderInfo.size_lots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.Request">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">Request</code><span class="sig-paren">(</span><em class="sig-param">request_flags</em>, <em class="sig-param">open_order_slot</em>, <em class="sig-param">fee_tier</em>, <em class="sig-param">max_base_size_or_cancel_id</em>, <em class="sig-param">native_quote_quantity_locked</em>, <em class="sig-param">order_id</em>, <em class="sig-param">open_orders</em>, <em class="sig-param">client_order_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#Request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.Request" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.Request.client_order_id">
+<code class="sig-name descname">client_order_id</code><a class="headerlink" href="#pyserum.market.types.Request.client_order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.fee_tier">
+<code class="sig-name descname">fee_tier</code><a class="headerlink" href="#pyserum.market.types.Request.fee_tier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.max_base_size_or_cancel_id">
+<code class="sig-name descname">max_base_size_or_cancel_id</code><a class="headerlink" href="#pyserum.market.types.Request.max_base_size_or_cancel_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.native_quote_quantity_locked">
+<code class="sig-name descname">native_quote_quantity_locked</code><a class="headerlink" href="#pyserum.market.types.Request.native_quote_quantity_locked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.open_order_slot">
+<code class="sig-name descname">open_order_slot</code><a class="headerlink" href="#pyserum.market.types.Request.open_order_slot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.open_orders">
+<code class="sig-name descname">open_orders</code><a class="headerlink" href="#pyserum.market.types.Request.open_orders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.order_id">
+<code class="sig-name descname">order_id</code><a class="headerlink" href="#pyserum.market.types.Request.order_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.Request.request_flags">
+<code class="sig-name descname">request_flags</code><a class="headerlink" href="#pyserum.market.types.Request.request_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.ReuqestFlags">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">ReuqestFlags</code><span class="sig-paren">(</span><em class="sig-param">new_order</em>, <em class="sig-param">cancel_order</em>, <em class="sig-param">bid</em>, <em class="sig-param">post_only</em>, <em class="sig-param">ioc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#ReuqestFlags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.ReuqestFlags" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.ReuqestFlags.bid">
+<code class="sig-name descname">bid</code><a class="headerlink" href="#pyserum.market.types.ReuqestFlags.bid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.ReuqestFlags.cancel_order">
+<code class="sig-name descname">cancel_order</code><a class="headerlink" href="#pyserum.market.types.ReuqestFlags.cancel_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.ReuqestFlags.ioc">
+<code class="sig-name descname">ioc</code><a class="headerlink" href="#pyserum.market.types.ReuqestFlags.ioc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.ReuqestFlags.new_order">
+<code class="sig-name descname">new_order</code><a class="headerlink" href="#pyserum.market.types.ReuqestFlags.new_order" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.ReuqestFlags.post_only">
+<code class="sig-name descname">post_only</code><a class="headerlink" href="#pyserum.market.types.ReuqestFlags.post_only" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyserum.market.types.TokenInfo">
+<em class="property">class </em><code class="sig-prename descclassname">pyserum.market.types.</code><code class="sig-name descname">TokenInfo</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">address</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyserum/market/types.html#TokenInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyserum.market.types.TokenInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pyserum.market.types.TokenInfo.address">
+<code class="sig-name descname">address</code><a class="headerlink" href="#pyserum.market.types.TokenInfo.address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyserum.market.types.TokenInfo.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#pyserum.market.types.TokenInfo.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pyserum</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Serum Market</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-pyserum.market.state">Market State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pyserum.market.orderbook">Orderbook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pyserum.market.types">Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="instructions.html">DEX Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="instructions.html#module-pyserum.enums">Enums</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to pyserum’s documentation!</a></li>
+      <li>Next: <a href="instructions.html" title="next chapter">DEX Instructions</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, serum-community.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/market.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

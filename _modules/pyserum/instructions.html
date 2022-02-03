@@ -1,0 +1,898 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyserum.instructions &#8212; pyserum  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyserum.instructions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Serum Dex Instructions.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">construct</span> <span class="kn">import</span> <span class="n">Container</span>
+<span class="kn">from</span> <span class="nn">solana.publickey</span> <span class="kn">import</span> <span class="n">PublicKey</span>
+<span class="kn">from</span> <span class="nn">solana.sysvar</span> <span class="kn">import</span> <span class="n">SYSVAR_RENT_PUBKEY</span>
+<span class="kn">from</span> <span class="nn">solana.transaction</span> <span class="kn">import</span> <span class="n">AccountMeta</span><span class="p">,</span> <span class="n">TransactionInstruction</span>
+<span class="kn">from</span> <span class="nn">solana.utils.validate</span> <span class="kn">import</span> <span class="n">validate_instruction_keys</span><span class="p">,</span> <span class="n">validate_instruction_type</span>
+<span class="kn">from</span> <span class="nn">spl.token.constants</span> <span class="kn">import</span> <span class="n">TOKEN_PROGRAM_ID</span>
+
+<span class="kn">from</span> <span class="nn">._layouts.instructions</span> <span class="kn">import</span> <span class="n">INSTRUCTIONS_LAYOUT</span><span class="p">,</span> <span class="n">InstructionType</span>
+<span class="kn">from</span> <span class="nn">.enums</span> <span class="kn">import</span> <span class="n">OrderType</span><span class="p">,</span> <span class="n">SelfTradeBehavior</span><span class="p">,</span> <span class="n">Side</span>
+
+<span class="c1"># V3</span>
+<span class="n">DEFAULT_DEX_PROGRAM_ID</span> <span class="o">=</span> <span class="n">PublicKey</span><span class="p">(</span><span class="s2">&quot;9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="InitializeMarketParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.InitializeMarketParams">[docs]</a><span class="k">class</span> <span class="nc">InitializeMarketParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initalize market params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_mint</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_mint</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_lot_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_lot_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_rate_bps</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">vault_signer_nonce</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_dust_threshold</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span></div>
+
+
+<div class="viewcode-block" id="NewOrderParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.NewOrderParams">[docs]</a><span class="k">class</span> <span class="nc">NewOrderParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;New order params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">payer</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">limit_price</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">max_quantity</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_type</span><span class="p">:</span> <span class="n">OrderType</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MatchOrdersParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.MatchOrdersParams">[docs]</a><span class="k">class</span> <span class="nc">MatchOrdersParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Match order params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ConsumeEventsParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.ConsumeEventsParams">[docs]</a><span class="k">class</span> <span class="nc">ConsumeEventsParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Consume events params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders_accounts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PublicKey</span><span class="p">]</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CancelOrderParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.CancelOrderParams">[docs]</a><span class="k">class</span> <span class="nc">CancelOrderParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders_slot</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CancelOrderByClientIDParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.CancelOrderByClientIDParams">[docs]</a><span class="k">class</span> <span class="nc">CancelOrderByClientIDParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order by client ID params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SettleFundsParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.SettleFundsParams">[docs]</a><span class="k">class</span> <span class="nc">SettleFundsParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Settle fund params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_wallet</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_wallet</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">vault_signer</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span></div>
+
+
+<div class="viewcode-block" id="NewOrderV3Params"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.NewOrderV3Params">[docs]</a><span class="k">class</span> <span class="nc">NewOrderV3Params</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;New order params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">payer</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">base_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">quote_vault</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">limit_price</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">max_base_quantity</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">max_quote_quantity</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_type</span><span class="p">:</span> <span class="n">OrderType</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">self_trade_behavior</span><span class="p">:</span> <span class="n">SelfTradeBehavior</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_discount_pubkey</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PublicKey</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="CancelOrderV2Params"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.CancelOrderV2Params">[docs]</a><span class="k">class</span> <span class="nc">CancelOrderV2Params</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders_slot</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CancelOrderByClientIDV2Params"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.CancelOrderByClientIDV2Params">[docs]</a><span class="k">class</span> <span class="nc">CancelOrderByClientIDV2Params</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order by client ID params.&quot;&quot;&quot;</span>
+
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CloseOpenOrdersParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.CloseOpenOrdersParams">[docs]</a><span class="k">class</span> <span class="nc">CloseOpenOrdersParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order by client ID params.&quot;&quot;&quot;</span>
+
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">sol_wallet</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="InitOpenOrdersParams"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.InitOpenOrdersParams">[docs]</a><span class="k">class</span> <span class="nc">InitOpenOrdersParams</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cancel order by client ID params.&quot;&quot;&quot;</span>
+
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">market</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">market_authority</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PublicKey</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span> <span class="o">=</span> <span class="n">DEFAULT_DEX_PROGRAM_ID</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<span class="k">def</span> <span class="nf">__parse_and_validate_instruction</span><span class="p">(</span>
+    <span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">,</span> <span class="n">instruction_type</span><span class="p">:</span> <span class="n">InstructionType</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Container</span><span class="p">:</span>
+    <span class="n">instruction_type_to_length_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">InstructionType</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">INITIALIZE_MARKET</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">MATCH_ORDER</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CONSUME_EVENTS</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">SETTLE_FUNDS</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER_V3</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_V2</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID_V2</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">CLOSE_OPEN_ORDERS</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">InstructionType</span><span class="o">.</span><span class="n">INIT_OPEN_ORDERS</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">validate_instruction_keys</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">instruction_type_to_length_map</span><span class="p">[</span><span class="n">instruction_type</span><span class="p">])</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">instruction</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">validate_instruction_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">instruction_type</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<div class="viewcode-block" id="decode_initialize_market"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.decode_initialize_market">[docs]</a><span class="k">def</span> <span class="nf">decode_initialize_market</span><span class="p">(</span>
+    <span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitializeMarketParams</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Decode an instialize market instruction and retrieve the instruction params.&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">INITIALIZE_MARKET</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">InitializeMarketParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">bids</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">asks</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_mint</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_mint</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_lot_size</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">base_lot_size</span><span class="p">,</span>
+        <span class="n">quote_lot_size</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">quote_lot_size</span><span class="p">,</span>
+        <span class="n">fee_rate_bps</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">fee_rate_bps</span><span class="p">,</span>
+        <span class="n">vault_signer_nonce</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">vault_signer_nonce</span><span class="p">,</span>
+        <span class="n">quote_dust_threshold</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">quote_dust_threshold</span><span class="p">,</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">decode_new_order</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NewOrderParams</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">NewOrderParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">payer</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">side</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+        <span class="n">limit_price</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">limit_price</span><span class="p">,</span>
+        <span class="n">max_quantity</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_quantity</span><span class="p">,</span>
+        <span class="n">order_type</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">order_type</span><span class="p">,</span>
+        <span class="n">client_id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="decode_match_orders"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.decode_match_orders">[docs]</a><span class="k">def</span> <span class="nf">decode_match_orders</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MatchOrdersParams</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Decode a match orders instruction and retrieve the instruction params.&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">MATCH_ORDER</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">MatchOrdersParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">bids</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">asks</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">limit</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">limit</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="decode_consume_events"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.decode_consume_events">[docs]</a><span class="k">def</span> <span class="nf">decode_consume_events</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConsumeEventsParams</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Decode a consume events instruction and retrieve the instruction params.&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">CONSUME_EVENTS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ConsumeEventsParams</span><span class="p">(</span>
+        <span class="n">open_orders_accounts</span><span class="o">=</span><span class="p">[</span><span class="n">a_m</span><span class="o">.</span><span class="n">pubkey</span> <span class="k">for</span> <span class="n">a_m</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]],</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="c1"># NOTE - ignoring pc_fee and coin_fee as unused</span>
+        <span class="n">limit</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">limit</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">decode_cancel_order</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CancelOrderParams</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CancelOrderParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">side</span><span class="o">=</span><span class="n">Side</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">side</span><span class="p">),</span>
+        <span class="n">order_id</span><span class="o">=</span><span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">order_id</span><span class="p">,</span> <span class="s2">&quot;little&quot;</span><span class="p">),</span>
+        <span class="n">open_orders_slot</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">open_orders_slot</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_settle_funds</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SettleFundsParams</span><span class="p">:</span>
+    <span class="c1"># data = __parse_and_validate_instruction(instruction, InstructionType.SettleFunds)</span>
+    <span class="k">return</span> <span class="n">SettleFundsParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_wallet</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_wallet</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">vault_signer</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_cancel_order_by_client_id</span><span class="p">(</span>
+    <span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CancelOrderByClientIDParams</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CancelOrderByClientIDParams</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">client_id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_new_order_v3</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NewOrderV3Params</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER_V3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">NewOrderV3Params</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">request_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">bids</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">asks</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">payer</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">base_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">quote_vault</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">side</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+        <span class="n">limit_price</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">limit_price</span><span class="p">,</span>
+        <span class="n">max_base_quantity</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_base_quantity</span><span class="p">,</span>
+        <span class="n">max_quote_quantity</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">max_quote_quantity</span><span class="p">,</span>
+        <span class="n">self_trade_behavior</span><span class="o">=</span><span class="n">SelfTradeBehavior</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">self_trade_behavior</span><span class="p">),</span>
+        <span class="n">order_type</span><span class="o">=</span><span class="n">OrderType</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">order_type</span><span class="p">),</span>
+        <span class="n">client_id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+        <span class="n">limit</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">limit</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_cancel_order_v2</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CancelOrderV2Params</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_V2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CancelOrderV2Params</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">bids</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">asks</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">side</span><span class="o">=</span><span class="n">Side</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">side</span><span class="p">),</span>
+        <span class="n">order_id</span><span class="o">=</span><span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">order_id</span><span class="p">,</span> <span class="s2">&quot;little&quot;</span><span class="p">),</span>
+        <span class="n">open_orders_slot</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">open_orders_slot</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_cancel_order_by_client_id_v2</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CancelOrderByClientIDV2Params</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">__parse_and_validate_instruction</span><span class="p">(</span><span class="n">instruction</span><span class="p">,</span> <span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID_V2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CancelOrderByClientIDV2Params</span><span class="p">(</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">bids</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">asks</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">event_queue</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">client_id</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_close_open_orders</span><span class="p">(</span>
+    <span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CloseOpenOrdersParams</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">CloseOpenOrdersParams</span><span class="p">(</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">sol_wallet</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">decode_init_open_orders</span><span class="p">(</span>
+    <span class="n">instruction</span><span class="p">:</span> <span class="n">TransactionInstruction</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitOpenOrdersParams</span><span class="p">:</span>
+    <span class="n">market_authority</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">InitOpenOrdersParams</span><span class="p">(</span>
+        <span class="n">open_orders</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">owner</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">market</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">pubkey</span><span class="p">,</span>
+        <span class="n">market_authority</span><span class="o">=</span><span class="n">market_authority</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="initialize_market"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.initialize_market">[docs]</a><span class="k">def</span> <span class="nf">initialize_market</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">InitializeMarketParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to initialize a Serum market.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_mint</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_mint</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">INITIALIZE_MARKET</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">base_lot_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_lot_size</span><span class="p">,</span>
+                    <span class="n">quote_lot_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_lot_size</span><span class="p">,</span>
+                    <span class="n">fee_rate_bps</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">fee_rate_bps</span><span class="p">,</span>
+                    <span class="n">vault_signer_nonce</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">vault_signer_nonce</span><span class="p">,</span>
+                    <span class="n">quote_dust_threshold</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_dust_threshold</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="new_order"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.new_order">[docs]</a><span class="k">def</span> <span class="nf">new_order</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">NewOrderParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to place new order.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">payer</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">TOKEN_PROGRAM_ID</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">SYSVAR_RENT_PUBKEY</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">side</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+                    <span class="n">limit_price</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">limit_price</span><span class="p">,</span>
+                    <span class="n">max_quantity</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">max_quantity</span><span class="p">,</span>
+                    <span class="n">order_type</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">order_type</span><span class="p">,</span>
+                    <span class="n">client_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="match_orders"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.match_orders">[docs]</a><span class="k">def</span> <span class="nf">match_orders</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">MatchOrdersParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to match order.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">MATCH_ORDER</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">limit</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="consume_events"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.consume_events">[docs]</a><span class="k">def</span> <span class="nf">consume_events</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">ConsumeEventsParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to consume market events.&quot;&quot;&quot;</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">pubkey</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># NOTE - last two accounts are required for backwards compatibility but are ignored</span>
+        <span class="k">for</span> <span class="n">pubkey</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">open_orders_accounts</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">[</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CONSUME_EVENTS</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">limit</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cancel_order"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.cancel_order">[docs]</a><span class="k">def</span> <span class="nf">cancel_order</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">CancelOrderParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to cancel order.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">side</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+                    <span class="n">order_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">order_id</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;little&quot;</span><span class="p">),</span>
+                    <span class="n">open_orders</span><span class="o">=</span><span class="nb">bytes</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">),</span>
+                    <span class="n">open_orders_slot</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders_slot</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="settle_funds"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.settle_funds">[docs]</a><span class="k">def</span> <span class="nf">settle_funds</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">SettleFundsParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to settle fund.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_wallet</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_wallet</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">vault_signer</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">TOKEN_PROGRAM_ID</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">SETTLE_FUNDS</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">())),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cancel_order_by_client_id"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.cancel_order_by_client_id">[docs]</a><span class="k">def</span> <span class="nf">cancel_order_by_client_id</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">CancelOrderByClientIDParams</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to cancel order by client id.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">client_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="new_order_v3"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.new_order_v3">[docs]</a><span class="k">def</span> <span class="nf">new_order_v3</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">NewOrderV3Params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to place new order.&quot;&quot;&quot;</span>
+    <span class="n">touched_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">payer</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">base_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quote_vault</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">TOKEN_PROGRAM_ID</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">SYSVAR_RENT_PUBKEY</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">fee_discount_pubkey</span><span class="p">:</span>
+        <span class="n">touched_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">fee_discount_pubkey</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="n">touched_keys</span><span class="p">,</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">NEW_ORDER_V3</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">side</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+                    <span class="n">limit_price</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">limit_price</span><span class="p">,</span>
+                    <span class="n">max_base_quantity</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">max_base_quantity</span><span class="p">,</span>
+                    <span class="n">max_quote_quantity</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">max_quote_quantity</span><span class="p">,</span>
+                    <span class="n">self_trade_behavior</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">self_trade_behavior</span><span class="p">,</span>
+                    <span class="n">order_type</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">order_type</span><span class="p">,</span>
+                    <span class="n">client_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+                    <span class="n">limit</span><span class="o">=</span><span class="mi">65535</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cancel_order_v2"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.cancel_order_v2">[docs]</a><span class="k">def</span> <span class="nf">cancel_order_v2</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">CancelOrderV2Params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to cancel order.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_V2</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">side</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">side</span><span class="p">,</span>
+                    <span class="n">order_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">order_id</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;little&quot;</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cancel_order_by_client_id_v2"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.cancel_order_by_client_id_v2">[docs]</a><span class="k">def</span> <span class="nf">cancel_order_by_client_id_v2</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">CancelOrderByClientIDV2Params</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to cancel order by client id.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CANCEL_ORDER_BY_CLIENT_ID_V2</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">client_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="close_open_orders"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.close_open_orders">[docs]</a><span class="k">def</span> <span class="nf">close_open_orders</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">CloseOpenOrdersParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to close open orders account.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">sol_wallet</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">CLOSE_OPEN_ORDERS</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">())),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_open_orders"><a class="viewcode-back" href="../../instructions.html#pyserum.instructions.init_open_orders">[docs]</a><span class="k">def</span> <span class="nf">init_open_orders</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">InitOpenOrdersParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionInstruction</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate a transaction instruction to initialize open orders account.&quot;&quot;&quot;</span>
+    <span class="n">touched_keys</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">SYSVAR_RENT_PUBKEY</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">market_authority</span><span class="p">:</span>
+        <span class="n">touched_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">AccountMeta</span><span class="p">(</span><span class="n">pubkey</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">market_authority</span><span class="p">,</span> <span class="n">is_signer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_writable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">TransactionInstruction</span><span class="p">(</span>
+        <span class="n">keys</span><span class="o">=</span><span class="n">touched_keys</span><span class="p">,</span>
+        <span class="n">program_id</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">program_id</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">INSTRUCTIONS_LAYOUT</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">instruction_type</span><span class="o">=</span><span class="n">InstructionType</span><span class="o">.</span><span class="n">INIT_OPEN_ORDERS</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="nb">dict</span><span class="p">())),</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyserum</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../market.html">Serum Market</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../instructions.html">DEX Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../instructions.html#module-pyserum.enums">Enums</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, serum-community.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

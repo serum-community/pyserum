@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pyserum.market.types &#8212; pyserum  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyserum.market.types</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+
+<span class="kn">from</span> <span class="nn">solana.publickey</span> <span class="kn">import</span> <span class="n">PublicKey</span>
+
+<span class="kn">from</span> <span class="nn">.._layouts.account_flags</span> <span class="kn">import</span> <span class="n">ACCOUNT_FLAGS_LAYOUT</span>
+<span class="kn">from</span> <span class="nn">..enums</span> <span class="kn">import</span> <span class="n">Side</span>
+
+
+<div class="viewcode-block" id="AccountFlags"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.AccountFlags">[docs]</a><span class="k">class</span> <span class="nc">AccountFlags</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">initialized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">market</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">request_queue</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">event_queue</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">bids</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">asks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_bytes</span><span class="p">(</span><span class="n">buffer</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccountFlags</span><span class="p">:</span>
+        <span class="n">con</span> <span class="o">=</span> <span class="n">ACCOUNT_FLAGS_LAYOUT</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AccountFlags</span><span class="p">(</span>
+            <span class="n">initialized</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">initialized</span><span class="p">,</span>
+            <span class="n">market</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">market</span><span class="p">,</span>
+            <span class="n">open_orders</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">open_orders</span><span class="p">,</span>
+            <span class="n">request_queue</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">request_queue</span><span class="p">,</span>
+            <span class="n">event_queue</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">event_queue</span><span class="p">,</span>
+            <span class="n">bids</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">bids</span><span class="p">,</span>
+            <span class="n">asks</span><span class="o">=</span><span class="n">con</span><span class="o">.</span><span class="n">asks</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FilledOrder"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.FilledOrder">[docs]</a><span class="k">class</span> <span class="nc">FilledOrder</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_cost</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="OrderInfo"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.OrderInfo">[docs]</a><span class="k">class</span> <span class="nc">OrderInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">price_lots</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">size_lots</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Order"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.Order">[docs]</a><span class="k">class</span> <span class="nc">Order</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_order_address</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_order_slot</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_tier</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">OrderInfo</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ReuqestFlags"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.ReuqestFlags">[docs]</a><span class="k">class</span> <span class="nc">ReuqestFlags</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">new_order</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">cancel_order</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">bid</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">post_only</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">ioc</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+<div class="viewcode-block" id="Request"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.Request">[docs]</a><span class="k">class</span> <span class="nc">Request</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">request_flags</span><span class="p">:</span> <span class="n">ReuqestFlags</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_order_slot</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_tier</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">max_base_size_or_cancel_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">native_quote_quantity_locked</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_orders</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="EventFlags"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.EventFlags">[docs]</a><span class="k">class</span> <span class="nc">EventFlags</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">bid</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">maker</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+<div class="viewcode-block" id="Event"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.Event">[docs]</a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">event_flags</span><span class="p">:</span> <span class="n">EventFlags</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">open_order_slot</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">fee_tier</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">native_quantity_released</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">native_quantity_paid</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">native_fee_or_rebate</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">public_key</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">client_order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="MarketInfo"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.MarketInfo">[docs]</a><span class="k">class</span> <span class="nc">MarketInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">program_id</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="TokenInfo"><a class="viewcode-back" href="../../../market.html#pyserum.market.types.TokenInfo">[docs]</a><span class="k">class</span> <span class="nc">TokenInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">PublicKey</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">pyserum</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../market.html">Serum Market</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../instructions.html">DEX Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../instructions.html#module-pyserum.enums">Enums</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, serum-community.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
