@@ -9,7 +9,7 @@ from solana.rpc.async_api import AsyncClient
 
 from pyserum import async_utils, utils
 
-from .._layouts.market import MARKET_STAT_LAYOUT_V1, MARKET_STAT_LAYOUT_V2, MARKET_STAT_LAYOUT_V3
+from .._layouts.market import MARKET_STAT_LAYOUT_V1, MARKET_STAT_LAYOUT_V2
 from .types import AccountFlags
 
 
@@ -39,8 +39,7 @@ class MarketState:  # pylint: disable=too-many-public-methods
         version = MarketState.get_layout_version(program_id) if program_id else 1
         if version == 1:
             return MARKET_STAT_LAYOUT_V1
-        else:
-            return MARKET_STAT_LAYOUT_V2
+        return MARKET_STAT_LAYOUT_V2
 
     @staticmethod
     def _make_parsed_market(bytes_data: bytes, program_id: PublicKey) -> Container:

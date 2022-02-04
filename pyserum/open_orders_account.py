@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List, NamedTuple, Tuple, Type, TypeVar
+from typing import List, NamedTuple, Tuple, Type, TypeVar, Optional
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
@@ -62,7 +62,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         self.client_ids = client_ids
 
     @classmethod
-    def from_bytes(cls: Type[_T], address: PublicKey, program_id: PublicKey, buffer: bytes) -> _T:
+    def from_bytes(cls: Type[_T], address: PublicKey, program_id: Optional[PublicKey], buffer: bytes) -> _T:
         open_order_decoded = get_layout(program_id).parse(buffer)
         if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")

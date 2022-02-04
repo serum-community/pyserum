@@ -332,7 +332,6 @@ class InitOpenOrdersParams(NamedTuple):
 class PruneParams(NamedTuple):
     """Prune"""
 
-    """"""
     market: PublicKey
     """"""
     bids: PublicKey

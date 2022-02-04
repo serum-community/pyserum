@@ -25,10 +25,10 @@ class AsyncOpenOrdersAccount(_OpenOrdersAccountCore):
             market=market, program_id=program_id, owner=owner, commitment=commitment
         )
         resp = await conn.get_program_accounts(*args)
-        return cls._process_get_program_accounts_resp(resp)
+        return cls._process_get_program_accounts_resp(program_id, resp)
 
     @classmethod
-    async def load(cls, conn: AsyncClient, address: str) -> AsyncOpenOrdersAccount:
+    async def load(cls, conn: AsyncClient, address: str, program_id: PublicKey) -> AsyncOpenOrdersAccount:
         addr_pub_key = PublicKey(address)
         bytes_data = await load_bytes_data(addr_pub_key, conn)
-        return cls.from_bytes(addr_pub_key, bytes_data)
+        return cls.from_bytes(addr_pub_key, program_id, bytes_data)

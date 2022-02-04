@@ -1,16 +1,13 @@
-import traceback
-
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import TxOpts
-from spl.token.client import Token
 
 from conf.keys import mykey, rpc_api
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market
 
 # constant
-symbol = "RAY-USDT"
+SYMBOL = "RAY-USDT"
 SPL_USDT = PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
 SPL_RAY = PublicKey("4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R")
 SPL_Token_Program = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
@@ -46,7 +43,7 @@ def load_asks_and_bids(market):
 
 def load_my_order(market: Market, own_address: PublicKey):
     res = market.find_open_orders_accounts_for_owner(mykey.public_key)
-    print(f"find_open_orders_accounts_for_owner: {res}")
+    print(f"find_open_orders_accounts_for_owner: {res}, {own_address}")
 
 
 def load_queue(market):
