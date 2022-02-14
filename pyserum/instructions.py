@@ -549,8 +549,11 @@ def decode_close_open_orders(instruction: TransactionInstruction,) -> CloseOpenO
     )
 
 
-def decode_init_open_orders(instruction: TransactionInstruction,) -> InitOpenOrdersParams:
-    market_authority = instruction.keys[4].pubkey if len(instruction.keys) > 4 else None
+
+def decode_init_open_orders(
+    instruction: TransactionInstruction,
+) -> InitOpenOrdersParams:
+    market_authority = instruction.keys[-1].pubkey if len(instruction.keys) == 5 else None
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
