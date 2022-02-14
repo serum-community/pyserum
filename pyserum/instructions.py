@@ -549,7 +549,6 @@ def decode_close_open_orders(instruction: TransactionInstruction,) -> CloseOpenO
     )
 
 
-
 def decode_init_open_orders(
     instruction: TransactionInstruction,
 ) -> InitOpenOrdersParams:
