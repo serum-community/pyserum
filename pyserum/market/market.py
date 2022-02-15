@@ -276,9 +276,9 @@ class Market(MarketCore):
         return res["result"]["value"]
 
     @staticmethod
-    def get_spl_token_balance_from_account_info(account_info: AccountInfo, decimals: int) -> float:
-        data = account_info.data
-        if isinstance(data, tuple):
+    def get_spl_token_balance_from_account_info(account_info: dict, decimals: int) -> float:
+        data = account_info['data']
+        if isinstance(data, tuple) or isinstance(data, list):
             bytes_data = base64.b64decode(data[0])
         else:
             raise Exception("parse account info balance data errors.")
@@ -319,7 +319,7 @@ class Market(MarketCore):
                 }
                 srm_accounts.append(item)
             sorted_accounts += msrm_accounts + srm_accounts
-            sorted_accounts.sort(key=lambda i: (i["fee_tier"], i["account"]), reverse=True)
+            sorted_accounts.sort(key=lambda i: (i["fee_tier"], i["balance"]), reverse=True)
         self._fee_discount_keys_cache[str_owner] = {"ts": now, "accounts": sorted_accounts}
         return sorted_accounts
 
