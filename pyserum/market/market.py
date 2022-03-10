@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import base64
 import time
-from typing import Dict, List, Any, Union, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
@@ -43,11 +43,11 @@ class Market(MarketCore):
     @classmethod
     # pylint: disable=unused-argument
     def load(
-            cls,
-            conn: Client,
-            market_address: PublicKey,
-            program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
-            force_use_request_queue: bool = False,
+        cls,
+        conn: Client,
+        market_address: PublicKey,
+        program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
+        force_use_request_queue: bool = False,
     ) -> Market:
         """Factory method to create a Market.
 
@@ -60,13 +60,13 @@ class Market(MarketCore):
         return cls(conn, market_state, force_use_request_queue)
 
     def find_open_orders_accounts_for_owner(
-            self, owner_address: PublicKey, cache_duration_ms: int = 0
+        self, owner_address: PublicKey, cache_duration_ms: int = 0
     ) -> List[OpenOrdersAccount]:
         str_owner = owner_address.to_base58().decode()
         now = int(time.time() * 1000)
         if (
-                str_owner in self._open_orders_accounts_cache
-                and now - self._open_orders_accounts_cache[str_owner]["ts"] < cache_duration_ms
+            str_owner in self._open_orders_accounts_cache
+            and now - self._open_orders_accounts_cache[str_owner]["ts"] < cache_duration_ms
         ):
             return self._open_orders_accounts_cache[str_owner]["accounts"]
         open_orders_accounts_for_owner = OpenOrdersAccount.find_for_market_and_owner(
@@ -113,20 +113,20 @@ class Market(MarketCore):
         return self._parse_fills(bytes_data, limit)
 
     def place_order(  # pylint: disable=too-many-arguments,too-many-locals
-            self,
-            payer: PublicKey,
-            owner: Keypair,
-            order_type: OrderType,
-            side: Side,
-            limit_price: float,
-            max_quantity: float,
-            client_id: int = 0,
-            open_orders_address_key: PublicKey = None,
-            open_orders_account: Keypair = None,
-            fee_discount_pubkey: PublicKey = None,
-            self_trade_behavior=SelfTradeBehavior.DECREMENT_TAKE,
-            fee_discount_pubkey_cache_duration_ms: int = 0,
-            opts: TxOpts = TxOpts(),
+        self,
+        payer: PublicKey,
+        owner: Keypair,
+        order_type: OrderType,
+        side: Side,
+        limit_price: float,
+        max_quantity: float,
+        client_id: int = 0,
+        open_orders_address_key: PublicKey = None,
+        open_orders_account: Keypair = None,
+        fee_discount_pubkey: PublicKey = None,
+        self_trade_behavior=SelfTradeBehavior.DECREMENT_TAKE,
+        fee_discount_pubkey_cache_duration_ms: int = 0,
+        opts: TxOpts = TxOpts(),
     ) -> RPCResponse:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         open_orders_layout = get_open_order_layout(self.state.program_id())
         transaction = Transaction()
@@ -136,8 +136,9 @@ class Market(MarketCore):
         if fee_discount_pubkey:
             use_fee_discount_pubkey = fee_discount_pubkey
         elif self.support_srm_fee_discounts():
-            best_fee_discount_key = self.find_best_fee_discount_key(owner_address,
-                                                                    fee_discount_pubkey_cache_duration_ms)
+            best_fee_discount_key = self.find_best_fee_discount_key(
+                owner_address, fee_discount_pubkey_cache_duration_ms
+            )
             if isinstance(best_fee_discount_key["pubkey"], PublicKey):
                 use_fee_discount_pubkey = best_fee_discount_key["pubkey"]
             else:
@@ -177,7 +178,7 @@ class Market(MarketCore):
         return self._conn.send_transaction(transaction, *signers, opts=opts)
 
     def cancel_order_by_client_id(
-            self, owner: Keypair, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int, opts: TxOpts = TxOpts()
     ) -> RPCResponse:
         txs = self._build_cancel_order_by_client_id_tx(
             owner=owner, open_orders_account=open_orders_account, client_id=client_id
@@ -193,13 +194,13 @@ class Market(MarketCore):
         return self._conn.send_transaction(txn, fee_payer, opts=opts)
 
     def settle_funds(  # pylint: disable=too-many-arguments
-            self,
-            owner: Keypair,
-            open_orders: OpenOrdersAccount,
-            base_wallet: PublicKey,
-            quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
-            referrer_quote_wallet: PublicKey = None,
-            opts: TxOpts = TxOpts(),
+        self,
+        owner: Keypair,
+        open_orders: OpenOrdersAccount,
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+        referrer_quote_wallet: PublicKey = None,
+        opts: TxOpts = TxOpts(),
     ) -> RPCResponse:
         # TODO: Handle wrapped sol accounts
         if not open_orders.owner == owner.public_key:
@@ -207,7 +208,7 @@ class Market(MarketCore):
         if referrer_quote_wallet and not self.support_referral_fee():
             raise ValueError("This program ID does not support referrerQuoteWallet")
         should_wrap_sol = (self.state.quote_mint() == WRAPPED_SOL_MINT and quote_wallet == open_orders.owner) or (
-                self.state.base_mint() == WRAPPED_SOL_MINT and base_wallet == open_orders.owner
+            self.state.base_mint() == WRAPPED_SOL_MINT and base_wallet == open_orders.owner
         )
         min_bal_for_rent_exemption = (
             self._conn.get_minimum_balance_for_rent_exemption(165)["result"] if should_wrap_sol else 0
@@ -248,7 +249,7 @@ class Market(MarketCore):
         return fee_tier
 
     def find_base_token_accounts_for_owner(
-            self, owner_address: PublicKey, include_unwrapped_sol: bool = False
+        self, owner_address: PublicKey, include_unwrapped_sol: bool = False
     ) -> List[Dict[str, Union[PublicKey, AccountInfo]]]:
         if self.state.base_mint() == WRAPPED_SOL_MINT and include_unwrapped_sol:
             wrapped = self.find_base_token_accounts_for_owner(owner_address=owner_address, include_unwrapped_sol=False)
@@ -259,7 +260,7 @@ class Market(MarketCore):
         return self.get_token_account_by_owner_for_mint(owner_address, self.state.base_mint())
 
     def find_quote_token_accounts_for_owner(
-            self, owner_address: PublicKey, include_unwrapped_sol: bool = False
+        self, owner_address: PublicKey, include_unwrapped_sol: bool = False
     ) -> List[Dict[str, Union[PublicKey, AccountInfo]]]:
         if self.state.quote_mint() == WRAPPED_SOL_MINT and include_unwrapped_sol:
             wrapped = self.find_quote_token_accounts_for_owner(owner_address=owner_address, include_unwrapped_sol=False)
@@ -269,16 +270,14 @@ class Market(MarketCore):
             return wrapped
         return self.get_token_account_by_owner_for_mint(owner_address, self.state.quote_mint())
 
-    def get_token_account_by_owner_for_mint(
-            self, owner_address: PublicKey, mint_address
-    ) -> List[Dict[str, Any]]:
+    def get_token_account_by_owner_for_mint(self, owner_address: PublicKey, mint_address) -> List[Dict[str, Any]]:
         res = self._conn.get_token_accounts_by_owner(owner_address, TokenAccountOpts(mint=mint_address))
         return res["result"]["value"]
 
     @staticmethod
     def get_spl_token_balance_from_account_info(account_info: dict, decimals: int) -> float:
-        data = account_info['data']
-        if isinstance(data, tuple) or isinstance(data, list):
+        data = account_info["data"]
+        if isinstance(data, (tuple, list)):
             bytes_data = base64.b64decode(data[0])
         else:
             raise Exception("parse account info balance data errors.")
@@ -287,14 +286,14 @@ class Market(MarketCore):
         return balance / 10 ** decimals
 
     def find_fee_discount_keys(
-            self, owner: PublicKey, cache_duration: int = 0
+        self, owner: PublicKey, cache_duration: int = 0
     ) -> List[Dict[str, Union[PublicKey, int]]]:
         sorted_accounts = []
         now = int(time.time() * 1000)
         str_owner = owner.to_base58().decode()
         if (
-                str_owner in self._fee_discount_keys_cache
-                and now - self._fee_discount_keys_cache[str_owner]["ts"] < cache_duration
+            str_owner in self._fee_discount_keys_cache
+            and now - self._fee_discount_keys_cache[str_owner]["ts"] < cache_duration
         ):
             return self._fee_discount_keys_cache[str_owner]["accounts"]
         if self.support_srm_fee_discounts():
@@ -323,8 +322,9 @@ class Market(MarketCore):
         self._fee_discount_keys_cache[str_owner] = {"ts": now, "accounts": sorted_accounts}
         return sorted_accounts
 
-    def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int = 30000
-                                   ) -> Dict[str, Union[Optional[PublicKey], int]]:
+    def find_best_fee_discount_key(
+        self, owner: PublicKey, cache_duration: int = 30000
+    ) -> Dict[str, Union[Optional[PublicKey], int]]:
         accounts = self.find_fee_discount_keys(owner, cache_duration)
         res: Dict[str, Union[Optional[PublicKey], int]] = {"pubkey": None, "fee_tier": 0}
         if len(accounts):

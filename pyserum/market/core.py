@@ -93,7 +93,7 @@ class MarketCore:
             )
 
         price = (price_before_fees * self.state.base_spl_token_multiplier()) / (
-                self.state.quote_spl_token_multiplier() * event.native_quantity_paid
+            self.state.quote_spl_token_multiplier() * event.native_quantity_paid
         )
         size = event.native_quantity_paid / self.state.base_spl_token_multiplier()
         return t.FilledOrder(
@@ -105,12 +105,12 @@ class MarketCore:
         )
 
     def _prepare_new_oo_account(
-            self,
-            owner: Keypair,
-            balance_needed: int,
-            signers: List[Keypair],
-            transaction: Transaction,
-            account: Keypair = None,
+        self,
+        owner: Keypair,
+        balance_needed: int,
+        signers: List[Keypair],
+        transaction: Transaction,
+        account: Keypair = None,
     ) -> PublicKey:
         # new_open_orders_account = Account()
         if account:
@@ -130,25 +130,25 @@ class MarketCore:
         return place_order_open_order_account
 
     def _prepare_order_transaction(  # pylint: disable=too-many-arguments,too-many-locals
-            self,
-            transaction: Transaction,
-            payer: PublicKey,
-            owner: Keypair,
-            order_type: OrderType,
-            side: Side,
-            signers: List[Keypair],
-            limit_price: float,
-            max_quantity: float,
-            client_id: int,
-            open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
-            place_order_open_order_account: PublicKey,
-            fee_discount_pubkey: PublicKey = None,
-            self_trade_behavior: SelfTradeBehavior = SelfTradeBehavior.DECREMENT_TAKE,
+        self,
+        transaction: Transaction,
+        payer: PublicKey,
+        owner: Keypair,
+        order_type: OrderType,
+        side: Side,
+        signers: List[Keypair],
+        limit_price: float,
+        max_quantity: float,
+        client_id: int,
+        open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
+        place_order_open_order_account: PublicKey,
+        fee_discount_pubkey: PublicKey = None,
+        self_trade_behavior: SelfTradeBehavior = SelfTradeBehavior.DECREMENT_TAKE,
     ) -> None:
         # unwrapped SOL cannot be used for payment
         # TODO: add integration test for SOL wrapping.
         should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
-                side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
+            side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
         )
         if payer == owner.public_key and not should_wrap_sol:
             raise ValueError("Invalid payer account.")
@@ -209,12 +209,12 @@ class MarketCore:
             )
 
     def _after_oo_mbfre_resp(
-            self,
-            mbfre_resp: RPCResponse,
-            owner: Keypair,
-            signers: List[Keypair],
-            transaction: Transaction,
-            account: Keypair = None,
+        self,
+        mbfre_resp: RPCResponse,
+        owner: Keypair,
+        signers: List[Keypair],
+        transaction: Transaction,
+        account: Keypair = None,
     ) -> PublicKey:
         balance_needed = mbfre_resp["result"]
         place_order_open_order_account = self._prepare_new_oo_account(
@@ -224,10 +224,10 @@ class MarketCore:
 
     @staticmethod
     def _get_lamport_need_for_sol_wrapping(
-            price: float,
-            size: float,
-            side: Side,
-            open_orders_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
+        price: float,
+        size: float,
+        side: Side,
+        open_orders_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
     ) -> int:
         if side == Side.BUY:
             lamports = round(price * size * 1.01 * LAMPORTS_PER_SOL)
@@ -240,17 +240,17 @@ class MarketCore:
         return max(lamports, 0) + 10000000
 
     def make_place_order_instruction(  # pylint: disable=too-many-arguments
-            self,
-            payer: PublicKey,
-            owner: Keypair,
-            order_type: OrderType,
-            side: Side,
-            limit_price: float,
-            max_quantity: float,
-            client_id: int,
-            open_orders_address_key: PublicKey,
-            fee_discount_pubkey: PublicKey = None,
-            self_trade_behavior: SelfTradeBehavior = SelfTradeBehavior.DECREMENT_TAKE,
+        self,
+        payer: PublicKey,
+        owner: Keypair,
+        order_type: OrderType,
+        side: Side,
+        limit_price: float,
+        max_quantity: float,
+        client_id: int,
+        open_orders_address_key: PublicKey,
+        fee_discount_pubkey: PublicKey = None,
+        self_trade_behavior: SelfTradeBehavior = SelfTradeBehavior.DECREMENT_TAKE,
     ) -> TransactionInstruction:
         if self.state.base_size_number_to_lots(max_quantity) < 0:
             raise Exception("Size lot %d is too small" % max_quantity)
@@ -290,8 +290,9 @@ class MarketCore:
                 side=side,
                 limit_price=self.state.price_number_to_lots(limit_price),
                 max_base_quantity=self.state.base_size_number_to_lots(max_quantity),
-                max_quote_quantity=self.state.base_size_number_to_lots(
-                    max_quantity) * self.state.quote_lot_size() * self.state.price_number_to_lots(limit_price),
+                max_quote_quantity=self.state.base_size_number_to_lots(max_quantity)
+                * self.state.quote_lot_size()
+                * self.state.price_number_to_lots(limit_price),
                 order_type=order_type,
                 client_id=client_id,
                 program_id=self.state.program_id(),
@@ -302,12 +303,12 @@ class MarketCore:
         )
 
     def _build_cancel_order_by_client_id_tx(
-            self, owner: Keypair, open_orders_account: PublicKey, client_id: int
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int
     ) -> Transaction:
         return Transaction().add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
 
     def make_cancel_order_by_client_id_instruction(
-            self, owner: Keypair, open_orders_account: PublicKey, client_id: int
+        self, owner: Keypair, open_orders_account: PublicKey, client_id: int
     ) -> TransactionInstruction:
         if self._use_request_queue():
             return instructions.cancel_order_by_client_id(
@@ -365,7 +366,7 @@ class MarketCore:
         )
 
     def make_consume_events_instruction(
-            self, open_orders_accounts: List[PublicKey], limit: int
+        self, open_orders_accounts: List[PublicKey], limit: int
     ) -> TransactionInstruction:
         return instructions.consume_events(
             instructions.ConsumeEventsParams(
@@ -380,7 +381,7 @@ class MarketCore:
         )
 
     def make_consume_events_permissioned_instruction(
-            self, open_orders_accounts: List[PublicKey], limit: int
+        self, open_orders_accounts: List[PublicKey], limit: int
     ) -> TransactionInstruction:
         return instructions.consume_events_permissioned(
             instructions.ConsumeEventsPermissionedParams(
@@ -411,14 +412,14 @@ class MarketCore:
         return instructions.match_orders(params)
 
     def _build_settle_funds_tx(  # pylint: disable=too-many-arguments
-            self,
-            signers: List[Keypair],
-            open_orders: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
-            base_wallet: PublicKey,
-            quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
-            min_bal_for_rent_exemption: int,
-            should_wrap_sol: bool,
-            referrer_quote_wallet: PublicKey = None,
+        self,
+        signers: List[Keypair],
+        open_orders: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+        min_bal_for_rent_exemption: int,
+        should_wrap_sol: bool,
+        referrer_quote_wallet: PublicKey = None,
     ) -> Transaction:
         # TODO: Handle wrapped sol accounts
         vault_signer = PublicKey.create_program_address(
@@ -456,17 +457,19 @@ class MarketCore:
                 )
             )
 
-        base = wrapped_sol_account.public_key if (
-                    self.state.base_mint() == WRAPPED_SOL_MINT and wrapped_sol_account is not None) else base_wallet
-        quote = wrapped_sol_account.public_key if (
-                    self.state.quote_mint() == WRAPPED_SOL_MINT and wrapped_sol_account is not None) else quote_wallet
+        base = (
+            wrapped_sol_account.public_key
+            if (self.state.base_mint() == WRAPPED_SOL_MINT and wrapped_sol_account is not None)
+            else base_wallet
+        )
+        quote = (
+            wrapped_sol_account.public_key
+            if (self.state.quote_mint() == WRAPPED_SOL_MINT and wrapped_sol_account is not None)
+            else quote_wallet
+        )
         transaction.add(
             self.make_settle_funds_instruction(
-                open_orders,
-                base,
-                quote,
-                vault_signer,
-                referrer_quote_wallet=referrer_quote_wallet,
+                open_orders, base, quote, vault_signer, referrer_quote_wallet=referrer_quote_wallet,
             )
         )
 
@@ -488,12 +491,12 @@ class MarketCore:
         return (self.state.quote_mint() == WRAPPED_SOL_MINT) or (self.state.base_mint() == WRAPPED_SOL_MINT)
 
     def make_settle_funds_instruction(
-            self,
-            open_orders_account: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
-            base_wallet: PublicKey,
-            quote_wallet: PublicKey,
-            vault_signer: PublicKey,
-            referrer_quote_wallet: PublicKey = None,
+        self,
+        open_orders_account: Union[OpenOrdersAccount, AsyncOpenOrdersAccount],
+        base_wallet: PublicKey,
+        quote_wallet: PublicKey,
+        vault_signer: PublicKey,
+        referrer_quote_wallet: PublicKey = None,
     ) -> TransactionInstruction:
         if base_wallet == self.state.base_vault():
             raise ValueError("base_wallet should not be a vault address")

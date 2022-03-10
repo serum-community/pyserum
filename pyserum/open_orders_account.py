@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List, NamedTuple, Tuple, Type, TypeVar, Optional
+from typing import List, NamedTuple, Optional, Tuple, Type, TypeVar
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
