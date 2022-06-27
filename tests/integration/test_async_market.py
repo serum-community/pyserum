@@ -172,7 +172,9 @@ async def test_order_placement_cancellation_cycle(
 
     # The two order shouldn't get executed since there is a price difference of 1
     await bootstrapped_market.match_orders(
-        stubbed_payer, 2, opts=TxOpts(skip_confirmation=False),
+        stubbed_payer,
+        2,
+        opts=TxOpts(skip_confirmation=False),
     )
 
     # There should be 1 bid order that we sent earlier.

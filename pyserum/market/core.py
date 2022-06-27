@@ -469,7 +469,11 @@ class MarketCore:
         )
         transaction.add(
             self.make_settle_funds_instruction(
-                open_orders, base, quote, vault_signer, referrer_quote_wallet=referrer_quote_wallet,
+                open_orders,
+                base,
+                quote,
+                vault_signer,
+                referrer_quote_wallet=referrer_quote_wallet,
             )
         )
 

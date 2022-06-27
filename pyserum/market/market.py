@@ -150,7 +150,11 @@ class Market(MarketCore):
             mbfre_resp = self._conn.get_minimum_balance_for_rent_exemption(open_orders_layout.sizeof())
             account = open_orders_account if open_orders_account else None
             place_order_open_order_account = self._after_oo_mbfre_resp(
-                mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction, account=account,
+                mbfre_resp=mbfre_resp,
+                owner=owner,
+                signers=signers,
+                transaction=transaction,
+                account=account,
             )
             self._open_orders_accounts_cache[owner_address.to_base58().decode()]["ts"] = 0
         elif open_orders_account:
@@ -283,7 +287,7 @@ class Market(MarketCore):
             raise Exception("parse account info balance data errors.")
         account = ACCOUNT_LAYOUT.parse(bytes_data)
         balance = account.amount
-        return balance / 10 ** decimals
+        return balance / 10**decimals
 
     def find_fee_discount_keys(
         self, owner: PublicKey, cache_duration: int = 0

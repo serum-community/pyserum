@@ -375,7 +375,9 @@ def __parse_and_validate_instruction(
     return data
 
 
-def decode_initialize_market(instruction: TransactionInstruction,) -> InitializeMarketParams:
+def decode_initialize_market(
+    instruction: TransactionInstruction,
+) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
     data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
     return InitializeMarketParams(
@@ -474,7 +476,9 @@ def decode_settle_funds(instruction: TransactionInstruction) -> SettleFundsParam
     )
 
 
-def decode_cancel_order_by_client_id(instruction: TransactionInstruction,) -> CancelOrderByClientIDParams:
+def decode_cancel_order_by_client_id(
+    instruction: TransactionInstruction,
+) -> CancelOrderByClientIDParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
     return CancelOrderByClientIDParams(
         market=instruction.keys[0].pubkey,
@@ -540,7 +544,9 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
     )
 
 
-def decode_close_open_orders(instruction: TransactionInstruction,) -> CloseOpenOrdersParams:
+def decode_close_open_orders(
+    instruction: TransactionInstruction,
+) -> CloseOpenOrdersParams:
     return CloseOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
         owner=instruction.keys[1].pubkey,
@@ -549,7 +555,9 @@ def decode_close_open_orders(instruction: TransactionInstruction,) -> CloseOpenO
     )
 
 
-def decode_init_open_orders(instruction: TransactionInstruction,) -> InitOpenOrdersParams:
+def decode_init_open_orders(
+    instruction: TransactionInstruction,
+) -> InitOpenOrdersParams:
     market_authority = instruction.keys[-1].pubkey if len(instruction.keys) == 5 else None
     return InitOpenOrdersParams(
         open_orders=instruction.keys[0].pubkey,
@@ -559,7 +567,9 @@ def decode_init_open_orders(instruction: TransactionInstruction,) -> InitOpenOrd
     )
 
 
-def decode_prune(instruction: TransactionInstruction,) -> PruneParams:
+def decode_prune(
+    instruction: TransactionInstruction,
+) -> PruneParams:
     data = __parse_and_validate_instruction(instruction, InstructionType.PRUNE)
     return PruneParams(
         market=instruction.keys[0].pubkey,
@@ -639,7 +649,12 @@ def new_order(params: NewOrderParams) -> TransactionInstruction:
     return TransactionInstruction(
         keys=touched_keys,
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.NEW_ORDER, args=args,)),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.NEW_ORDER,
+                args=args,
+            )
+        ),
     )
 
 
@@ -657,7 +672,10 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
         ],
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.MATCH_ORDERS, args=dict(limit=params.limit),)
+            dict(
+                instruction_type=InstructionType.MATCH_ORDERS,
+                args=dict(limit=params.limit),
+            )
         ),
     )
 
@@ -674,7 +692,10 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
         keys=keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CONSUME_EVENTS, args=dict(limit=params.limit),)
+            dict(
+                instruction_type=InstructionType.CONSUME_EVENTS,
+                args=dict(limit=params.limit),
+            )
         ),
     )
 
@@ -690,7 +711,10 @@ def consume_events_permissioned(params: ConsumeEventsPermissionedParams) -> Tran
         keys=keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CONSUME_EVENTS_PERMISSIONED, args=dict(limit=params.limit),)
+            dict(
+                instruction_type=InstructionType.CONSUME_EVENTS_PERMISSIONED,
+                args=dict(limit=params.limit),
+            )
         ),
     )
 
@@ -741,7 +765,9 @@ def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
     )
 
 
-def cancel_order_by_client_id(params: CancelOrderByClientIDParams,) -> TransactionInstruction:
+def cancel_order_by_client_id(
+    params: CancelOrderByClientIDParams,
+) -> TransactionInstruction:
     """Generate a transaction instruction to cancel order by client id."""
     return TransactionInstruction(
         keys=[
@@ -752,7 +778,12 @@ def cancel_order_by_client_id(params: CancelOrderByClientIDParams,) -> Transacti
         ],
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID, args=dict(client_id=params.client_id,),)
+            dict(
+                instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID,
+                args=dict(
+                    client_id=params.client_id,
+                ),
+            )
         ),
     )
 
@@ -774,7 +805,9 @@ def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
         AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
     ]
     if params.fee_discount_pubkey:
-        touched_keys.append(AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False),)
+        touched_keys.append(
+            AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False),
+        )
     return TransactionInstruction(
         keys=touched_keys,
         program_id=params.program_id,
@@ -811,13 +844,18 @@ def cancel_order_v2(params: CancelOrderV2Params) -> TransactionInstruction:
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
                 instruction_type=InstructionType.CANCEL_ORDER_V2,
-                args=dict(side=params.side, order_id=params.order_id.to_bytes(16, byteorder="little"),),
+                args=dict(
+                    side=params.side,
+                    order_id=params.order_id.to_bytes(16, byteorder="little"),
+                ),
             )
         ),
     )
 
 
-def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params,) -> TransactionInstruction:
+def cancel_order_by_client_id_v2(
+    params: CancelOrderByClientIDV2Params,
+) -> TransactionInstruction:
     """Generate a transaction instruction to cancel order by client id."""
     return TransactionInstruction(
         keys=[
@@ -830,7 +868,12 @@ def cancel_order_by_client_id_v2(params: CancelOrderByClientIDV2Params,) -> Tran
         ],
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2, args=dict(client_id=params.client_id,),)
+            dict(
+                instruction_type=InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2,
+                args=dict(
+                    client_id=params.client_id,
+                ),
+            )
         ),
     )
 
@@ -858,7 +901,9 @@ def init_open_orders(params: InitOpenOrdersParams) -> TransactionInstruction:
         AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
     ]
     if params.market_authority:
-        touched_keys.append(AccountMeta(pubkey=params.market_authority, is_signer=False, is_writable=False),)
+        touched_keys.append(
+            AccountMeta(pubkey=params.market_authority, is_signer=False, is_writable=False),
+        )
     return TransactionInstruction(
         keys=touched_keys,
         program_id=params.program_id,
@@ -880,5 +925,10 @@ def prune(params: PruneParams) -> TransactionInstruction:
     return TransactionInstruction(
         keys=keys,
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.PRUNE, args=dict(limit=params.limit),)),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.PRUNE,
+                args=dict(limit=params.limit),
+            )
+        ),
     )

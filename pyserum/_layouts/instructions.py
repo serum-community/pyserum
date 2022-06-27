@@ -48,7 +48,10 @@ _MATCH_ORDERS = cStruct("limit" / Int16ul)
 _CONSUME_EVENTS = cStruct("limit" / Int16ul)
 
 _CANCEL_ORDER = cStruct(
-    "side" / Int32ul, "order_id" / KEY, "open_orders" / Bytes(32), "open_orders_slot" / Int8ul,  # Enum
+    "side" / Int32ul,
+    "order_id" / KEY,
+    "open_orders" / Bytes(32),
+    "open_orders_slot" / Int8ul,  # Enum
 )
 _SETTLE_FUNDS = cStruct()
 
@@ -65,7 +68,10 @@ _NEW_ORDER_V3 = cStruct(
     "limit" / Int16ul,
 )
 
-_CANCEL_ORDER_V2 = cStruct("side" / Int32ul, "order_id" / KEY,)  # Enum
+_CANCEL_ORDER_V2 = cStruct(
+    "side" / Int32ul,
+    "order_id" / KEY,
+)  # Enum
 
 _CANCEL_ORDER_BY_CLIENTID_V2 = cStruct("client_id" / Int64ul)
 

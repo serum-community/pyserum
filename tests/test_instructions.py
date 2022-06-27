@@ -183,7 +183,10 @@ def test_cancel_order_by_client_id_v2():
 def test_close_open_orders():
     """Test close open orders."""
     params = inlib.CloseOpenOrdersParams(
-        open_orders=PublicKey(0), owner=PublicKey(1), sol_wallet=PublicKey(2), market=PublicKey(3),
+        open_orders=PublicKey(0),
+        owner=PublicKey(1),
+        sol_wallet=PublicKey(2),
+        market=PublicKey(3),
     )
     instruction = inlib.close_open_orders(params)
     assert inlib.decode_close_open_orders(instruction) == params
@@ -201,7 +204,10 @@ def test_init_open_orders():
 def test_init_open_orders_with_authority():
     """Test init open orders with authority."""
     params = inlib.InitOpenOrdersParams(
-        open_orders=PublicKey(0), owner=PublicKey(1), market=PublicKey(2), market_authority=PublicKey(3),
+        open_orders=PublicKey(0),
+        owner=PublicKey(1),
+        market=PublicKey(2),
+        market_authority=PublicKey(3),
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params

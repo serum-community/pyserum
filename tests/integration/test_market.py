@@ -81,7 +81,10 @@ def test_match_order(bootstrapped_market: Market, stubbed_payer: Keypair):
 
 @pytest.mark.integration
 def test_settle_fund(
-    bootstrapped_market: Market, stubbed_payer: Keypair, stubbed_quote_wallet: Keypair, stubbed_base_wallet: Keypair,
+    bootstrapped_market: Market,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
     open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key)
 
@@ -117,7 +120,10 @@ def test_settle_fund(
 
 @pytest.mark.integration
 def test_order_placement_cancellation_cycle(
-    bootstrapped_market: Market, stubbed_payer: Keypair, stubbed_quote_wallet: Keypair, stubbed_base_wallet: Keypair,
+    bootstrapped_market: Market,
+    stubbed_payer: Keypair,
+    stubbed_quote_wallet: Keypair,
+    stubbed_base_wallet: Keypair,
 ):
     initial_request_len = len(bootstrapped_market.load_request_queue())
     bootstrapped_market.place_order(
@@ -154,7 +160,9 @@ def test_order_placement_cancellation_cycle(
 
     # The two order shouldn't get executed since there is a price difference of 1
     bootstrapped_market.match_orders(
-        stubbed_payer, 2, opts=TxOpts(skip_confirmation=False),
+        stubbed_payer,
+        2,
+        opts=TxOpts(skip_confirmation=False),
     )
 
     # There should be 1 bid order that we sent earlier.

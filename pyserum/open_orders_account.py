@@ -102,7 +102,10 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
     ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
         filters = [
-            MemcmpOpts(offset=5 + 8, bytes=str(market),),  # 5 bytes of padding, 8 bytes of account flag
+            MemcmpOpts(
+                offset=5 + 8,
+                bytes=str(market),
+            ),  # 5 bytes of padding, 8 bytes of account flag
             MemcmpOpts(
                 offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),

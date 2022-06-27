@@ -67,7 +67,11 @@ def place_order(market: Market):
 
 
 def match_order(market: Market):
-    res = market.match_orders(fee_payer=mykey, limit=2, opts=TxOpts(skip_confirmation=False),)
+    res = market.match_orders(
+        fee_payer=mykey,
+        limit=2,
+        opts=TxOpts(skip_confirmation=False),
+    )
     print(f"match_orders: {res}")
 
 
@@ -88,7 +92,11 @@ def cancel_order(market: Market):
     orders = market.load_orders_for_owner(owner_address=mykey.public_key)
     for order in orders:
         print(f"order: {order}")
-    res = market.cancel_order(owner=mykey, order=orders[0], opts=TxOpts(skip_confirmation=False),)
+    res = market.cancel_order(
+        owner=mykey,
+        order=orders[0],
+        opts=TxOpts(skip_confirmation=False),
+    )
     print(f"cancel_order: {res}")
 
 

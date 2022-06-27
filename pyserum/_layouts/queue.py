@@ -48,7 +48,15 @@ EVENT_QUEUE_HEADER_LAYOUT = cStruct(
     Padding(4),
 )
 
-EVENT_FLAGS_LAYOUT = BitsSwapped(BitStruct("fill" / Flag, "out" / Flag, "bid" / Flag, "maker" / Flag, Padding(4),))
+EVENT_FLAGS_LAYOUT = BitsSwapped(
+    BitStruct(
+        "fill" / Flag,
+        "out" / Flag,
+        "bid" / Flag,
+        "maker" / Flag,
+        Padding(4),
+    )
+)
 
 EVENT_LAYOUT = cStruct(
     "event_flags" / EVENT_FLAGS_LAYOUT,
