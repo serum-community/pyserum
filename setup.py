@@ -1,4 +1,5 @@
 """setuptools module for PySerum."""
+222222
 
 from setuptools import find_packages, setup
 
@@ -7,11 +8,7 @@ setup(
     version="0.5.0a",
     author="serum-community",
     description="""Python client library for interacting with the Project Serum DEX.""",
-    install_requires=[
-        "construct>=2.10.56, <3.0.0",
-        "construct-typing>=0.5.1, <1.0.0",
-        "solana>=0.11.3, <1.0.0",
-    ],
+    install_requires=["construct>=2.10.56, <3.0.0", "construct-typing>=0.5.1, <1.0.0", "solana>=0.11.3, <1.0.0"],
     python_requires=">=3.7, <4",
     license="MIT",
     package_data={"pyserum": ["py.typed"]},

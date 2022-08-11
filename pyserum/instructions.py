@@ -47,6 +47,13 @@ class InitializeMarketParams(NamedTuple):
     quote_dust_threshold: int
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+    authority: Optional[PublicKey] = None
+    """"""
+    prune_authority: Optional[PublicKey] = None
+    """"""
+    crank_authority: Optional[PublicKey] = None
+    """"""
 
 
 class NewOrderParams(NamedTuple):
@@ -77,6 +84,8 @@ class NewOrderParams(NamedTuple):
     client_id: int = 0
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+    fee_discount_pubkey: Optional[PublicKey] = None
     """"""
 
 
@@ -109,6 +118,27 @@ class ConsumeEventsParams(NamedTuple):
     market: PublicKey
     """"""
     event_queue: PublicKey
+    """"""
+    coin_fee: PublicKey
+    """"""
+    pc_fee: PublicKey
+    """"""
+    open_orders_accounts: List[PublicKey]
+    """"""
+    limit: int
+    """"""
+    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+
+
+class ConsumeEventsPermissionedParams(NamedTuple):
+    """Consume events params."""
+
+    market: PublicKey
+    """"""
+    event_queue: PublicKey
+    """"""
+    crank_authority: PublicKey
     """"""
     open_orders_accounts: List[PublicKey]
     """"""
@@ -176,6 +206,8 @@ class SettleFundsParams(NamedTuple):
     vault_signer: PublicKey
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
+    """"""
+    referrer_quote_wallet: Optional[PublicKey] = None
 
 
 class NewOrderV3Params(NamedTuple):
@@ -213,13 +245,14 @@ class NewOrderV3Params(NamedTuple):
     """"""
     self_trade_behavior: SelfTradeBehavior
     """"""
-    limit: Optional[int]
+    program_id: PublicKey
+    """"""
+    limit: int = 65545
     """"""
     client_id: int = 0
     """"""
-    program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
-    """"""
     fee_discount_pubkey: Optional[PublicKey] = None
+    """"""
 
 
 class CancelOrderV2Params(NamedTuple):
@@ -240,8 +273,6 @@ class CancelOrderV2Params(NamedTuple):
     side: Side
     """"""
     order_id: int
-    """"""
-    open_orders_slot: int
     """"""
     program_id: PublicKey = DEFAULT_DEX_PROGRAM_ID
     """"""
@@ -298,13 +329,35 @@ class InitOpenOrdersParams(NamedTuple):
     """"""
 
 
+class PruneParams(NamedTuple):
+    """Prune"""
+
+    market: PublicKey
+    """"""
+    bids: PublicKey
+    """"""
+    asks: PublicKey
+    """"""
+    event_queue: PublicKey
+    """"""
+    prune_authority: PublicKey
+    """"""
+    open_orders: PublicKey
+    """"""
+    open_orders_owner: PublicKey
+    """"""
+    program_id: PublicKey
+    """"""
+    limit: int
+
+
 def __parse_and_validate_instruction(
     instruction: TransactionInstruction, instruction_type: InstructionType
 ) -> Container:
     instruction_type_to_length_map: Dict[InstructionType, int] = {
         InstructionType.INITIALIZE_MARKET: 9,
         InstructionType.NEW_ORDER: 9,
-        InstructionType.MATCH_ORDER: 7,
+        InstructionType.MATCH_ORDERS: 7,
         InstructionType.CONSUME_EVENTS: 2,
         InstructionType.CANCEL_ORDER: 4,
         InstructionType.CANCEL_ORDER_BY_CLIENT_ID: 4,
@@ -314,6 +367,7 @@ def __parse_and_validate_instruction(
         InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2: 6,
         InstructionType.CLOSE_OPEN_ORDERS: 4,
         InstructionType.INIT_OPEN_ORDERS: 3,
+        InstructionType.PRUNE: 7,
     }
     validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
@@ -342,6 +396,9 @@ def decode_initialize_market(
         vault_signer_nonce=data.args.vault_signer_nonce,
         quote_dust_threshold=data.args.quote_dust_threshold,
         program_id=instruction.program_id,
+        authority=instruction.keys[10].pubkey if len(instruction.keys) > 10 else None,
+        prune_authority=instruction.keys[11].pubkey if len(instruction.keys) > 11 else None,
+        crank_authority=instruction.keys[12].pubkey if len(instruction.keys) > 12 else None,
     )
 
 
@@ -365,7 +422,7 @@ def decode_new_order(instruction: TransactionInstruction) -> NewOrderParams:
 
 def decode_match_orders(instruction: TransactionInstruction) -> MatchOrdersParams:
     """Decode a match orders instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDER)
+    data = __parse_and_validate_instruction(instruction, InstructionType.MATCH_ORDERS)
     return MatchOrdersParams(
         market=instruction.keys[0].pubkey,
         request_queue=instruction.keys[1].pubkey,
@@ -385,8 +442,10 @@ def decode_consume_events(instruction: TransactionInstruction) -> ConsumeEventsP
         open_orders_accounts=[a_m.pubkey for a_m in instruction.keys[:-4]],
         market=instruction.keys[-4].pubkey,
         event_queue=instruction.keys[-3].pubkey,
-        # NOTE - ignoring pc_fee and coin_fee as unused
+        coin_fee=instruction.keys[-2].pubkey,
+        pc_fee=instruction.keys[-1].pubkey,
         limit=data.args.limit,
+        program_id=instruction.program_id,
     )
 
 
@@ -443,7 +502,7 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
         owner=instruction.keys[7].pubkey,
         base_vault=instruction.keys[8].pubkey,
         quote_vault=instruction.keys[9].pubkey,
-        side=data.args.side,
+        side=Side(data.args.side),
         limit_price=data.args.limit_price,
         max_base_quantity=data.args.max_base_quantity,
         max_quote_quantity=data.args.max_quote_quantity,
@@ -451,6 +510,8 @@ def decode_new_order_v3(instruction: TransactionInstruction) -> NewOrderV3Params
         order_type=OrderType(data.args.order_type),
         client_id=data.args.client_id,
         limit=data.args.limit,
+        program_id=instruction.program_id,
+        fee_discount_pubkey=instruction.keys[12].pubkey if len(instruction.keys) > 12 else None,
     )
 
 
@@ -465,7 +526,7 @@ def decode_cancel_order_v2(instruction: TransactionInstruction) -> CancelOrderV2
         event_queue=instruction.keys[5].pubkey,
         side=Side(data.args.side),
         order_id=int.from_bytes(data.args.order_id, "little"),
-        open_orders_slot=data.args.open_orders_slot,
+        program_id=instruction.program_id,
     )
 
 
@@ -479,6 +540,7 @@ def decode_cancel_order_by_client_id_v2(instruction: TransactionInstruction) -> 
         owner=instruction.keys[4].pubkey,
         event_queue=instruction.keys[5].pubkey,
         client_id=data.args.client_id,
+        program_id=instruction.program_id,
     )
 
 
@@ -505,20 +567,47 @@ def decode_init_open_orders(
     )
 
 
+def decode_prune(
+    instruction: TransactionInstruction,
+) -> PruneParams:
+    data = __parse_and_validate_instruction(instruction, InstructionType.PRUNE)
+    return PruneParams(
+        market=instruction.keys[0].pubkey,
+        bids=instruction.keys[1].pubkey,
+        asks=instruction.keys[2].pubkey,
+        prune_authority=instruction.keys[3].pubkey,
+        open_orders=instruction.keys[4].pubkey,
+        open_orders_owner=instruction.keys[5].pubkey,
+        event_queue=instruction.keys[6].pubkey,
+        program_id=instruction.program_id,
+        limit=data.args.limit,
+    )
+
+
 def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
     """Generate a transaction instruction to initialize a Serum market."""
+    touched_keys = [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.base_mint, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=params.quote_mint, is_signer=False, is_writable=False),
+        AccountMeta(
+            pubkey=params.quote_mint if params.authority else SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False
+        ),
+    ]
+    if params.authority:
+        touched_keys.append(AccountMeta(pubkey=params.authority, is_signer=False, is_writable=False))
+    if params.authority and params.prune_authority:
+        touched_keys.append(AccountMeta(pubkey=params.prune_authority, is_signer=False, is_writable=False))
+    if params.authority and params.prune_authority and params.crank_authority:
+        touched_keys.append(AccountMeta(pubkey=params.crank_authority, is_signer=False, is_writable=False))
     return TransactionInstruction(
-        keys=[
-            AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
-            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.base_mint, is_signer=False, is_writable=False),
-            AccountMeta(pubkey=params.quote_mint, is_signer=False, is_writable=False),
-        ],
+        keys=touched_keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
@@ -537,29 +626,33 @@ def initialize_market(params: InitializeMarketParams) -> TransactionInstruction:
 
 def new_order(params: NewOrderParams) -> TransactionInstruction:
     """Generate a transaction instruction to place new order."""
+    touched_keys = [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.payer, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
+    ]
+    if params.fee_discount_pubkey:
+        touched_keys.append(AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False))
+    args = dict(
+        side=params.side,
+        limit_price=params.limit_price,
+        max_quantity=params.max_quantity,
+        order_type=params.order_type,
+        client_id=params.client_id,
+    )
     return TransactionInstruction(
-        keys=[
-            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.request_queue, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.payer, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
-            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
-            AccountMeta(pubkey=SYSVAR_RENT_PUBKEY, is_signer=False, is_writable=False),
-        ],
+        keys=touched_keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
                 instruction_type=InstructionType.NEW_ORDER,
-                args=dict(
-                    side=params.side,
-                    limit_price=params.limit_price,
-                    max_quantity=params.max_quantity,
-                    order_type=params.order_type,
-                    client_id=params.client_id,
-                ),
+                args=args,
             )
         ),
     )
@@ -580,7 +673,7 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
-                instruction_type=InstructionType.MATCH_ORDER,
+                instruction_type=InstructionType.MATCH_ORDERS,
                 args=dict(limit=params.limit),
             )
         ),
@@ -589,10 +682,11 @@ def match_orders(params: MatchOrdersParams) -> TransactionInstruction:
 
 def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
     """Generate a transaction instruction to consume market events."""
-    keys = [
-        AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
-        # NOTE - last two accounts are required for backwards compatibility but are ignored
-        for pubkey in params.open_orders_accounts + (2 * [params.market, params.event_queue])
+    keys = [AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True) for pubkey in params.open_orders_accounts] + [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.coin_fee, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.pc_fee, is_signer=False, is_writable=True),
     ]
     return TransactionInstruction(
         keys=keys,
@@ -600,6 +694,25 @@ def consume_events(params: ConsumeEventsParams) -> TransactionInstruction:
         data=INSTRUCTIONS_LAYOUT.build(
             dict(
                 instruction_type=InstructionType.CONSUME_EVENTS,
+                args=dict(limit=params.limit),
+            )
+        ),
+    )
+
+
+def consume_events_permissioned(params: ConsumeEventsPermissionedParams) -> TransactionInstruction:
+    """Generate a transaction instruction to consume market events."""
+    keys = [AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True) for pubkey in params.open_orders_accounts] + [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.crank_authority, is_signer=True, is_writable=False),
+    ]
+    return TransactionInstruction(
+        keys=keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.CONSUME_EVENTS_PERMISSIONED,
                 args=dict(limit=params.limit),
             )
         ),
@@ -632,18 +745,21 @@ def cancel_order(params: CancelOrderParams) -> TransactionInstruction:
 
 def settle_funds(params: SettleFundsParams) -> TransactionInstruction:
     """Generate a transaction instruction to settle fund."""
+    touched_keys = [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
+        AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.base_wallet, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.quote_wallet, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.vault_signer, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
+    ]
+    if params.referrer_quote_wallet:
+        touched_keys.append(AccountMeta(pubkey=params.referrer_quote_wallet, is_signer=False, is_writable=True))
     return TransactionInstruction(
-        keys=[
-            AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.owner, is_signer=True, is_writable=False),
-            AccountMeta(pubkey=params.base_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.quote_vault, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.base_wallet, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.quote_wallet, is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.vault_signer, is_signer=False, is_writable=False),
-            AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
-        ],
+        keys=touched_keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SETTLE_FUNDS, args=dict())),
     )
@@ -706,7 +822,7 @@ def new_order_v3(params: NewOrderV3Params) -> TransactionInstruction:
                     self_trade_behavior=params.self_trade_behavior,
                     order_type=params.order_type,
                     client_id=params.client_id,
-                    limit=65535,
+                    limit=params.limit,
                 ),
             )
         ),
@@ -792,4 +908,27 @@ def init_open_orders(params: InitOpenOrdersParams) -> TransactionInstruction:
         keys=touched_keys,
         program_id=params.program_id,
         data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.INIT_OPEN_ORDERS, args=dict())),
+    )
+
+
+def prune(params: PruneParams) -> TransactionInstruction:
+    """Generate a transaction instruction to prune."""
+    keys = [
+        AccountMeta(pubkey=params.market, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.bids, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.asks, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.prune_authority, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=params.open_orders, is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.open_orders_owner, is_signer=False, is_writable=False),
+        AccountMeta(pubkey=params.event_queue, is_signer=False, is_writable=True),
+    ]
+    return TransactionInstruction(
+        keys=keys,
+        program_id=params.program_id,
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(
+                instruction_type=InstructionType.PRUNE,
+                args=dict(limit=params.limit),
+            )
+        ),
     )

@@ -12,10 +12,10 @@ from solana.transaction import Transaction
 import pyserum.market.types as t
 from pyserum import instructions
 
-from .._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from ..async_open_orders_account import AsyncOpenOrdersAccount
 from ..async_utils import load_bytes_data
 from ..enums import OrderType, Side
+from ..open_orders_account import get_layout
 from ._internal.queue import decode_event_queue, decode_request_queue
 from .core import MarketCore
 from .orderbook import OrderBook
@@ -105,7 +105,8 @@ class AsyncMarket(MarketCore):
         if open_order_accounts:
             place_order_open_order_account = open_order_accounts[0].address
         else:
-            mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
+            open_orders_layout = get_layout(self.state.program_id())
+            mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(open_orders_layout.sizeof())
             place_order_open_order_account = self._after_oo_mbfre_resp(
                 mbfre_resp=mbfre_resp, owner=owner, signers=signers, transaction=transaction
             )
@@ -149,6 +150,7 @@ class AsyncMarket(MarketCore):
         open_orders: AsyncOpenOrdersAccount,
         base_wallet: PublicKey,
         quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+        referrer_quote_wallet: PublicKey = None,
         opts: TxOpts = TxOpts(),
     ) -> RPCResponse:
         # TODO: Handle wrapped sol accounts
@@ -160,12 +162,12 @@ class AsyncMarket(MarketCore):
             min_bal_for_rent_exemption = 0  # value only matters if should_wrap_sol
         signers = [owner]
         transaction = self._build_settle_funds_tx(
-            owner=owner,
             signers=signers,
             open_orders=open_orders,
             base_wallet=base_wallet,
             quote_wallet=quote_wallet,
             min_bal_for_rent_exemption=min_bal_for_rent_exemption,
             should_wrap_sol=should_wrap_sol,
+            referrer_quote_wallet=referrer_quote_wallet,
         )
         return await self._conn.send_transaction(transaction, *signers, opts=opts)

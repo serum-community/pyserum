@@ -12,7 +12,7 @@ def assert_parsed_layout(instruction_type, args, raw_bytes):
     if args:
         assert parsed.args == args
     else:
-        assert not parsed.args
+        assert not parsed.args or parsed
 
 
 def test_parse_initialize_market():
@@ -51,8 +51,8 @@ def test_parse_match_orders():
     """Test parsing raw match orders data."""
     args = {"limit": 1}
     expected = bytes.fromhex("00020000000100")  # Raw hex from serum.js
-    assert INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.MATCH_ORDER, args=args)) == expected
-    assert_parsed_layout(InstructionType.MATCH_ORDER, args, expected)
+    assert INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.MATCH_ORDERS, args=args)) == expected
+    assert_parsed_layout(InstructionType.MATCH_ORDERS, args, expected)
 
 
 def test_parse_consume_events():
