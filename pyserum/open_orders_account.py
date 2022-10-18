@@ -4,7 +4,7 @@ from typing import List, NamedTuple, Tuple, Type, TypeVar
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.commitment import Recent
+from solana.rpc.commitment import Processed
 from solana.rpc.types import Commitment, MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
@@ -137,7 +137,7 @@ class OpenOrdersAccount(_OpenOrdersAccountCore):
         market: PublicKey,
         owner: PublicKey,
         program_id: PublicKey,
-        commitment: Commitment = Recent,
+        commitment: Commitment = Processed,
     ) -> List[OpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment

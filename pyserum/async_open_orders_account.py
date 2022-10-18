@@ -4,7 +4,7 @@ from typing import List
 
 from solana.publickey import PublicKey
 from solana.rpc.async_api import AsyncClient
-from solana.rpc.commitment import Recent
+from solana.rpc.commitment import Processed
 from solana.rpc.types import Commitment
 
 from .async_utils import load_bytes_data
@@ -19,7 +19,7 @@ class AsyncOpenOrdersAccount(_OpenOrdersAccountCore):
         market: PublicKey,
         owner: PublicKey,
         program_id: PublicKey,
-        commitment: Commitment = Recent,
+        commitment: Commitment = Processed,
     ) -> List[AsyncOpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment
