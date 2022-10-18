@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import base64
 from typing import List, NamedTuple, Tuple, Type, TypeVar
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.commitment import Recent
-from solana.rpc.types import Commitment, MemcmpOpts, RPCResponse
+from solana.rpc.types import Commitment, MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
+from solders.rpc.responses import GetProgramAccountsResp
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .instructions import DEFAULT_DEX_PROGRAM_ID
@@ -57,7 +57,10 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
     @classmethod
     def from_bytes(cls: Type[_T], address: PublicKey, buffer: bytes) -> _T:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
-        if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
+        if (
+            not open_order_decoded.account_flags.open_orders
+            or not open_order_decoded.account_flags.initialized
+        ):
             raise Exception("Not an open order account or not initialized.")
 
         return cls(
@@ -70,38 +73,49 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
             quote_token_total=open_order_decoded.quote_token_total,
             free_slot_bits=int.from_bytes(open_order_decoded.free_slot_bits, "little"),
             is_bid_bits=int.from_bytes(open_order_decoded.is_bid_bits, "little"),
-            orders=[int.from_bytes(order, "little") for order in open_order_decoded.orders],
+            orders=[
+                int.from_bytes(order, "little") for order in open_order_decoded.orders
+            ],
             client_ids=open_order_decoded.client_ids,
         )
 
     @classmethod
-    def _process_get_program_accounts_resp(cls: Type[_T], resp: RPCResponse) -> List[_T]:
+    def _process_get_program_accounts_resp(
+        cls: Type[_T], resp: GetProgramAccountsResp
+    ) -> List[_T]:
         accounts = []
-        for account in resp["result"]:
-            account_details = account["account"]
+        for keyed_account in resp.value:
+            account_details = keyed_account.account
             accounts.append(
                 ProgramAccount(
-                    public_key=PublicKey(account["pubkey"]),
-                    data=base64.decodebytes(account_details["data"][0].encode("ascii")),
-                    is_executablable=bool(account_details["executable"]),
-                    owner=PublicKey(account_details["owner"]),
-                    lamports=int(account_details["lamports"]),
+                    public_key=PublicKey(keyed_account.pubkey),
+                    data=account_details.data,
+                    is_executablable=account_details.executable,
+                    owner=PublicKey(account_details.owner),
+                    lamports=account_details.lamports,
                 )
             )
 
-        return [cls.from_bytes(account.public_key, account.data) for account in accounts]
+        return [
+            cls.from_bytes(account.public_key, account.data) for account in accounts
+        ]
 
     @staticmethod
     def _build_get_program_accounts_args(
-        market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
-    ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
+        market: PublicKey,
+        program_id: PublicKey,
+        owner: PublicKey,
+        commitment: Commitment,
+    ) -> Tuple[PublicKey, Commitment, str, None, List[MemcmpOpts]]:
         filters = [
             MemcmpOpts(
                 offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
                 bytes=str(market),
             ),
             MemcmpOpts(
-                offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
+                offset=5
+                + 8
+                + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),
             ),
         ]
@@ -111,7 +125,6 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
             commitment,
             "base64",
             data_slice,
-            OPEN_ORDERS_LAYOUT.sizeof(),
             filters,
         )
 
@@ -119,7 +132,12 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 class OpenOrdersAccount(_OpenOrdersAccountCore):
     @classmethod
     def find_for_market_and_owner(  # pylint: disable=too-many-arguments
-        cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
+        cls,
+        conn: Client,
+        market: PublicKey,
+        owner: PublicKey,
+        program_id: PublicKey,
+        commitment: Commitment = Recent,
     ) -> List[OpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment

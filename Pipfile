@@ -10,7 +10,7 @@ allow_prereleases = true
 install-ci-deps = "pipenv install --dev --skip-lock black pydocstyle flake8 pylint mypy pytest"
 
 [dev-packages]
-jupyterlab = "*"
+notebook = "*"
 black = "*"
 pytest = "*"
 pylint = "*"
@@ -28,7 +28,7 @@ pytest-asyncio = "*"
 types-requests = "*"
 
 [packages]
-solana = {version = ">=0.15.0"}
+solana = {version = ">=0.27.0"}
 construct = "*"
 flake8 = "*"
 construct-typing = "*"
