@@ -35,9 +35,7 @@ class AsyncMarket(MarketCore):
         market_state: MarketState,
         force_use_request_queue: bool = False,
     ) -> None:
-        super().__init__(
-            market_state=market_state, force_use_request_queue=force_use_request_queue
-        )
+        super().__init__(market_state=market_state, force_use_request_queue=force_use_request_queue)
         self._conn = conn
 
     @classmethod
@@ -58,9 +56,7 @@ class AsyncMarket(MarketCore):
         market_state = await MarketState.async_load(conn, market_address, program_id)
         return cls(conn, market_state, force_use_request_queue)
 
-    async def find_open_orders_accounts_for_owner(
-        self, owner_address: PublicKey
-    ) -> List[AsyncOpenOrdersAccount]:
+    async def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[AsyncOpenOrdersAccount]:
         return await AsyncOpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
@@ -79,9 +75,7 @@ class AsyncMarket(MarketCore):
         """Load orders for owner."""
         bids = await self.load_bids()
         asks = await self.load_asks()
-        open_orders_accounts = await self.find_open_orders_accounts_for_owner(
-            owner_address
-        )
+        open_orders_accounts = await self.find_open_orders_accounts_for_owner(owner_address)
         return self._parse_orders_for_owner(bids, asks, open_orders_accounts)
 
     async def load_event_queue(self) -> List[t.Event]:
@@ -113,15 +107,11 @@ class AsyncMarket(MarketCore):
     ) -> SendTransactionResp:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Keypair] = [owner]
-        open_order_accounts = await self.find_open_orders_accounts_for_owner(
-            owner.public_key
-        )
+        open_order_accounts = await self.find_open_orders_accounts_for_owner(owner.public_key)
         if open_order_accounts:
             place_order_open_order_account = open_order_accounts[0].address
         else:
-            mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(
-                OPEN_ORDERS_LAYOUT.sizeof()
-            )
+            mbfre_resp = await self._conn.get_minimum_balance_for_rent_exemption(OPEN_ORDERS_LAYOUT.sizeof())
             place_order_open_order_account = self._after_oo_mbfre_resp(
                 mbfre_resp=mbfre_resp,
                 owner=owner,
@@ -158,15 +148,11 @@ class AsyncMarket(MarketCore):
         )
         return await self._conn.send_transaction(txs, owner, opts=opts)
 
-    async def cancel_order(
-        self, owner: Keypair, order: t.Order, opts: TxOpts = TxOpts()
-    ) -> SendTransactionResp:
+    async def cancel_order(self, owner: Keypair, order: t.Order, opts: TxOpts = TxOpts()) -> SendTransactionResp:
         txn = self._build_cancel_order_tx(owner=owner, order=order)
         return await self._conn.send_transaction(txn, owner, opts=opts)
 
-    async def match_orders(
-        self, fee_payer: Keypair, limit: int, opts: TxOpts = TxOpts()
-    ) -> SendTransactionResp:
+    async def match_orders(self, fee_payer: Keypair, limit: int, opts: TxOpts = TxOpts()) -> SendTransactionResp:
         txn = self._build_match_orders_tx(limit)
         return await self._conn.send_transaction(txn, fee_payer, opts=opts)
 

@@ -37,25 +37,20 @@ class MarketCore:
 
     logger = logging.getLogger("pyserum.market.Market")
 
-    def __init__(
-        self, market_state: MarketState, force_use_request_queue: bool = False
-    ) -> None:
+    def __init__(self, market_state: MarketState, force_use_request_queue: bool = False) -> None:
         self.state = market_state
         self.force_use_request_queue = force_use_request_queue
 
     def _use_request_queue(self) -> bool:
         return (
             # DEX Version 1
-            self.state.program_id
-            == PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
+            self.state.program_id == PublicKey("4ckmDgGdxQoPDLUkDT3vHgSAkzA3QRdNq5ywwY4sUSJn")
             or
             # DEX Version 1
-            self.state.program_id
-            == PublicKey("BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg")
+            self.state.program_id == PublicKey("BJ3jrUzddfuSrZHXSCxMUUQsjKEyLmuuyZebkcaFp2fg")
             or
             # DEX Version 2
-            self.state.program_id
-            == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
+            self.state.program_id == PublicKey("EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o")
             or self.force_use_request_queue
         )
 
@@ -68,9 +63,7 @@ class MarketCore:
     def find_best_fee_discount_key(self, owner: PublicKey, cache_duration: int):
         raise NotImplementedError("find_best_fee_discount_key not implemented")
 
-    def find_quote_token_accounts_for_owner(
-        self, owner_address: PublicKey, include_unwrapped_sol: bool = False
-    ):
+    def find_quote_token_accounts_for_owner(self, owner_address: PublicKey, include_unwrapped_sol: bool = False):
         raise NotImplementedError("find_quote_token_accounts_for_owner not implemented")
 
     def _parse_bids_or_asks(self, bytes_data: bytes) -> OrderBook:
@@ -83,9 +76,7 @@ class MarketCore:
 
         all_orders = itertools.chain(bids.orders(), asks.orders())
         open_orders_addresses = {str(o.address) for o in open_orders_accounts}
-        orders = [
-            o for o in all_orders if str(o.open_order_address) in open_orders_addresses
-        ]
+        orders = [o for o in all_orders if str(o.open_order_address) in open_orders_addresses]
         return orders
 
     def load_base_token_for_owner(self):
@@ -124,8 +115,7 @@ class MarketCore:
             side=side,
             price=price,
             size=size,
-            fee_cost=event.native_fee_or_rebate
-            * (1 if event.event_flags.maker else -1),
+            fee_cost=event.native_fee_or_rebate * (1 if event.event_flags.maker else -1),
         )
 
     def _prepare_new_oo_account(
@@ -160,9 +150,7 @@ class MarketCore:
         limit_price: float,
         max_quantity: float,
         client_id: int,
-        open_order_accounts: Union[
-            List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]
-        ],
+        open_order_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
         place_order_open_order_account: PublicKey,
     ) -> None:
         # unwrapped SOL cannot be used for payment
@@ -170,9 +158,9 @@ class MarketCore:
             raise ValueError("Invalid payer account. Cannot use unwrapped SOL.")
 
         # TODO: add integration test for SOL wrapping.
-        should_wrap_sol = (
-            side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT
-        ) or (side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT)
+        should_wrap_sol = (side == Side.BUY and self.state.quote_mint() == WRAPPED_SOL_MINT) or (
+            side == Side.SELL and self.state.base_mint() == WRAPPED_SOL_MINT
+        )
 
         if should_wrap_sol:
             # wrapped_sol_account = Account()
@@ -236,9 +224,7 @@ class MarketCore:
         transaction: Transaction,
     ) -> PublicKey:
         balance_needed = mbfre_resp.value
-        place_order_open_order_account = self._prepare_new_oo_account(
-            owner, balance_needed, signers, transaction
-        )
+        place_order_open_order_account = self._prepare_new_oo_account(owner, balance_needed, signers, transaction)
         return place_order_open_order_account
 
     @staticmethod
@@ -246,9 +232,7 @@ class MarketCore:
         price: float,
         size: float,
         side: Side,
-        open_orders_accounts: Union[
-            List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]
-        ],
+        open_orders_accounts: Union[List[OpenOrdersAccount], List[AsyncOpenOrdersAccount]],
     ) -> int:
         lamports = 0
         if side == Side.BUY:
@@ -326,11 +310,7 @@ class MarketCore:
     def _build_cancel_order_by_client_id_tx(
         self, owner: Keypair, open_orders_account: PublicKey, client_id: int
     ) -> Transaction:
-        return Transaction().add(
-            self.make_cancel_order_by_client_id_instruction(
-                owner, open_orders_account, client_id
-            )
-        )
+        return Transaction().add(self.make_cancel_order_by_client_id_instruction(owner, open_orders_account, client_id))
 
     def make_cancel_order_by_client_id_instruction(
         self, owner: Keypair, open_orders_account: PublicKey, client_id: int
@@ -360,13 +340,9 @@ class MarketCore:
         )
 
     def _build_cancel_order_tx(self, owner: Keypair, order: t.Order) -> Transaction:
-        return Transaction().add(
-            self.make_cancel_order_instruction(owner.public_key, order)
-        )
+        return Transaction().add(self.make_cancel_order_instruction(owner.public_key, order))
 
-    def make_cancel_order_instruction(
-        self, owner: PublicKey, order: t.Order
-    ) -> TransactionInstruction:
+    def make_cancel_order_instruction(self, owner: PublicKey, order: t.Order) -> TransactionInstruction:
         if self._use_request_queue():
             return instructions.cancel_order(
                 instructions.CancelOrderParams(
@@ -465,12 +441,8 @@ class MarketCore:
         transaction.add(
             self.make_settle_funds_instruction(
                 open_orders,
-                base_wallet
-                if self.state.base_mint() != WRAPPED_SOL_MINT
-                else wrapped_sol_account.public_key,
-                quote_wallet
-                if self.state.quote_mint() != WRAPPED_SOL_MINT
-                else wrapped_sol_account.public_key,
+                base_wallet if self.state.base_mint() != WRAPPED_SOL_MINT else wrapped_sol_account.public_key,
+                quote_wallet if self.state.quote_mint() != WRAPPED_SOL_MINT else wrapped_sol_account.public_key,
                 vault_signer,
             )
         )
@@ -490,9 +462,7 @@ class MarketCore:
         return transaction
 
     def _settle_funds_should_wrap_sol(self) -> bool:
-        return (self.state.quote_mint() == WRAPPED_SOL_MINT) or (
-            self.state.base_mint() == WRAPPED_SOL_MINT
-        )
+        return (self.state.quote_mint() == WRAPPED_SOL_MINT) or (self.state.base_mint() == WRAPPED_SOL_MINT)
 
     def make_settle_funds_instruction(
         self,

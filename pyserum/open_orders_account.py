@@ -57,10 +57,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
     @classmethod
     def from_bytes(cls: Type[_T], address: PublicKey, buffer: bytes) -> _T:
         open_order_decoded = OPEN_ORDERS_LAYOUT.parse(buffer)
-        if (
-            not open_order_decoded.account_flags.open_orders
-            or not open_order_decoded.account_flags.initialized
-        ):
+        if not open_order_decoded.account_flags.open_orders or not open_order_decoded.account_flags.initialized:
             raise Exception("Not an open order account or not initialized.")
 
         return cls(
@@ -73,16 +70,12 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
             quote_token_total=open_order_decoded.quote_token_total,
             free_slot_bits=int.from_bytes(open_order_decoded.free_slot_bits, "little"),
             is_bid_bits=int.from_bytes(open_order_decoded.is_bid_bits, "little"),
-            orders=[
-                int.from_bytes(order, "little") for order in open_order_decoded.orders
-            ],
+            orders=[int.from_bytes(order, "little") for order in open_order_decoded.orders],
             client_ids=open_order_decoded.client_ids,
         )
 
     @classmethod
-    def _process_get_program_accounts_resp(
-        cls: Type[_T], resp: GetProgramAccountsResp
-    ) -> List[_T]:
+    def _process_get_program_accounts_resp(cls: Type[_T], resp: GetProgramAccountsResp) -> List[_T]:
         accounts = []
         for keyed_account in resp.value:
             account_details = keyed_account.account
@@ -96,9 +89,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
                 )
             )
 
-        return [
-            cls.from_bytes(account.public_key, account.data) for account in accounts
-        ]
+        return [cls.from_bytes(account.public_key, account.data) for account in accounts]
 
     @staticmethod
     def _build_get_program_accounts_args(
@@ -113,9 +104,7 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
                 bytes=str(market),
             ),
             MemcmpOpts(
-                offset=5
-                + 8
-                + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
+                offset=5 + 8 + 32,  # 5 bytes of padding, 8 bytes of account flag, 32 bytes of market public key
                 bytes=str(owner),
             ),
         ]
