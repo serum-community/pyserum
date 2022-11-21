@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import base64
 from typing import List, NamedTuple, Tuple, Type, TypeVar
 
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.commitment import Recent
-from solana.rpc.types import Commitment, MemcmpOpts, RPCResponse
+from solana.rpc.commitment import Processed
+from solana.rpc.types import Commitment, MemcmpOpts
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import TransactionInstruction
+from solders.rpc.responses import GetProgramAccountsResp
 
 from ._layouts.open_orders import OPEN_ORDERS_LAYOUT
 from .instructions import DEFAULT_DEX_PROGRAM_ID
@@ -75,17 +75,17 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
         )
 
     @classmethod
-    def _process_get_program_accounts_resp(cls: Type[_T], resp: RPCResponse) -> List[_T]:
+    def _process_get_program_accounts_resp(cls: Type[_T], resp: GetProgramAccountsResp) -> List[_T]:
         accounts = []
-        for account in resp["result"]:
-            account_details = account["account"]
+        for keyed_account in resp.value:
+            account_details = keyed_account.account
             accounts.append(
                 ProgramAccount(
-                    public_key=PublicKey(account["pubkey"]),
-                    data=base64.decodebytes(account_details["data"][0].encode("ascii")),
-                    is_executablable=bool(account_details["executable"]),
-                    owner=PublicKey(account_details["owner"]),
-                    lamports=int(account_details["lamports"]),
+                    public_key=PublicKey(keyed_account.pubkey),
+                    data=account_details.data,
+                    is_executablable=account_details.executable,
+                    owner=PublicKey(account_details.owner),
+                    lamports=account_details.lamports,
                 )
             )
 
@@ -93,8 +93,11 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 
     @staticmethod
     def _build_get_program_accounts_args(
-        market: PublicKey, program_id: PublicKey, owner: PublicKey, commitment: Commitment
-    ) -> Tuple[PublicKey, Commitment, str, None, int, List[MemcmpOpts]]:
+        market: PublicKey,
+        program_id: PublicKey,
+        owner: PublicKey,
+        commitment: Commitment,
+    ) -> Tuple[PublicKey, Commitment, str, None, List[MemcmpOpts]]:
         filters = [
             MemcmpOpts(
                 offset=5 + 8,  # 5 bytes of padding, 8 bytes of account flag
@@ -111,7 +114,6 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
             commitment,
             "base64",
             data_slice,
-            OPEN_ORDERS_LAYOUT.sizeof(),
             filters,
         )
 
@@ -119,7 +121,12 @@ class _OpenOrdersAccountCore:  # pylint: disable=too-many-instance-attributes,to
 class OpenOrdersAccount(_OpenOrdersAccountCore):
     @classmethod
     def find_for_market_and_owner(  # pylint: disable=too-many-arguments
-        cls, conn: Client, market: PublicKey, owner: PublicKey, program_id: PublicKey, commitment: Commitment = Recent
+        cls,
+        conn: Client,
+        market: PublicKey,
+        owner: PublicKey,
+        program_id: PublicKey,
+        commitment: Commitment = Processed,
     ) -> List[OpenOrdersAccount]:
         args = cls._build_get_program_accounts_args(
             market=market, program_id=program_id, owner=owner, commitment=commitment

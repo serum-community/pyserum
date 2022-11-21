@@ -7,11 +7,16 @@ from typing import List, Union
 
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
-from solana.rpc.types import RPCResponse
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import Transaction, TransactionInstruction
+from solders.rpc.responses import GetMinimumBalanceForRentExemptionResp
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT
-from spl.token.instructions import CloseAccountParams, InitializeAccountParams, close_account, initialize_account
+from spl.token.instructions import (
+    CloseAccountParams,
+    InitializeAccountParams,
+    close_account,
+    initialize_account,
+)
 
 import pyserum.market.types as t
 from pyserum import instructions
@@ -114,7 +119,11 @@ class MarketCore:
         )
 
     def _prepare_new_oo_account(
-        self, owner: Keypair, balance_needed: int, signers: List[Keypair], transaction: Transaction
+        self,
+        owner: Keypair,
+        balance_needed: int,
+        signers: List[Keypair],
+        transaction: Transaction,
     ) -> PublicKey:
         # new_open_orders_account = Account()
         new_open_orders_account = Keypair()
@@ -208,9 +217,13 @@ class MarketCore:
             )
 
     def _after_oo_mbfre_resp(
-        self, mbfre_resp: RPCResponse, owner: Keypair, signers: List[Keypair], transaction: Transaction
+        self,
+        mbfre_resp: GetMinimumBalanceForRentExemptionResp,
+        owner: Keypair,
+        signers: List[Keypair],
+        transaction: Transaction,
     ) -> PublicKey:
-        balance_needed = mbfre_resp["result"]
+        balance_needed = mbfre_resp.value
         place_order_open_order_account = self._prepare_new_oo_account(owner, balance_needed, signers, transaction)
         return place_order_open_order_account
 
@@ -246,9 +259,9 @@ class MarketCore:
         fee_discount_pubkey: PublicKey = None,
     ) -> TransactionInstruction:
         if self.state.base_size_number_to_lots(max_quantity) < 0:
-            raise Exception("Size lot %d is too small" % max_quantity)
+            raise Exception(f"Size lot %d is too small {max_quantity}")
         if self.state.price_number_to_lots(limit_price) < 0:
-            raise Exception("Price lot %d is too small" % limit_price)
+            raise Exception(f"Price lot %d is too small {limit_price}")
         if self._use_request_queue():
             return instructions.new_order(
                 instructions.NewOrderParams(
@@ -389,7 +402,10 @@ class MarketCore:
         if open_orders.owner != owner.public_key:
             raise Exception("Invalid open orders account")
         vault_signer = PublicKey.create_program_address(
-            [bytes(self.state.public_key()), self.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+            [
+                bytes(self.state.public_key()),
+                self.state.vault_signer_nonce().to_bytes(8, byteorder="little"),
+            ],
             self.state.program_id(),
         )
         transaction = Transaction()

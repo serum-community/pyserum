@@ -126,10 +126,10 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return self._quote_mint_decimals
 
     def base_spl_token_multiplier(self) -> int:
-        return 10 ** self._base_mint_decimals
+        return 10**self._base_mint_decimals
 
     def quote_spl_token_multiplier(self) -> int:
-        return 10 ** self._quote_mint_decimals
+        return 10**self._quote_mint_decimals
 
     def base_spl_size_to_number(self, size: int) -> float:
         return size / self.base_spl_token_multiplier()
