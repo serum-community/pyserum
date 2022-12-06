@@ -1,8 +1,6 @@
-[![Actions
-Status](https://github.com/serum-community/pyserum/workflows/CI/badge.svg)](https://github.com/serum-community/pyserum/actions?query=workflow%3ACI)
-[![Codecov](https://codecov.io/gh/serum-community/pyserum/branch/alpha/graph/badge.svg)](https://codecov.io/gh/serum-community/pyserum/branches/alpha)
 
-# PySerum
+
+# No Broker
 
 Python client library for interacting with the [Project Serum](https://projectserum.com/) DEX.
 
