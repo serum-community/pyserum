@@ -52,33 +52,42 @@ for bid in bids:
     print(f"Order id: {bid.order_id}, price: {bid.info.price}, size: {bid.info.size}.")
 ```
 
-### Get Orderbook (Async)
+### Get Orderbook (Sync)
 
 ```python
-import asyncio
-from pyserum.async_connection import async_conn
-from pyserum.market import AsyncMarket
+from pyserum.connection import conn
+from pyserum.market import Market
+
+from solana.publickey import PublicKey
 
 
-async def main():
-    market_address = "5LgJphS6D5zXwUVPU7eCryDBkyta3AidrJ5vjNU6BcGW"  # Address for BTC/USDC
-    async with async_conn("https://api.mainnet-beta.solana.com/") as cc:
-        # Load the given market
-        market = await AsyncMarket.load(cc, market_address)
-        asks = await market.load_asks()
-        # Show all current ask order
-        print("Ask Orders:")
-        for ask in asks:
-            print(f"Order id: {ask.order_id}, price: {ask.info.price}, size: {ask.info.size}.")
-        print("\n")
-        # Show all current bid order
-        print("Bid Orders:")
-        bids = await market.load_bids()
-        for bid in bids:
-            print(f"Order id: {bid.order_id}, price: {bid.info.price}, size: {bid.info.size}.")
+def get_orderbook_sync():
+    cc = conn("https://api.mainnet-beta.solana.com/")
+    market_address = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"  # Openbook SOL/USDC
+
+    # Load the given DEX
+    market = Market.load(cc, PublicKey(market_address))
+
+    # Show all current bid orders
+    print("Bid Orders:")
+    bids = market.load_bids()
+    for bid in bids:
+        print(f"Order id: {bid.order_id}, price: {bid.info.price}, size: {bid.info.size}.")
+
+    print("\n")
+
+    # Show all current ask orders
+    asks = market.load_asks()
+    print("Ask Orders:")
+    for ask in asks:
+        print("Order id: %d, price: %f, size: %f." % (
+              ask.order_id, ask.info.price, ask.info.size))
 
 
-asyncio.run(main())
+
+if __name__ == '__main__':
+
+    get_orderbook_sync()
 
 ```
 
