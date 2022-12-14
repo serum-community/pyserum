@@ -1,18 +1,16 @@
-import base64
-
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.types import RPCResponse
+from solders.account import Account
+from solders.rpc.responses import GetAccountInfoResp
 from spl.token.constants import WRAPPED_SOL_MINT
 
 from pyserum._layouts.market import MINT_LAYOUT
 
 
-def parse_bytes_data(res: RPCResponse) -> bytes:
-    if ("result" not in res) or ("value" not in res["result"]) or ("data" not in res["result"]["value"]):
+def parse_bytes_data(res: GetAccountInfoResp) -> bytes:
+    if not isinstance(res.value, Account):
         raise Exception("Cannot load byte data.")
-    data = res["result"]["value"]["data"][0]
-    return base64.decodebytes(data.encode("ascii"))
+    return res.value.data
 
 
 def load_bytes_data(addr: PublicKey, conn: Client) -> bytes:

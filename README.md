@@ -2,7 +2,8 @@
 
 # No Broker
 
-Python client library for interacting with the [Project Serum](https://projectserum.com/) DEX.
+Python client library for interacting with the OpenBook DEX, and other DEXes.  
+This project started as a fork of [pyserum](https://github.com/serum-community/pyserum).  
 
 ## Install
 
