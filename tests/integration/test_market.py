@@ -1,8 +1,8 @@
 # pylint: disable=redefined-outer-name
 
 import pytest
-from solana.keypair import Keypair
-from solana.publickey import PublicKey
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
 from solana.rpc.api import Client
 from solana.rpc.types import TxOpts
 
@@ -12,23 +12,23 @@ from pyserum.market import Market
 
 @pytest.mark.integration
 @pytest.fixture(scope="module")
-def bootstrapped_market(http_client: Client, stubbed_market_pk: PublicKey, stubbed_dex_program_pk: PublicKey) -> Market:
+def bootstrapped_market(http_client: Client, stubbed_market_pk: Pubkey, stubbed_dex_program_pk: Pubkey) -> Market:
     return Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True)
 
 
 @pytest.mark.integration
 def test_bootstrapped_market(
     bootstrapped_market: Market,
-    stubbed_market_pk: PublicKey,
-    stubbed_dex_program_pk: PublicKey,
+    stubbed_market_pk: Pubkey,
+    stubbed_dex_program_pk: Pubkey,
     stubbed_base_mint: Keypair,
     stubbed_quote_mint: Keypair,
 ):
     assert isinstance(bootstrapped_market, Market)
     assert bootstrapped_market.state.public_key() == stubbed_market_pk
     assert bootstrapped_market.state.program_id() == stubbed_dex_program_pk
-    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.public_key
-    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.public_key
+    assert bootstrapped_market.state.base_mint() == stubbed_base_mint.pubkey()
+    assert bootstrapped_market.state.quote_mint() == stubbed_quote_mint.pubkey()
 
 
 @pytest.mark.integration
@@ -86,7 +86,7 @@ def test_settle_fund(
     stubbed_quote_wallet: Keypair,
     stubbed_base_wallet: Keypair,
 ):
-    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.public_key)
+    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.pubkey())
 
     with pytest.raises(ValueError):
         # Should not allow base_wallet to be base_vault
@@ -94,7 +94,7 @@ def test_settle_fund(
             stubbed_payer,
             open_order_accounts[0],
             bootstrapped_market.state.base_vault(),
-            stubbed_quote_wallet.public_key,
+            stubbed_quote_wallet.pubkey(),
         )
 
     with pytest.raises(ValueError):
@@ -102,7 +102,7 @@ def test_settle_fund(
         bootstrapped_market.settle_funds(
             stubbed_payer,
             open_order_accounts[0],
-            stubbed_base_wallet.public_key,
+            stubbed_base_wallet.pubkey(),
             bootstrapped_market.state.quote_vault(),
         )
 
@@ -110,8 +110,8 @@ def test_settle_fund(
         assert "error" not in bootstrapped_market.settle_funds(
             stubbed_payer,
             open_order_account,
-            stubbed_base_wallet.public_key,
-            stubbed_quote_wallet.public_key,
+            stubbed_base_wallet.pubkey(),
+            stubbed_quote_wallet.pubkey(),
             opts=TxOpts(skip_confirmation=False),
         )
 
@@ -127,7 +127,7 @@ def test_order_placement_cancellation_cycle(
 ):
     initial_request_len = len(bootstrapped_market.load_request_queue())
     bootstrapped_market.place_order(
-        payer=stubbed_quote_wallet.public_key,
+        payer=stubbed_quote_wallet.pubkey(),
         owner=stubbed_payer,
         side=Side.BUY,
         order_type=OrderType.LIMIT,
@@ -149,7 +149,7 @@ def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 0
 
     bootstrapped_market.place_order(
-        payer=stubbed_base_wallet.public_key,
+        payer=stubbed_base_wallet.pubkey(),
         owner=stubbed_payer,
         side=Side.SELL,
         order_type=OrderType.LIMIT,

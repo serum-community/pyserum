@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 import requests
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 from solana.rpc.api import Client as conn  # pylint: disable=unused-import # noqa:F401
 
 from .market.types import MarketInfo, TokenInfo
@@ -17,7 +17,7 @@ def parse_live_markets(data: List[Dict[str, Any]]) -> List[MarketInfo]:
 
 
 def parse_token_mints(data: List[Dict[str, str]]) -> List[TokenInfo]:
-    return [TokenInfo(name=t["name"], address=PublicKey(t["address"])) for t in data]
+    return [TokenInfo(name=t["name"], address=Pubkey.from_string(t["address"])) for t in data]
 
 
 def get_live_markets() -> List[MarketInfo]:

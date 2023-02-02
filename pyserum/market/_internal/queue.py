@@ -3,8 +3,7 @@ from enum import IntEnum
 from typing import List, Optional, Tuple, Union, cast
 
 from construct import Container
-from solana.publickey import PublicKey
-
+from solders.pubkey import Pubkey
 from ..._layouts.queue import EVENT_LAYOUT, QUEUE_HEADER_LAYOUT, REQUEST_LAYOUT
 from ..types import Event, EventFlags, Request, ReuqestFlags
 
@@ -53,7 +52,7 @@ def __parse_queue_item(buffer: bytes, queue_type: QueueType) -> Union[Event, Req
             native_quantity_paid=parsed_item.native_quantity_paid,
             native_fee_or_rebate=parsed_item.native_fee_or_rebate,
             order_id=int.from_bytes(parsed_item.order_id, "little"),
-            public_key=PublicKey(parsed_item.public_key),
+            public_key=Pubkey.from_bytes(parsed_item.public_key),
             client_order_id=parsed_item.client_order_id,
         )
     else:
@@ -74,7 +73,7 @@ def __parse_queue_item(buffer: bytes, queue_type: QueueType) -> Union[Event, Req
             max_base_size_or_cancel_id=parsed_item.max_base_size_or_cancel_id,
             native_quote_quantity_locked=parsed_item.native_quote_quantity_locked,
             order_id=int.from_bytes(parsed_item.order_id, "little"),
-            open_orders=PublicKey(parsed_item.open_orders),
+            open_orders=Pubkey.from_bytes(parsed_item.open_orders),
             client_order_id=parsed_item.client_order_id,
         )
 

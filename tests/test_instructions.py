@@ -1,6 +1,6 @@
 """Test instructions."""
 
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 
 import pyserum.instructions as inlib
 from pyserum.enums import OrderType, Side
@@ -9,15 +9,15 @@ from pyserum.enums import OrderType, Side
 def test_initialize_market():
     """Test initialize market."""
     params = inlib.InitializeMarketParams(
-        market=PublicKey(0),
-        request_queue=PublicKey(1),
-        event_queue=PublicKey(2),
-        bids=PublicKey(3),
-        asks=PublicKey(4),
-        base_vault=PublicKey(5),
-        quote_vault=PublicKey(6),
-        base_mint=PublicKey(7),
-        quote_mint=PublicKey(8),
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        request_queue=Pubkey.from_string("11111111111111111111111111111113"),
+        event_queue=Pubkey.from_string("11111111111111111111111111111114"),
+        bids=Pubkey.from_string("11111111111111111111111111111115"),
+        asks=Pubkey.from_string("11111111111111111111111111111116"),
+        base_vault=Pubkey.from_string("11111111111111111111111111111117"),
+        quote_vault=Pubkey.from_string("11111111111111111111111111111118"),
+        base_mint=Pubkey.from_string("11111111111111111111111111111119"),
+        quote_mint=Pubkey.from_string("1111111111111111111111111111111A"),
         base_lot_size=1,
         quote_lot_size=2,
         fee_rate_bps=3,
@@ -31,13 +31,13 @@ def test_initialize_market():
 def test_new_orders():
     """Test match orders."""
     params = inlib.NewOrderParams(
-        market=PublicKey(0),
-        open_orders=PublicKey(1),
-        payer=PublicKey(2),
-        owner=PublicKey(3),
-        request_queue=PublicKey(4),
-        base_vault=PublicKey(5),
-        quote_vault=PublicKey(6),
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        open_orders=Pubkey.from_string("11111111111111111111111111111113"),
+        payer=Pubkey.from_string("11111111111111111111111111111114"),
+        owner=Pubkey.from_string("11111111111111111111111111111115"),
+        request_queue=Pubkey.from_string("11111111111111111111111111111116"),
+        base_vault=Pubkey.from_string("11111111111111111111111111111117"),
+        quote_vault=Pubkey.from_string("11111111111111111111111111111118"),
         side=Side.BUY,
         limit_price=1,
         max_quantity=1,
@@ -51,13 +51,13 @@ def test_new_orders():
 def test_match_orders():
     """Test match orders."""
     params = inlib.MatchOrdersParams(
-        market=PublicKey(0),
-        request_queue=PublicKey(1),
-        event_queue=PublicKey(2),
-        bids=PublicKey(3),
-        asks=PublicKey(4),
-        base_vault=PublicKey(5),
-        quote_vault=PublicKey(6),
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        request_queue=Pubkey.from_string("11111111111111111111111111111113"),
+        event_queue=Pubkey.from_string("11111111111111111111111111111114"),
+        bids=Pubkey.from_string("11111111111111111111111111111115"),
+        asks=Pubkey.from_string("11111111111111111111111111111116"),
+        base_vault=Pubkey.from_string("11111111111111111111111111111117"),
+        quote_vault=Pubkey.from_string("11111111111111111111111111111118"),
         limit=1,
     )
     instruction = inlib.match_orders(params)
@@ -66,9 +66,9 @@ def test_match_orders():
 
 def test_consume_events():
     params = inlib.ConsumeEventsParams(
-        market=PublicKey(0),
-        event_queue=PublicKey(1),
-        open_orders_accounts=[PublicKey(i + 2) for i in range(8)],
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        event_queue=Pubkey.from_string("11111111111111111111111111111113"),
+        open_orders_accounts=[Pubkey.from_string("1111111111111111111111111111111{:X}".format(i+2)) for i in range(8)],
         limit=1,
     )
     instruction = inlib.consume_events(params)
@@ -78,10 +78,10 @@ def test_consume_events():
 def test_cancel_order():
     """Test cancel order."""
     params = inlib.CancelOrderParams(
-        market=PublicKey(0),
-        request_queue=PublicKey(1),
-        owner=PublicKey(2),
-        open_orders=PublicKey(3),
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        request_queue=Pubkey.from_string("11111111111111111111111111111113"),
+        owner=Pubkey.from_string("11111111111111111111111111111114"),
+        open_orders=Pubkey.from_string("11111111111111111111111111111115"),
         side=Side.BUY,
         order_id=1,
         open_orders_slot=1,
@@ -93,7 +93,11 @@ def test_cancel_order():
 def test_cancel_order_by_client_id():
     """Test cancel order by client id."""
     params = inlib.CancelOrderByClientIDParams(
-        market=PublicKey(0), request_queue=PublicKey(1), owner=PublicKey(2), open_orders=PublicKey(3), client_id=1
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        request_queue=Pubkey.from_string("11111111111111111111111111111113"),
+        owner=Pubkey.from_string("11111111111111111111111111111114"),
+        open_orders=Pubkey.from_string("11111111111111111111111111111115"),
+        client_id=1
     )
     instruction = inlib.cancel_order_by_client_id(params)
     assert inlib.decode_cancel_order_by_client_id(instruction) == params
@@ -102,14 +106,14 @@ def test_cancel_order_by_client_id():
 def test_settle_funds():
     """Test settle funds."""
     params = inlib.SettleFundsParams(
-        market=PublicKey(0),
-        owner=PublicKey(1),
-        open_orders=PublicKey(2),
-        base_vault=PublicKey(3),
-        quote_vault=PublicKey(4),
-        base_wallet=PublicKey(5),
-        quote_wallet=PublicKey(6),
-        vault_signer=PublicKey(7),
+        market=Pubkey.from_string("11111111111111111111111111111112"),
+        owner=Pubkey.from_string("11111111111111111111111111111113"),
+        open_orders=Pubkey.from_string("11111111111111111111111111111114"),
+        base_vault=Pubkey.from_string("11111111111111111111111111111115"),
+        quote_vault=Pubkey.from_string("11111111111111111111111111111116"),
+        base_wallet=Pubkey.from_string("11111111111111111111111111111117"),
+        quote_wallet=Pubkey.from_string("11111111111111111111111111111118"),
+        vault_signer=Pubkey.from_string("11111111111111111111111111111119"),
     )
     instruction = inlib.settle_funds(params)
     assert inlib.decode_settle_funds(instruction) == params
@@ -118,10 +122,10 @@ def test_settle_funds():
 def test_close_open_orders():
     """Test settle funds."""
     params = inlib.CloseOpenOrdersParams(
-        open_orders=PublicKey(0),
-        owner=PublicKey(1),
-        sol_wallet=PublicKey(2),
-        market=PublicKey(3),
+        open_orders=Pubkey.from_string("11111111111111111111111111111112"),
+        owner=Pubkey.from_string("11111111111111111111111111111113"),
+        sol_wallet=Pubkey.from_string("11111111111111111111111111111114"),
+        market=Pubkey.from_string("11111111111111111111111111111115"),
     )
     instruction = inlib.close_open_orders(params)
     assert inlib.decode_close_open_orders(instruction) == params
@@ -130,7 +134,10 @@ def test_close_open_orders():
 def test_init_open_orders():
     """Test settle funds."""
     params = inlib.InitOpenOrdersParams(
-        open_orders=PublicKey(0), owner=PublicKey(1), market=PublicKey(2), market_authority=None
+        open_orders=Pubkey.from_string("11111111111111111111111111111112"),
+        owner=Pubkey.from_string("11111111111111111111111111111113"),
+        market=Pubkey.from_string("11111111111111111111111111111114"),
+        market_authority=None
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params
@@ -139,10 +146,10 @@ def test_init_open_orders():
 def test_init_open_orders_with_authority():
     """Test settle funds."""
     params = inlib.InitOpenOrdersParams(
-        open_orders=PublicKey(0),
-        owner=PublicKey(1),
-        market=PublicKey(2),
-        market_authority=PublicKey(3),
+        open_orders=Pubkey.from_string("11111111111111111111111111111112"),
+        owner=Pubkey.from_string("11111111111111111111111111111113"),
+        market=Pubkey.from_string("11111111111111111111111111111114"),
+        market_authority=Pubkey.from_string("11111111111111111111111111111115"),
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params

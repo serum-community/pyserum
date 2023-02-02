@@ -1,5 +1,5 @@
 """Tests for instruction layouts."""
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 
 from pyserum._layouts.instructions import _VERSION, INSTRUCTIONS_LAYOUT, InstructionType
 from pyserum.enums import OrderType, Side
@@ -69,7 +69,7 @@ def test_parse_cancel_order():
         "side": Side.BUY,
         "order_id": (1234567890).to_bytes(16, "little"),
         "open_orders_slot": 123,
-        "open_orders": bytes(PublicKey(123)),
+        "open_orders": bytes(Pubkey.from_string("111111111111111111111111111111138")),
     }
     expected = bytes.fromhex(
         "000400000000000000d202964900000000000000000000000000000000"

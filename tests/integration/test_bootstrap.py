@@ -1,8 +1,7 @@
 import pytest
 
-# from solana.account import Keypair
-from solana.keypair import Keypair
-from solana.publickey import PublicKey
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
 
 
 @pytest.mark.integration
@@ -22,7 +21,7 @@ def test_base_wallet(stubbed_base_wallet):
 
 @pytest.mark.integration
 def test_base_vault_pk(stubbed_base_vault_pk):
-    assert isinstance(stubbed_base_vault_pk, PublicKey)
+    assert isinstance(stubbed_base_vault_pk, Pubkey)
 
 
 @pytest.mark.integration
@@ -37,44 +36,44 @@ def test_quote_wallet(stubbed_quote_wallet):
 
 @pytest.mark.integration
 def test_quote_vault_pk(stubbed_quote_vault_pk):
-    assert isinstance(stubbed_quote_vault_pk, PublicKey)
+    assert isinstance(stubbed_quote_vault_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_market_pk(stubbed_market_pk):
-    assert isinstance(stubbed_market_pk, PublicKey)
+    assert isinstance(stubbed_market_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_event_q_pk(stubbed_event_q_pk):
-    assert isinstance(stubbed_event_q_pk, PublicKey)
+    assert isinstance(stubbed_event_q_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_req_q_pk(stubbed_req_q_pk):
-    assert isinstance(stubbed_req_q_pk, PublicKey)
+    assert isinstance(stubbed_req_q_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_bids_pk(stubbed_bids_pk):
-    assert isinstance(stubbed_bids_pk, PublicKey)
+    assert isinstance(stubbed_bids_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_asks_pk(stubbed_asks_pk):
-    assert isinstance(stubbed_asks_pk, PublicKey)
+    assert isinstance(stubbed_asks_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_bid_account_pk(stubbed_bid_account_pk):
-    assert isinstance(stubbed_bid_account_pk, PublicKey)
+    assert isinstance(stubbed_bid_account_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_ask_account_pk(stubbed_ask_account_pk):
-    assert isinstance(stubbed_ask_account_pk, PublicKey)
+    assert isinstance(stubbed_ask_account_pk, Pubkey)
 
 
 @pytest.mark.integration
 def test_dex_program_pk(stubbed_dex_program_pk):
-    assert isinstance(stubbed_dex_program_pk, PublicKey)
+    assert isinstance(stubbed_dex_program_pk, Pubkey)

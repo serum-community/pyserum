@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 
 from .._layouts.account_flags import ACCOUNT_FLAGS_LAYOUT
 from ..enums import Side
@@ -67,7 +67,7 @@ class Order(NamedTuple):
     """"""
     client_id: int
     """"""
-    open_order_address: PublicKey
+    open_order_address: Pubkey
     """"""
     open_order_slot: int
     """"""
@@ -100,7 +100,7 @@ class Request(NamedTuple):
     """"""
     order_id: int
     """"""
-    open_orders: PublicKey
+    open_orders: Pubkey
     """"""
     client_order_id: int
     """"""
@@ -128,7 +128,7 @@ class Event(NamedTuple):
     """"""
     order_id: int
     """"""
-    public_key: PublicKey
+    public_key: Pubkey
     """"""
     client_order_id: int
     """"""
@@ -137,14 +137,14 @@ class Event(NamedTuple):
 class MarketInfo(NamedTuple):
     name: str
     """"""
-    address: PublicKey
+    address: Pubkey
     """"""
-    program_id: PublicKey
+    program_id: Pubkey
     """"""
 
 
 class TokenInfo(NamedTuple):
     name: str
     """"""
-    address: PublicKey
+    address: Pubkey
     """"""

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import List
 
-from solana.keypair import Keypair
-from solana.publickey import PublicKey
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
 from solana.rpc.api import Client
 from solana.rpc.types import TxOpts
 from solana.transaction import Transaction
@@ -43,8 +43,8 @@ class Market(MarketCore):
     def load(
         cls,
         conn: Client,
-        market_address: PublicKey,
-        program_id: PublicKey = instructions.DEFAULT_DEX_PROGRAM_ID,
+        market_address: Pubkey,
+        program_id: Pubkey = instructions.DEFAULT_DEX_PROGRAM_ID,
         force_use_request_queue: bool = False,
     ) -> Market:
         """Factory method to create a Market.
@@ -56,7 +56,7 @@ class Market(MarketCore):
         market_state = MarketState.load(conn, market_address, program_id)
         return cls(conn, market_state, force_use_request_queue)
 
-    def find_open_orders_accounts_for_owner(self, owner_address: PublicKey) -> List[OpenOrdersAccount]:
+    def find_open_orders_accounts_for_owner(self, owner_address: Pubkey) -> List[OpenOrdersAccount]:
         return OpenOrdersAccount.find_for_market_and_owner(
             self._conn, self.state.public_key(), owner_address, self.state.program_id()
         )
@@ -71,7 +71,7 @@ class Market(MarketCore):
         bytes_data = load_bytes_data(self.state.asks(), self._conn)
         return self._parse_bids_or_asks(bytes_data)
 
-    def load_orders_for_owner(self, owner_address: PublicKey) -> List[t.Order]:
+    def load_orders_for_owner(self, owner_address: Pubkey) -> List[t.Order]:
         """Load orders for owner."""
         bids = self.load_bids()
         asks = self.load_asks()
@@ -96,7 +96,7 @@ class Market(MarketCore):
 
     def place_order(  # pylint: disable=too-many-arguments,too-many-locals
         self,
-        payer: PublicKey,
+        payer: Pubkey,
         owner: Keypair,
         order_type: OrderType,
         side: Side,
@@ -107,7 +107,7 @@ class Market(MarketCore):
     ) -> SendTransactionResp:  # TODO: Add open_orders_address_key param and fee_discount_pubkey
         transaction = Transaction()
         signers: List[Keypair] = [owner]
-        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.public_key)
+        open_order_accounts = self.find_open_orders_accounts_for_owner(owner.pubkey())
         if open_order_accounts:
             place_order_open_order_account = open_order_accounts[0].address
         else:
@@ -139,7 +139,7 @@ class Market(MarketCore):
     def cancel_order_by_client_id(
         self,
         owner: Keypair,
-        open_orders_account: PublicKey,
+        open_orders_account: Pubkey,
         client_id: int,
         opts: TxOpts = TxOpts(),
     ) -> SendTransactionResp:
@@ -160,8 +160,8 @@ class Market(MarketCore):
         self,
         owner: Keypair,
         open_orders: OpenOrdersAccount,
-        base_wallet: PublicKey,
-        quote_wallet: PublicKey,  # TODO: add referrer_quote_wallet.
+        base_wallet: Pubkey,
+        quote_wallet: Pubkey,  # TODO: add referrer_quote_wallet.
         opts: TxOpts = TxOpts(),
     ) -> SendTransactionResp:
         # TODO: Handle wrapped sol accounts

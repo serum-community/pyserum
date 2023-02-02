@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from typing import Iterable, List, NamedTuple, Optional
 
 from construct import ListContainer
-from solana.publickey import PublicKey
-
+from solders.pubkey import Pubkey
 from ..._layouts.slab import SLAB_LAYOUT, NodeType
 
 
@@ -33,7 +32,7 @@ class SlabLeafNode(SlabNode):
     owner_slot: int
     fee_tier: int
     key: int
-    owner: PublicKey
+    owner: Pubkey
     quantity: int
     client_order_id: int
 
@@ -64,7 +63,7 @@ class Slab:
                         owner_slot=node.owner_slot,
                         fee_tier=node.fee_tier,
                         key=int.from_bytes(node.key, "little"),
-                        owner=PublicKey(node.owner),
+                        owner=Pubkey.from_bytes(node.owner),
                         quantity=node.quantity,
                         client_order_id=node.client_order_id,
                         is_initialized=True,

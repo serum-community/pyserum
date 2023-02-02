@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 
 from construct import Container, Struct
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 from solana.rpc.api import Client
 from solana.rpc.async_api import AsyncClient
 
@@ -15,7 +15,7 @@ from .types import AccountFlags
 
 class MarketState:  # pylint: disable=too-many-public-methods
     def __init__(
-        self, parsed_market: Container, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int
+        self, parsed_market: Container, program_id: Pubkey, base_mint_decimals: int, quote_mint_decimals: int
     ) -> None:
         self._decoded = parsed_market
         self._program_id = program_id
@@ -37,25 +37,25 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return parsed_market
 
     @classmethod
-    def load(cls, conn: Client, market_address: PublicKey, program_id: PublicKey) -> MarketState:
+    def load(cls, conn: Client, market_address: Pubkey, program_id: Pubkey) -> MarketState:
         bytes_data = utils.load_bytes_data(market_address, conn)
         parsed_market = cls._make_parsed_market(bytes_data)
 
-        base_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
-        quote_mint_decimals = utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
+        base_mint_decimals = utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.base_mint))
+        quote_mint_decimals = utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.quote_mint))
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
     @classmethod
-    async def async_load(cls, conn: AsyncClient, market_address: PublicKey, program_id: PublicKey) -> MarketState:
+    async def async_load(cls, conn: AsyncClient, market_address: Pubkey, program_id: Pubkey) -> MarketState:
         bytes_data = await async_utils.load_bytes_data(market_address, conn)
         parsed_market = cls._make_parsed_market(bytes_data)
-        base_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.base_mint))
-        quote_mint_decimals = await async_utils.get_mint_decimals(conn, PublicKey(parsed_market.quote_mint))
+        base_mint_decimals = await async_utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.base_mint))
+        quote_mint_decimals = await async_utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.quote_mint))
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
     @classmethod
     def from_bytes(
-        cls, program_id: PublicKey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
+        cls, program_id: Pubkey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
     ) -> MarketState:
         parsed_market = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
@@ -65,44 +65,44 @@ class MarketState:  # pylint: disable=too-many-public-methods
 
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
-    def program_id(self) -> PublicKey:
+    def program_id(self) -> Pubkey:
         return self._program_id
 
-    def public_key(self) -> PublicKey:
-        return PublicKey(self._decoded.own_address)
+    def public_key(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.own_address)
 
     def account_flags(self) -> AccountFlags:
         return AccountFlags(**self._decoded.account_flags)
 
-    def asks(self) -> PublicKey:
-        return PublicKey(self._decoded.asks)
+    def asks(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.asks)
 
-    def bids(self) -> PublicKey:
-        return PublicKey(self._decoded.bids)
+    def bids(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.bids)
 
     def fee_rate_bps(self) -> int:
         return self._decoded.fee_rate_bps
 
-    def event_queue(self) -> PublicKey:
-        return PublicKey(self._decoded.event_queue)
+    def event_queue(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.event_queue)
 
-    def request_queue(self) -> PublicKey:
-        return PublicKey(self._decoded.request_queue)
+    def request_queue(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.request_queue)
 
     def vault_signer_nonce(self) -> int:
         return self._decoded.vault_signer_nonce
 
-    def base_mint(self) -> PublicKey:
-        return PublicKey(self._decoded.base_mint)
+    def base_mint(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.base_mint)
 
-    def quote_mint(self) -> PublicKey:
-        return PublicKey(self._decoded.quote_mint)
+    def quote_mint(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.quote_mint)
 
-    def base_vault(self) -> PublicKey:
-        return PublicKey(self._decoded.base_vault)
+    def base_vault(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.base_vault)
 
-    def quote_vault(self) -> PublicKey:
-        return PublicKey(self._decoded.quote_vault)
+    def quote_vault(self) -> Pubkey:
+        return Pubkey.from_bytes(self._decoded.quote_vault)
 
     def base_deposits_total(self) -> int:
         return self._decoded.base_deposits_total

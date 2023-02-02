@@ -28,7 +28,7 @@ pytest-asyncio = "*"
 types-requests = "*"
 
 [packages]
-solana = {version = ">=0.27.0"}
+solana = {version = ">=0.29.0"}
 construct = "*"
 flake8 = "*"
 construct-typing = "*"

@@ -1,4 +1,4 @@
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 from solana.rpc.api import Client
 from solders.account import Account
 from solders.rpc.responses import GetAccountInfoResp
@@ -13,7 +13,7 @@ def parse_bytes_data(res: GetAccountInfoResp) -> bytes:
     return res.value.data
 
 
-def load_bytes_data(addr: PublicKey, conn: Client) -> bytes:
+def load_bytes_data(addr: Pubkey, conn: Client) -> bytes:
     res = conn.get_account_info(addr)
     return parse_bytes_data(res)
 
@@ -22,7 +22,7 @@ def parse_mint_decimals(bytes_data: bytes) -> int:
     return MINT_LAYOUT.parse(bytes_data).decimals
 
 
-def get_mint_decimals(conn: Client, mint_pub_key: PublicKey) -> int:
+def get_mint_decimals(conn: Client, mint_pub_key: Pubkey) -> int:
     """Get the mint decimals for a token mint"""
     if mint_pub_key == WRAPPED_SOL_MINT:
         return 9
