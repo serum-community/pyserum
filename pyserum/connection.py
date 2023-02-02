@@ -12,12 +12,17 @@ TOKEN_MINTS_URL = "https://raw.githubusercontent.com/project-serum/serum-ts/mast
 
 def parse_live_markets(data: List[Dict[str, Any]]) -> List[MarketInfo]:
     return [
-        MarketInfo(name=m["name"], address=m["address"], program_id=m["programId"]) for m in data if not m["deprecated"]
+        MarketInfo(name=m["name"], address=m["address"], program_id=m["programId"])
+        for m in data
+        if not m["deprecated"]
     ]
 
 
 def parse_token_mints(data: List[Dict[str, str]]) -> List[TokenInfo]:
-    return [TokenInfo(name=t["name"], address=Pubkey.from_string(t["address"])) for t in data]
+    return [
+        TokenInfo(name=t["name"], address=Pubkey.from_string(t["address"]))
+        for t in data
+    ]
 
 
 def get_live_markets() -> List[MarketInfo]:

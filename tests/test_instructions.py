@@ -68,7 +68,10 @@ def test_consume_events():
     params = inlib.ConsumeEventsParams(
         market=Pubkey.from_string("11111111111111111111111111111112"),
         event_queue=Pubkey.from_string("11111111111111111111111111111113"),
-        open_orders_accounts=[Pubkey.from_string("1111111111111111111111111111111{:X}".format(i+2)) for i in range(8)],
+        open_orders_accounts=[
+            Pubkey.from_string("1111111111111111111111111111111{:X}".format(i + 2))
+            for i in range(8)
+        ],
         limit=1,
     )
     instruction = inlib.consume_events(params)
@@ -97,7 +100,7 @@ def test_cancel_order_by_client_id():
         request_queue=Pubkey.from_string("11111111111111111111111111111113"),
         owner=Pubkey.from_string("11111111111111111111111111111114"),
         open_orders=Pubkey.from_string("11111111111111111111111111111115"),
-        client_id=1
+        client_id=1,
     )
     instruction = inlib.cancel_order_by_client_id(params)
     assert inlib.decode_cancel_order_by_client_id(instruction) == params
@@ -137,7 +140,7 @@ def test_init_open_orders():
         open_orders=Pubkey.from_string("11111111111111111111111111111112"),
         owner=Pubkey.from_string("11111111111111111111111111111113"),
         market=Pubkey.from_string("11111111111111111111111111111114"),
-        market_authority=None
+        market_authority=None,
     )
     instruction = inlib.init_open_orders(params)
     assert inlib.decode_init_open_orders(instruction) == params

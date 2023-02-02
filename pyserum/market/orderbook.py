@@ -16,9 +16,13 @@ class OrderBook:
     _is_bids: bool
     _slab: Slab
 
-    def __init__(self, market_state: MarketState, account_flags: t.AccountFlags, slab: Slab) -> None:
+    def __init__(
+        self, market_state: MarketState, account_flags: t.AccountFlags, slab: Slab
+    ) -> None:
         if not account_flags.initialized or not account_flags.bids ^ account_flags.asks:
-            raise Exception("Invalid order book, either not initialized or neither of bids or asks")
+            raise Exception(
+                "Invalid order book, either not initialized or neither of bids or asks"
+            )
         self._market_state = market_state
         self._is_bids = account_flags.bids
         self._slab = slab

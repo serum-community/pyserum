@@ -15,7 +15,11 @@ from .types import AccountFlags
 
 class MarketState:  # pylint: disable=too-many-public-methods
     def __init__(
-        self, parsed_market: Container, program_id: Pubkey, base_mint_decimals: int, quote_mint_decimals: int
+        self,
+        parsed_market: Container,
+        program_id: Pubkey,
+        base_mint_decimals: int,
+        quote_mint_decimals: int,
     ) -> None:
         self._decoded = parsed_market
         self._program_id = program_id
@@ -32,35 +36,57 @@ class MarketState:  # pylint: disable=too-many-public-methods
         parsed_market = MARKET_LAYOUT.parse(bytes_data)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
+        if (
+            not parsed_market.account_flags.initialized
+            or not parsed_market.account_flags.market
+        ):
             raise Exception("Invalid market")
         return parsed_market
 
     @classmethod
-    def load(cls, conn: Client, market_address: Pubkey, program_id: Pubkey) -> MarketState:
+    def load(
+        cls, conn: Client, market_address: Pubkey, program_id: Pubkey
+    ) -> MarketState:
         bytes_data = utils.load_bytes_data(market_address, conn)
         parsed_market = cls._make_parsed_market(bytes_data)
 
-        base_mint_decimals = utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.base_mint))
-        quote_mint_decimals = utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.quote_mint))
+        base_mint_decimals = utils.get_mint_decimals(
+            conn, Pubkey.from_bytes(parsed_market.base_mint)
+        )
+        quote_mint_decimals = utils.get_mint_decimals(
+            conn, Pubkey.from_bytes(parsed_market.quote_mint)
+        )
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
     @classmethod
-    async def async_load(cls, conn: AsyncClient, market_address: Pubkey, program_id: Pubkey) -> MarketState:
+    async def async_load(
+        cls, conn: AsyncClient, market_address: Pubkey, program_id: Pubkey
+    ) -> MarketState:
         bytes_data = await async_utils.load_bytes_data(market_address, conn)
         parsed_market = cls._make_parsed_market(bytes_data)
-        base_mint_decimals = await async_utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.base_mint))
-        quote_mint_decimals = await async_utils.get_mint_decimals(conn, Pubkey.from_bytes(parsed_market.quote_mint))
+        base_mint_decimals = await async_utils.get_mint_decimals(
+            conn, Pubkey.from_bytes(parsed_market.base_mint)
+        )
+        quote_mint_decimals = await async_utils.get_mint_decimals(
+            conn, Pubkey.from_bytes(parsed_market.quote_mint)
+        )
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
 
     @classmethod
     def from_bytes(
-        cls, program_id: Pubkey, base_mint_decimals: int, quote_mint_decimals: int, buffer: bytes
+        cls,
+        program_id: Pubkey,
+        base_mint_decimals: int,
+        quote_mint_decimals: int,
+        buffer: bytes,
     ) -> MarketState:
         parsed_market = MARKET_LAYOUT.parse(buffer)
         # TODO: add ownAddress check!
 
-        if not parsed_market.account_flags.initialized or not parsed_market.account_flags.market:
+        if (
+            not parsed_market.account_flags.initialized
+            or not parsed_market.account_flags.market
+        ):
             raise Exception("Invalid market")
 
         return cls(parsed_market, program_id, base_mint_decimals, quote_mint_decimals)
@@ -144,9 +170,9 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return self._decoded.quote_lot_size
 
     def price_lots_to_number(self, price: int) -> float:
-        return float(price * self.quote_lot_size() * self.base_spl_token_multiplier()) / (
-            self.base_lot_size() * self.quote_spl_token_multiplier()
-        )
+        return float(
+            price * self.quote_lot_size() * self.base_spl_token_multiplier()
+        ) / (self.base_lot_size() * self.quote_spl_token_multiplier())
 
     def price_number_to_lots(self, price: float) -> int:
         return int(
@@ -160,10 +186,14 @@ class MarketState:  # pylint: disable=too-many-public-methods
         return float(size * self.base_lot_size()) / self.base_spl_token_multiplier()
 
     def base_size_number_to_lots(self, size: float) -> int:
-        return int(math.floor(size * self.base_spl_token_multiplier()) / self.base_lot_size())
+        return int(
+            math.floor(size * self.base_spl_token_multiplier()) / self.base_lot_size()
+        )
 
     def quote_size_lots_to_number(self, size: int) -> float:
         return float(size * self.quote_lot_size()) / self.quote_spl_token_multiplier()
 
     def quote_size_number_to_lots(self, size: float) -> int:
-        return int(math.floor(size * self.quote_spl_token_multiplier()) / self.quote_lot_size())
+        return int(
+            math.floor(size * self.quote_spl_token_multiplier()) / self.quote_lot_size()
+        )

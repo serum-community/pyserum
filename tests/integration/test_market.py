@@ -12,8 +12,15 @@ from pyserum.market import Market
 
 @pytest.mark.integration
 @pytest.fixture(scope="module")
-def bootstrapped_market(http_client: Client, stubbed_market_pk: Pubkey, stubbed_dex_program_pk: Pubkey) -> Market:
-    return Market.load(http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True)
+def bootstrapped_market(
+    http_client: Client, stubbed_market_pk: Pubkey, stubbed_dex_program_pk: Pubkey
+) -> Market:
+    return Market.load(
+        http_client,
+        stubbed_market_pk,
+        stubbed_dex_program_pk,
+        force_use_request_queue=True,
+    )
 
 
 @pytest.mark.integration
@@ -86,7 +93,9 @@ def test_settle_fund(
     stubbed_quote_wallet: Keypair,
     stubbed_base_wallet: Keypair,
 ):
-    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.pubkey())
+    open_order_accounts = bootstrapped_market.find_open_orders_accounts_for_owner(
+        stubbed_payer.pubkey()
+    )
 
     with pytest.raises(ValueError):
         # Should not allow base_wallet to be base_vault
@@ -174,18 +183,26 @@ def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 1
 
     for bid in bids:
-        bootstrapped_market.cancel_order(stubbed_payer, bid, opts=TxOpts(skip_confirmation=False))
+        bootstrapped_market.cancel_order(
+            stubbed_payer, bid, opts=TxOpts(skip_confirmation=False)
+        )
 
-    bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
+    bootstrapped_market.match_orders(
+        stubbed_payer, 1, opts=TxOpts(skip_confirmation=False)
+    )
 
     # All bid order should have been cancelled.
     bids = bootstrapped_market.load_bids()
     assert sum(1 for _ in bids) == 0
 
     for ask in asks:
-        bootstrapped_market.cancel_order(stubbed_payer, ask, opts=TxOpts(skip_confirmation=False))
+        bootstrapped_market.cancel_order(
+            stubbed_payer, ask, opts=TxOpts(skip_confirmation=False)
+        )
 
-    bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
+    bootstrapped_market.match_orders(
+        stubbed_payer, 1, opts=TxOpts(skip_confirmation=False)
+    )
 
     # All ask order should have been cancelled.
     asks = bootstrapped_market.load_asks()

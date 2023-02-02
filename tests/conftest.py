@@ -52,7 +52,9 @@ def stubbed_payer(__bs_params) -> Keypair:
 @pytest.fixture(scope="session")
 def stubbed_base_mint(__bs_params) -> Keypair:
     """Bootstrapped base mint account."""
-    return __bootstrap_account(__bs_params["coin_mint"], __bs_params["coin_mint_secret"])
+    return __bootstrap_account(
+        __bs_params["coin_mint"], __bs_params["coin_mint_secret"]
+    )
 
 
 @pytest.mark.integration
@@ -66,14 +68,18 @@ def stubbed_quote_mint(__bs_params) -> Keypair:
 @pytest.fixture(scope="session")
 def stubbed_base_wallet(__bs_params) -> Keypair:
     """Bootstrapped base mint account."""
-    return __bootstrap_account(__bs_params["coin_wallet"], __bs_params["coin_wallet_secret"])
+    return __bootstrap_account(
+        __bs_params["coin_wallet"], __bs_params["coin_wallet_secret"]
+    )
 
 
 @pytest.mark.integration
 @pytest.fixture(scope="session")
 def stubbed_quote_wallet(__bs_params) -> Keypair:
     """Bootstrapped quote mint account."""
-    return __bootstrap_account(__bs_params["pc_wallet"], __bs_params["pc_wallet_secret"])
+    return __bootstrap_account(
+        __bs_params["pc_wallet"], __bs_params["pc_wallet_secret"]
+    )
 
 
 @pytest.mark.integration
@@ -152,7 +158,9 @@ def http_client() -> Client:
     """Solana http client."""
     cc = conn("http://localhost:8899")  # pylint: disable=invalid-name
     if not cc.is_connected():
-        raise Exception("Could not connect to local node. Please run `make int-tests` to run integration tests.")
+        raise Exception(
+            "Could not connect to local node. Please run `make int-tests` to run integration tests."
+        )
     return cc
 
 
@@ -166,7 +174,9 @@ def event_loop():
 
 @pytest.mark.async_integration
 @pytest.fixture(scope="session")
-def async_http_client(event_loop) -> AsyncClient:  # pylint: disable=redefined-outer-name
+def async_http_client(
+    event_loop,
+) -> AsyncClient:  # pylint: disable=redefined-outer-name
     """Solana async http client."""
     cc = async_conn("http://localhost:8899")  # pylint: disable=invalid-name
     if not event_loop.run_until_complete(cc.is_connected()):

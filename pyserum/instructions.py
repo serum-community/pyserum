@@ -13,7 +13,9 @@ from ._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 from .enums import OrderType, SelfTradeBehavior, Side
 
 # V3
-DEFAULT_DEX_PROGRAM_ID = Pubkey.from_string("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+DEFAULT_DEX_PROGRAM_ID = Pubkey.from_string(
+    "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
+)
 
 
 class InitializeMarketParams(NamedTuple):
@@ -316,7 +318,9 @@ def __parse_and_validate_instruction(
         InstructionType.CLOSE_OPEN_ORDERS: 4,
         InstructionType.INIT_OPEN_ORDERS: 3,
     }
-    validate_instruction_keys(instruction, instruction_type_to_length_map[instruction_type])
+    validate_instruction_keys(
+        instruction, instruction_type_to_length_map[instruction_type]
+    )
     data = INSTRUCTIONS_LAYOUT.parse(instruction.data)
     validate_instruction_type(data, instruction_type)
     return data
@@ -326,7 +330,9 @@ def decode_initialize_market(
     instruction: Instruction,
 ) -> InitializeMarketParams:
     """Decode an instialize market instruction and retrieve the instruction params."""
-    data = __parse_and_validate_instruction(instruction, InstructionType.INITIALIZE_MARKET)
+    data = __parse_and_validate_instruction(
+        instruction, InstructionType.INITIALIZE_MARKET
+    )
     return InitializeMarketParams(
         market=instruction.accounts[0].pubkey,
         request_queue=instruction.accounts[1].pubkey,
@@ -421,7 +427,9 @@ def decode_settle_funds(instruction: Instruction) -> SettleFundsParams:
 def decode_cancel_order_by_client_id(
     instruction: Instruction,
 ) -> CancelOrderByClientIDParams:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID)
+    data = __parse_and_validate_instruction(
+        instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID
+    )
     return CancelOrderByClientIDParams(
         market=instruction.accounts[0].pubkey,
         open_orders=instruction.accounts[1].pubkey,
@@ -456,7 +464,9 @@ def decode_new_order_v3(instruction: Instruction) -> NewOrderV3Params:
 
 
 def decode_cancel_order_v2(instruction: Instruction) -> CancelOrderV2Params:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_V2)
+    data = __parse_and_validate_instruction(
+        instruction, InstructionType.CANCEL_ORDER_V2
+    )
     return CancelOrderV2Params(
         market=instruction.accounts[0].pubkey,
         bids=instruction.accounts[1].pubkey,
@@ -470,8 +480,12 @@ def decode_cancel_order_v2(instruction: Instruction) -> CancelOrderV2Params:
     )
 
 
-def decode_cancel_order_by_client_id_v2(instruction: Instruction) -> CancelOrderByClientIDV2Params:
-    data = __parse_and_validate_instruction(instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2)
+def decode_cancel_order_by_client_id_v2(
+    instruction: Instruction,
+) -> CancelOrderByClientIDV2Params:
+    data = __parse_and_validate_instruction(
+        instruction, InstructionType.CANCEL_ORDER_BY_CLIENT_ID_V2
+    )
     return CancelOrderByClientIDV2Params(
         market=instruction.accounts[0].pubkey,
         bids=instruction.accounts[1].pubkey,
@@ -497,7 +511,9 @@ def decode_close_open_orders(
 def decode_init_open_orders(
     instruction: Instruction,
 ) -> InitOpenOrdersParams:
-    market_authority = instruction.accounts[-1].pubkey if len(instruction.accounts) == 5 else None
+    market_authority = (
+        instruction.accounts[-1].pubkey if len(instruction.accounts) == 5 else None
+    )
     return InitOpenOrdersParams(
         open_orders=instruction.accounts[0].pubkey,
         owner=instruction.accounts[1].pubkey,
@@ -593,7 +609,8 @@ def consume_events(params: ConsumeEventsParams) -> Instruction:
     accounts = [
         AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
         # NOTE - last two accounts are required for backwards compatibility but are ignored
-        for pubkey in params.open_orders_accounts + (2 * [params.market, params.event_queue])
+        for pubkey in params.open_orders_accounts
+        + (2 * [params.market, params.event_queue])
     ]
     return Instruction(
         accounts=accounts,
@@ -646,7 +663,9 @@ def settle_funds(params: SettleFundsParams) -> Instruction:
             AccountMeta(pubkey=TOKEN_PROGRAM_ID, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.SETTLE_FUNDS, args=dict())),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.SETTLE_FUNDS, args=dict())
+        ),
     )
 
 
@@ -691,7 +710,9 @@ def new_order_v3(params: NewOrderV3Params) -> Instruction:
     ]
     if params.fee_discount_pubkey:
         touched_accounts.append(
-            AccountMeta(pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False),
+            AccountMeta(
+                pubkey=params.fee_discount_pubkey, is_signer=False, is_writable=False
+            ),
         )
     return Instruction(
         accounts=touched_accounts,
@@ -773,7 +794,9 @@ def close_open_orders(params: CloseOpenOrdersParams) -> Instruction:
             AccountMeta(pubkey=params.market, is_signer=False, is_writable=False),
         ],
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.CLOSE_OPEN_ORDERS, args=dict())),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.CLOSE_OPEN_ORDERS, args=dict())
+        ),
     )
 
 
@@ -787,10 +810,14 @@ def init_open_orders(params: InitOpenOrdersParams) -> Instruction:
     ]
     if params.market_authority:
         touched_accounts.append(
-            AccountMeta(pubkey=params.market_authority, is_signer=False, is_writable=False),
+            AccountMeta(
+                pubkey=params.market_authority, is_signer=False, is_writable=False
+            ),
         )
     return Instruction(
         accounts=touched_accounts,
         program_id=params.program_id,
-        data=INSTRUCTIONS_LAYOUT.build(dict(instruction_type=InstructionType.INIT_OPEN_ORDERS, args=dict())),
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.INIT_OPEN_ORDERS, args=dict())
+        ),
     )

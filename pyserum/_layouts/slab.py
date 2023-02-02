@@ -33,7 +33,9 @@ class NodeType(IntEnum):
 
 # Different node types, we pad it all to size of 68 bytes.
 UNINTIALIZED = cStruct(Padding(68))
-INNER_NODE = cStruct("prefix_len" / Int32ul, "key" / KEY, "children" / Int32ul[2], Padding(40))
+INNER_NODE = cStruct(
+    "prefix_len" / Int32ul, "key" / KEY, "children" / Int32ul[2], Padding(40)
+)
 LEAF_NODE = cStruct(
     "owner_slot" / Int8ul,
     "fee_tier" / Int8ul,
@@ -61,6 +63,14 @@ SLAB_NODE_LAYOUT = cStruct(
     ),
 )
 
-SLAB_LAYOUT = cStruct("header" / SLAB_HEADER_LAYOUT, "nodes" / SLAB_NODE_LAYOUT[lambda this: this.header.bump_index])
+SLAB_LAYOUT = cStruct(
+    "header" / SLAB_HEADER_LAYOUT,
+    "nodes" / SLAB_NODE_LAYOUT[lambda this: this.header.bump_index],
+)
 
-ORDER_BOOK_LAYOUT = cStruct(Padding(5), "account_flags" / ACCOUNT_FLAGS_LAYOUT, "slab_layout" / SLAB_LAYOUT, Padding(7))
+ORDER_BOOK_LAYOUT = cStruct(
+    Padding(5),
+    "account_flags" / ACCOUNT_FLAGS_LAYOUT,
+    "slab_layout" / SLAB_LAYOUT,
+    Padding(7),
+)

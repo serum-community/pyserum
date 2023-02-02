@@ -1,4 +1,15 @@
-from construct import BitsInteger, BitsSwapped, BitStruct, Bytes, Const, Flag, Int8ul, Int32ul, Int64ul, Padding
+from construct import (
+    BitsInteger,
+    BitsSwapped,
+    BitStruct,
+    Bytes,
+    Const,
+    Flag,
+    Int8ul,
+    Int32ul,
+    Int64ul,
+    Padding,
+)
 from construct import Struct as cStruct
 
 from .account_flags import ACCOUNT_FLAGS_LAYOUT

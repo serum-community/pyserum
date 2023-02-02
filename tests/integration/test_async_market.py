@@ -13,10 +13,18 @@ from pyserum.market import AsyncMarket
 @pytest.mark.async_integration
 @pytest.fixture(scope="module")
 def bootstrapped_market(
-    async_http_client: AsyncClient, stubbed_market_pk: Pubkey, stubbed_dex_program_pk: Pubkey, event_loop
+    async_http_client: AsyncClient,
+    stubbed_market_pk: Pubkey,
+    stubbed_dex_program_pk: Pubkey,
+    event_loop,
 ) -> AsyncMarket:
     return event_loop.run_until_complete(
-        AsyncMarket.load(async_http_client, stubbed_market_pk, stubbed_dex_program_pk, force_use_request_queue=True)
+        AsyncMarket.load(
+            async_http_client,
+            stubbed_market_pk,
+            stubbed_dex_program_pk,
+            force_use_request_queue=True,
+        )
     )
 
 
@@ -70,7 +78,9 @@ async def test_market_load_requests(bootstrapped_market: AsyncMarket):
 @pytest.mark.async_integration
 @pytest.mark.asyncio
 async def test_match_order(bootstrapped_market: AsyncMarket, stubbed_payer: Keypair):
-    await bootstrapped_market.match_orders(stubbed_payer, 2, TxOpts(skip_confirmation=False))
+    await bootstrapped_market.match_orders(
+        stubbed_payer, 2, TxOpts(skip_confirmation=False)
+    )
 
     request_queue = await bootstrapped_market.load_request_queue()
     # 0 request after matching.
@@ -97,7 +107,9 @@ async def test_settle_fund(
     stubbed_quote_wallet: Keypair,
     stubbed_base_wallet: Keypair,
 ):
-    open_order_accounts = await bootstrapped_market.find_open_orders_accounts_for_owner(stubbed_payer.pubkey())
+    open_order_accounts = await bootstrapped_market.find_open_orders_accounts_for_owner(
+        stubbed_payer.pubkey()
+    )
 
     with pytest.raises(ValueError):
         # Should not allow base_wallet to be base_vault
@@ -186,18 +198,26 @@ async def test_order_placement_cancellation_cycle(
     assert sum(1 for _ in asks) == 1
 
     for bid in bids:
-        await bootstrapped_market.cancel_order(stubbed_payer, bid, opts=TxOpts(skip_confirmation=False))
+        await bootstrapped_market.cancel_order(
+            stubbed_payer, bid, opts=TxOpts(skip_confirmation=False)
+        )
 
-    await bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
+    await bootstrapped_market.match_orders(
+        stubbed_payer, 1, opts=TxOpts(skip_confirmation=False)
+    )
 
     # All bid order should have been cancelled.
     bids = await bootstrapped_market.load_bids()
     assert sum(1 for _ in bids) == 0
 
     for ask in asks:
-        await bootstrapped_market.cancel_order(stubbed_payer, ask, opts=TxOpts(skip_confirmation=False))
+        await bootstrapped_market.cancel_order(
+            stubbed_payer, ask, opts=TxOpts(skip_confirmation=False)
+        )
 
-    await bootstrapped_market.match_orders(stubbed_payer, 1, opts=TxOpts(skip_confirmation=False))
+    await bootstrapped_market.match_orders(
+        stubbed_payer, 1, opts=TxOpts(skip_confirmation=False)
+    )
 
     # All ask order should have been cancelled.
     asks = await bootstrapped_market.load_asks()

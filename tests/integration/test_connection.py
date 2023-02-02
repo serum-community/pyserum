@@ -7,7 +7,9 @@ from pyserum.market.types import MarketInfo, TokenInfo
 @pytest.mark.integration
 def test_get_live_markets():
     """Test get_live_markets."""
-    assert all(isinstance(market_info, MarketInfo) for market_info in get_live_markets())
+    assert all(
+        isinstance(market_info, MarketInfo) for market_info in get_live_markets()
+    )
 
 
 @pytest.mark.integration
